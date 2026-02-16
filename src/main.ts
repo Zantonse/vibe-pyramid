@@ -4,12 +4,14 @@ import { CharacterFactory } from './characters/CharacterFactory.js';
 import { HUD } from './hud/HUD.js';
 import { WSClient } from './network/WSClient.js';
 import { EventRouter } from './events/EventRouter.js';
+import { SandParticles } from './effects/SandParticles.js';
 
 // Core systems
 const sceneManager = new SceneManager();
 const pyramid = new PyramidBuilder(sceneManager.scene);
 const characters = new CharacterFactory(sceneManager.scene);
 const hud = new HUD(sceneManager.scene);
+const sand = new SandParticles(sceneManager.scene);
 
 // Networking
 const ws = new WSClient();
@@ -28,6 +30,7 @@ function animate(): void {
   pyramid.update(delta);
   characters.update(delta);
   hud.update(delta);
+  sand.update(delta);
   sceneManager.update(delta);
   sceneManager.render();
 }
