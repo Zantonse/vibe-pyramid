@@ -1,13 +1,9 @@
 {
-  "name": "pyramid",
-  "version": "1.0.0",
-  "description": "",
-  "main": "index.js",
+  "name": "pyramid-viz",
+  "version": "0.1.0",
+  "description": "Ancient Egyptian pyramid visualization for Claude Code activity",
   "bin": {
     "pyramid": "./bin/cli.ts"
-  },
-  "directories": {
-    "doc": "docs"
   },
   "scripts": {
     "dev": "vite",
@@ -17,9 +13,8 @@
     "setup": "tsx bin/setup.ts",
     "uninstall": "tsx bin/uninstall.ts"
   },
-  "keywords": [],
-  "author": "",
-  "license": "ISC",
+  "keywords": ["claude-code", "visualization", "three.js", "pyramid"],
+  "license": "MIT",
   "type": "module",
   "dependencies": {
     "express": "^5.2.1",
