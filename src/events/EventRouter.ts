@@ -39,13 +39,14 @@ export class EventRouter {
   ): void {
     const chars = this.characters.getOrCreate(sessionId);
 
+    // Determine activity from tool and drive movement
     const activity: WorkerActivity = TOOL_ACTIVITY_MAP[tool] || 'idle';
-    chars.worker.playAnimation(activity === 'carry' ? 'carry' : activity === 'chisel' ? 'chisel' : activity === 'survey' ? 'survey' : activity === 'antenna' ? 'antenna' : activity === 'portal' ? 'portal' : 'idle');
+    chars.controller.setActivity(activity);
 
-    chars.pharaoh.playAnimation('whip');
-
+    // Queue blocks on the pyramid
     this.pyramid.queueBlocks(blocksPlaced);
 
+    // Update HUD
     this.hud.updateXP(totalXp, blocksPlaced, this.pyramid.totalSlots);
     const label = metadata.file || metadata.command || tool;
     this.hud.showActivityText(label, xpEarned);
@@ -54,8 +55,7 @@ export class EventRouter {
   private handleSessionUpdate(sessionId: string, status: string, name: string): void {
     if (status === 'ended') {
       const chars = this.characters.getOrCreate(sessionId);
-      chars.worker.playAnimation('idle');
-      chars.pharaoh.playAnimation('idle');
+      chars.controller.setActivity('idle');
     } else {
       this.characters.getOrCreate(sessionId);
     }

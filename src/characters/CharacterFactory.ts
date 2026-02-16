@@ -2,10 +2,12 @@ import * as THREE from 'three';
 import { CharacterModel } from './CharacterModel.js';
 import { ProceduralWorker } from './ProceduralWorker.js';
 import { ProceduralPharaoh } from './ProceduralPharaoh.js';
+import { SessionController } from './SessionController.js';
 
 export interface SessionCharacters {
   pharaoh: CharacterModel;
   worker: CharacterModel;
+  controller: SessionController;
 }
 
 export class CharacterFactory {
@@ -23,19 +25,13 @@ export class CharacterFactory {
 
     const worker = new ProceduralWorker();
     const pharaoh = new ProceduralPharaoh();
-
     const index = this.sessions.size;
-    const baseX = -15;
-    const baseZ = 5 + index * 4;
-
-    worker.setPosition(new THREE.Vector3(baseX, 0, baseZ));
-    pharaoh.setPosition(new THREE.Vector3(baseX - 2, 0, baseZ));
-    pharaoh.lookAt(new THREE.Vector3(baseX, 0, baseZ));
+    const controller = new SessionController(worker, pharaoh, index);
 
     this.scene.add(worker.mesh);
     this.scene.add(pharaoh.mesh);
 
-    const chars = { pharaoh, worker };
+    const chars = { pharaoh, worker, controller };
     this.sessions.set(sessionId, chars);
     return chars;
   }
@@ -52,7 +48,8 @@ export class CharacterFactory {
   }
 
   update(delta: number): void {
-    for (const { pharaoh, worker } of this.sessions.values()) {
+    for (const { pharaoh, worker, controller } of this.sessions.values()) {
+      controller.update(delta);
       pharaoh.update(delta);
       worker.update(delta);
     }
