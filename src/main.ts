@@ -1,7 +1,22 @@
 import { SceneManager } from './scene/SceneManager.js';
+import { PyramidBuilder } from './pyramid/PyramidBuilder.js';
+import { CharacterFactory } from './characters/CharacterFactory.js';
+import { HUD } from './hud/HUD.js';
+import { WSClient } from './network/WSClient.js';
+import { EventRouter } from './events/EventRouter.js';
 
-const scene = new SceneManager();
+// Core systems
+const sceneManager = new SceneManager();
+const pyramid = new PyramidBuilder(sceneManager.scene);
+const characters = new CharacterFactory(sceneManager.scene);
+const hud = new HUD(sceneManager.scene);
 
+// Networking
+const ws = new WSClient();
+const router = new EventRouter(characters, pyramid, hud);
+ws.onMessage((msg) => router.handle(msg));
+
+// Render loop
 let lastTime = performance.now();
 
 function animate(): void {
@@ -10,8 +25,11 @@ function animate(): void {
   const delta = (now - lastTime) / 1000;
   lastTime = now;
 
-  scene.update(delta);
-  scene.render();
+  pyramid.update(delta);
+  characters.update(delta);
+  hud.update(delta);
+  sceneManager.update(delta);
+  sceneManager.render();
 }
 
 animate();
