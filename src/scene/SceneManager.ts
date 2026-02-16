@@ -7,6 +7,15 @@ export class SceneManager {
   renderer: THREE.WebGLRenderer;
   controls: OrbitControls;
 
+  private skyMaterial: THREE.ShaderMaterial | null = null;
+  private sun: THREE.Mesh | null = null;
+  private sunLight: THREE.DirectionalLight | null = null;
+  private ambientLight: THREE.AmbientLight | null = null;
+  private dayTime = 0;
+  private _nudgeTarget: THREE.Vector3 | null = null;
+  private nudgeProgress = 0;
+  private baseTarget = new THREE.Vector3(0, 5, 0);
+
   constructor() {
     // Scene
     this.scene = new THREE.Scene();
@@ -43,12 +52,14 @@ export class SceneManager {
   }
 
   private createSky(): void {
-    // Gradient sky using a large sphere with vertex colors
+    // Gradient sky using a large sphere with 3-stop gradient
     const skyGeo = new THREE.SphereGeometry(400, 32, 15);
     const skyMat = new THREE.ShaderMaterial({
       uniforms: {
         topColor: { value: new THREE.Color(0x1a237e) },    // Deep blue
-        bottomColor: { value: new THREE.Color(0xf57c00) }, // Warm amber
+        midColor: { value: new THREE.Color(0xf5a623) },    // Warm gold
+        bottomColor: { value: new THREE.Color(0xe8824a) }, // Soft terracotta
+        midPoint: { value: 0.15 },
       },
       vertexShader: `
         varying vec3 vWorldPosition;
@@ -60,17 +71,27 @@ export class SceneManager {
       `,
       fragmentShader: `
         uniform vec3 topColor;
+        uniform vec3 midColor;
         uniform vec3 bottomColor;
+        uniform float midPoint;
         varying vec3 vWorldPosition;
         void main() {
           float h = normalize(vWorldPosition).y;
           float t = max(0.0, h);
-          gl_FragColor = vec4(mix(bottomColor, topColor, t), 1.0);
+          vec3 color;
+          if (t < midPoint) {
+            color = mix(bottomColor, midColor, t / midPoint);
+          } else {
+            color = mix(midColor, topColor, (t - midPoint) / (1.0 - midPoint));
+          }
+          gl_FragColor = vec4(color, 1.0);
         }
       `,
       side: THREE.BackSide,
     });
-    this.scene.add(new THREE.Mesh(skyGeo, skyMat));
+    const skyMesh = new THREE.Mesh(skyGeo, skyMat);
+    this.scene.add(skyMesh);
+    this.skyMaterial = skyMat;
 
     // Low-poly sun
     const sunGeo = new THREE.SphereGeometry(8, 8, 8);
@@ -78,6 +99,7 @@ export class SceneManager {
     const sun = new THREE.Mesh(sunGeo, sunMat);
     sun.position.set(-100, 20, -150);
     this.scene.add(sun);
+    this.sun = sun;
   }
 
   private createTerrain(): void {
@@ -116,10 +138,12 @@ export class SceneManager {
     sunLight.shadow.camera.top = 50;
     sunLight.shadow.camera.bottom = -50;
     this.scene.add(sunLight);
+    this.sunLight = sunLight;
 
     // Ambient fill
     const ambient = new THREE.AmbientLight(0xffe0b2, 0.4);
     this.scene.add(ambient);
+    this.ambientLight = ambient;
   }
 
   private createQuarry(): void {
@@ -148,8 +172,61 @@ export class SceneManager {
     this.renderer.setSize(window.innerWidth, window.innerHeight);
   }
 
+  nudgeTo(worldPos: THREE.Vector3): void {
+    this._nudgeTarget = new THREE.Vector3().lerpVectors(this.baseTarget, worldPos, 0.2);
+    this._nudgeTarget.y = Math.max(3, this._nudgeTarget.y);
+    this.nudgeProgress = 0;
+  }
+
   update(delta: number): void {
     this.controls.update();
+
+    // Slow day/night cycle — full cycle every 5 minutes
+    this.dayTime = (this.dayTime + delta / 300) % 1;
+
+    if (this.skyMaterial) {
+      const topDay = new THREE.Color(0x1a237e);
+      const topNight = new THREE.Color(0x0a0a2e);
+      const midDay = new THREE.Color(0xf5a623);
+      const midNight = new THREE.Color(0x2a1a4a);
+      const botDay = new THREE.Color(0xe8824a);
+      const botNight = new THREE.Color(0x1a0a2e);
+
+      const nightAmount = Math.max(0, Math.sin(this.dayTime * Math.PI * 2 - Math.PI / 2)) * 0.5;
+
+      this.skyMaterial.uniforms.topColor.value.lerpColors(topDay, topNight, nightAmount);
+      this.skyMaterial.uniforms.midColor.value.lerpColors(midDay, midNight, nightAmount);
+      this.skyMaterial.uniforms.bottomColor.value.lerpColors(botDay, botNight, nightAmount);
+    }
+
+    if (this.sun) {
+      const sunAngle = this.dayTime * Math.PI * 2;
+      this.sun.position.y = 20 + Math.sin(sunAngle) * 30;
+      this.sun.visible = this.sun.position.y > -5;
+    }
+
+    if (this.sunLight) {
+      const dayFactor = 0.5 + 0.5 * Math.sin(this.dayTime * Math.PI * 2 - Math.PI / 2);
+      this.sunLight.intensity = 0.4 + dayFactor * 1.1;
+    }
+    if (this.ambientLight) {
+      const dayFactor = 0.5 + 0.5 * Math.sin(this.dayTime * Math.PI * 2 - Math.PI / 2);
+      this.ambientLight.intensity = 0.15 + dayFactor * 0.25;
+    }
+
+    // Camera nudge
+    if (this._nudgeTarget) {
+      this.nudgeProgress += delta * 0.5;
+      if (this.nudgeProgress < 1) {
+        const t = 1 - Math.pow(1 - this.nudgeProgress, 2);
+        this.controls.target.lerpVectors(this.controls.target, this._nudgeTarget, t * 0.03);
+      } else {
+        this.controls.target.lerp(this.baseTarget, delta * 0.5);
+        if (this.controls.target.distanceTo(this.baseTarget) < 0.1) {
+          this._nudgeTarget = null;
+        }
+      }
+    }
   }
 
   render(): void {

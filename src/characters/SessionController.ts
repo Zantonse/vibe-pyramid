@@ -13,29 +13,25 @@ const PYRAMID_CENTER = new THREE.Vector3(0, 0, 0);
 
 /** Get a target position based on the worker activity */
 function getActivityTarget(activity: WorkerActivity, sessionIndex: number): THREE.Vector3 {
-  // Offset per session so multiple workers don't stack on each other
-  const offset = sessionIndex * 3;
+  // Spread sessions along a curved path from quarry toward pyramid
+  // Each session gets a unique "lane" offset perpendicular to the quarry-pyramid axis
+  const laneOffset = (sessionIndex - 0.5) * 5; // 5 units apart per session
 
   switch (activity) {
     case 'carry':
-      // Walk toward pyramid — land on the near face with session offset
-      return new THREE.Vector3(-10 + offset * 0.5, 0, 2 + offset);
+      return new THREE.Vector3(-8, 0, laneOffset);
     case 'chisel':
-      // Stand at the pyramid face
-      return new THREE.Vector3(-10 + offset * 0.5, 0, -2 + offset);
+      return new THREE.Vector3(-6, 0, -3 + laneOffset);
     case 'survey':
-      // Stand back to survey from a distance
-      return new THREE.Vector3(-12 + offset * 0.3, 0, 8 + offset);
+      return new THREE.Vector3(-14, 0, 4 + laneOffset);
     case 'antenna':
-      // Move to an open area to "transmit"
-      return new THREE.Vector3(-8, 0, 15 + offset);
+      return new THREE.Vector3(-5, 0, 12 + laneOffset);
     case 'portal':
-      // Near the quarry, portal effect area
-      return new THREE.Vector3(-18, 0, 6 + offset);
+      return new THREE.Vector3(-18, 0, laneOffset);
     case 'idle':
     default:
       // Return to quarry area
-      return new THREE.Vector3(QUARRY_CENTER.x + offset * 0.5, 0, QUARRY_CENTER.z + offset);
+      return new THREE.Vector3(QUARRY_CENTER.x + sessionIndex * 3, 0, QUARRY_CENTER.z + laneOffset);
   }
 }
 

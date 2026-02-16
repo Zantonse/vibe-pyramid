@@ -1,6 +1,8 @@
 import { CharacterFactory } from '../characters/CharacterFactory.js';
 import { PyramidBuilder } from '../pyramid/PyramidBuilder.js';
 import { HUD } from '../hud/HUD.js';
+import { Sidebar } from '../ui/Sidebar.js';
+import { SceneManager } from '../scene/SceneManager.js';
 import { TOOL_ACTIVITY_MAP, type WorkerActivity } from '../../shared/types.js';
 import type { WSMessage, PyramidState } from '../../shared/types.js';
 
@@ -8,11 +10,15 @@ export class EventRouter {
   private characters: CharacterFactory;
   private pyramid: PyramidBuilder;
   private hud: HUD;
+  private sidebar: Sidebar;
+  private sceneManager: SceneManager;
 
-  constructor(characters: CharacterFactory, pyramid: PyramidBuilder, hud: HUD) {
+  constructor(characters: CharacterFactory, pyramid: PyramidBuilder, hud: HUD, sidebar: Sidebar, sceneManager: SceneManager) {
     this.characters = characters;
     this.pyramid = pyramid;
     this.hud = hud;
+    this.sidebar = sidebar;
+    this.sceneManager = sceneManager;
   }
 
   handle(msg: WSMessage): void {
@@ -41,15 +47,25 @@ export class EventRouter {
 
     // Determine activity from tool and drive movement
     const activity: WorkerActivity = TOOL_ACTIVITY_MAP[tool] || 'idle';
-    chars.controller.setActivity(activity);
+
+    if (activity !== 'idle') {
+      chars.controller.setActivity(activity);
+      this.sidebar.addTask(sessionId, tool, activity, xpEarned, metadata);
+      // Nudge camera toward active worker
+      const workerPos = chars.worker.mesh.position;
+      this.sceneManager.nudgeTo(workerPos);
+    }
 
     // Queue blocks on the pyramid
     this.pyramid.queueBlocks(blocksPlaced);
 
     // Update HUD
     this.hud.updateXP(totalXp, blocksPlaced, this.pyramid.totalSlots);
-    const label = metadata.file || metadata.command || tool;
-    this.hud.showActivityText(label, xpEarned);
+
+    if (activity !== 'idle') {
+      const label = metadata.file || metadata.command || tool;
+      this.hud.showActivityText(label, xpEarned);
+    }
   }
 
   private handleSessionUpdate(sessionId: string, status: string, name: string): void {
@@ -60,6 +76,7 @@ export class EventRouter {
       this.characters.getOrCreate(sessionId);
     }
     this.hud.updateSessionLabel(sessionId, name, status);
+    this.sidebar.updateSession(sessionId, name, status);
   }
 
   private handleStateSnapshot(state: PyramidState): void {
