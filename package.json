@@ -3,6 +3,9 @@
   "version": "1.0.0",
   "description": "",
   "main": "index.js",
+  "bin": {
+    "pyramid": "./bin/cli.ts"
+  },
   "directories": {
     "doc": "docs"
   },
@@ -10,7 +13,9 @@
     "dev": "vite",
     "dev:server": "tsx watch server/index.ts",
     "build": "vite build",
-    "start": "tsx server/index.ts"
+    "start": "tsx bin/cli.ts",
+    "setup": "tsx bin/setup.ts",
+    "uninstall": "tsx bin/uninstall.ts"
   },
   "keywords": [],
   "author": "",
