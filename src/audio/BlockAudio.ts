@@ -1,18 +1,23 @@
 export class BlockAudio {
   private ctx: AudioContext | null = null;
 
-  private ensureContext(): AudioContext {
+  private ensureContext(): AudioContext | null {
     if (!this.ctx) {
       this.ctx = new AudioContext();
     }
     if (this.ctx.state === 'suspended') {
-      this.ctx.resume();
+      this.ctx.resume().catch(() => {});
     }
-    return this.ctx;
+    return this.ctx.state === 'running' ? this.ctx : null;
+  }
+
+  warmup(): void {
+    this.ensureContext();
   }
 
   playBlockLand(): void {
     const ctx = this.ensureContext();
+    if (!ctx) return;
     const now = ctx.currentTime;
 
     // Stone thunk: short low-freq burst with noise
@@ -59,6 +64,7 @@ export class BlockAudio {
 
   playLevelUp(tierIndex: number): void {
     const ctx = this.ensureContext();
+    if (!ctx) return;
     const now = ctx.currentTime;
 
     // Base frequencies rise with each tier

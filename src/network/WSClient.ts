@@ -27,8 +27,8 @@ export class WSClient {
           for (const handler of this.handlers) {
             handler(msg);
           }
-        } catch {
-          // Ignore malformed messages
+        } catch (err) {
+          console.warn('Failed to parse WS message:', err);
         }
       };
 

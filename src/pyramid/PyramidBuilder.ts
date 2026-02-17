@@ -150,6 +150,11 @@ export class PyramidBuilder {
       const nextIndex = this.placedCount + this.pendingPlacements.length;
       this.pendingPlacements.push(nextIndex);
     }
+
+    // Safety cap: never exceed slot count
+    while (this.placedCount + this.pendingPlacements.length > this.slots.length && this.pendingPlacements.length > 0) {
+      this.pendingPlacements.pop();
+    }
   }
 
   update(delta: number): void {
@@ -185,6 +190,7 @@ export class PyramidBuilder {
   }
 
   private startBlockAnimation(index: number): void {
+    if (index >= this.slots.length) return;
     const slot = this.slots[index];
     if (slot.placed) return;
     slot.placed = true;

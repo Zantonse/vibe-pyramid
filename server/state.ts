@@ -24,6 +24,12 @@ export function loadState(): PyramidState {
     if (fs.existsSync(STATE_FILE)) {
       const raw = fs.readFileSync(STATE_FILE, 'utf-8');
       state = JSON.parse(raw);
+    } else if (fs.existsSync(STATE_FILE + '.tmp')) {
+      // Recover from incomplete atomic write
+      const raw = fs.readFileSync(STATE_FILE + '.tmp', 'utf-8');
+      state = JSON.parse(raw);
+      // Complete the rename
+      fs.renameSync(STATE_FILE + '.tmp', STATE_FILE);
     }
   } catch {
     console.warn('Failed to load state, using defaults');
@@ -36,7 +42,9 @@ function saveState(): void {
   if (saveTimer) return;
   saveTimer = setTimeout(() => {
     try {
-      fs.writeFileSync(STATE_FILE, JSON.stringify(state, null, 2));
+      const tmpFile = STATE_FILE + '.tmp';
+      fs.writeFileSync(tmpFile, JSON.stringify(state, null, 2));
+      fs.renameSync(tmpFile, STATE_FILE);
     } catch {
       console.warn('Failed to save state');
     }

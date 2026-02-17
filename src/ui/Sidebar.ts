@@ -268,7 +268,9 @@ export class Sidebar {
   }
 
   private injectStyles(): void {
+    if (document.getElementById('pyr-sidebar-styles')) return;
     const style = document.createElement('style');
+    style.id = 'pyr-sidebar-styles';
     style.textContent = `
       .pyr-sidebar {
         position: fixed;
@@ -450,6 +452,22 @@ export class Sidebar {
         padding: 2px 6px;
         border-radius: 3px;
         flex-shrink: 0;
+      }
+      @media (max-width: 900px) {
+        .pyr-sidebar {
+          width: 240px;
+        }
+        .pyr-sidebar--collapsed {
+          transform: translateX(200px);
+        }
+      }
+      @media (max-width: 600px) {
+        .pyr-sidebar {
+          width: 200px;
+        }
+        .pyr-sidebar--collapsed {
+          transform: translateX(160px);
+        }
       }
     `;
     document.head.appendChild(style);

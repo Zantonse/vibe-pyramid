@@ -91,6 +91,10 @@ app.post('/event', (req, res) => {
     broadcast(msg);
   }
 
+  if (!['PostToolUse', 'SessionStart', 'SessionEnd'].includes(event.hook_event_name)) {
+    console.log(`Unhandled hook event: ${event.hook_event_name}`);
+  }
+
   res.json({ ok: true });
 });
 

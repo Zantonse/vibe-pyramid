@@ -16,6 +16,7 @@ const hud = new HUD();
 const sand = new SandParticles(sceneManager.scene);
 const sidebar = new Sidebar();
 const audio = new BlockAudio();
+document.addEventListener('click', () => audio.warmup(), { once: true });
 pyramid.onBlockLand(() => audio.playBlockLand());
 hud.onLevelUp((_name, index) => audio.playLevelUp(index));
 

@@ -83,10 +83,17 @@ export class SandParticles {
       posArray[i3 + 1] += this.velocities[i3 + 1] * delta;
       posArray[i3 + 2] += this.velocities[i3 + 2] * delta;
 
+      // Wrap particles that drift out of bounds on any axis
       if (posArray[i3] > 50) {
         posArray[i3] = -50;
         posArray[i3 + 1] = Math.random() * 8;
         posArray[i3 + 2] = (Math.random() - 0.5) * 100;
+      }
+      if (posArray[i3 + 2] > 50 || posArray[i3 + 2] < -50) {
+        posArray[i3 + 2] = (Math.random() - 0.5) * 100;
+      }
+      if (posArray[i3 + 1] > 10 || posArray[i3 + 1] < -1) {
+        posArray[i3 + 1] = Math.random() * 8;
       }
     }
 

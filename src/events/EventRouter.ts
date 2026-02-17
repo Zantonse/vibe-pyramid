@@ -35,6 +35,8 @@ export class EventRouter {
       case 'milestone_unlock':
         this.sidebar.addMilestoneUnlock(msg.milestone_index, msg.unlocked_at);
         break;
+      default:
+        console.warn('EventRouter: unhandled message type:', (msg as { type: string }).type);
     }
   }
 

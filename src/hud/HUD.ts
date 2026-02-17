@@ -53,6 +53,7 @@ export class HUD {
       bottom: 0;
       left: 0;
       right: 320px;
+      transition: right 0.3s ease;
       z-index: 1000;
       display: flex;
       flex-direction: column;
@@ -124,6 +125,12 @@ export class HUD {
         }
         .pyr-hud-shimmer {
           animation: pyrHudShimmer 1.5s ease-out forwards;
+        }
+        @media (max-width: 900px) {
+          #pyr-hud { right: 240px; }
+        }
+        @media (max-width: 600px) {
+          #pyr-hud { right: 200px; }
         }
       `;
       document.head.appendChild(style);

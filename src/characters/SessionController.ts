@@ -15,7 +15,8 @@ const PYRAMID_CENTER = new THREE.Vector3(0, 0, 0);
 function getActivityTarget(activity: WorkerActivity, sessionIndex: number): THREE.Vector3 {
   // Spread sessions along a curved path from quarry toward pyramid
   // Each session gets a unique "lane" offset perpendicular to the quarry-pyramid axis
-  const laneOffset = (sessionIndex - 0.5) * 5; // 5 units apart per session
+  const clampedIndex = sessionIndex % 6; // wrap after 6 sessions to keep visible
+  const laneOffset = (clampedIndex - 2.5) * 5; // 5 units apart, centered
 
   switch (activity) {
     case 'carry':
@@ -31,7 +32,7 @@ function getActivityTarget(activity: WorkerActivity, sessionIndex: number): THRE
     case 'idle':
     default:
       // Return to quarry area
-      return new THREE.Vector3(QUARRY_CENTER.x + sessionIndex * 3, 0, QUARRY_CENTER.z + laneOffset);
+      return new THREE.Vector3(QUARRY_CENTER.x + clampedIndex * 3, 0, QUARRY_CENTER.z + laneOffset);
   }
 }
 

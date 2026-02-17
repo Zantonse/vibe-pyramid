@@ -16,6 +16,14 @@ export class SceneManager {
   private nudgeProgress = 0;
   private baseTarget = new THREE.Vector3(0, 5, 0);
 
+  // Day/night cycle color pairs (allocated once)
+  private readonly topDay = new THREE.Color(0x1a237e);
+  private readonly topNight = new THREE.Color(0x0a0a2e);
+  private readonly midDay = new THREE.Color(0xf5a623);
+  private readonly midNight = new THREE.Color(0x2a1a4a);
+  private readonly botDay = new THREE.Color(0xe8824a);
+  private readonly botNight = new THREE.Color(0x1a0a2e);
+
   constructor() {
     // Scene
     this.scene = new THREE.Scene();
@@ -185,18 +193,11 @@ export class SceneManager {
     this.dayTime = (this.dayTime + delta / 300) % 1;
 
     if (this.skyMaterial) {
-      const topDay = new THREE.Color(0x1a237e);
-      const topNight = new THREE.Color(0x0a0a2e);
-      const midDay = new THREE.Color(0xf5a623);
-      const midNight = new THREE.Color(0x2a1a4a);
-      const botDay = new THREE.Color(0xe8824a);
-      const botNight = new THREE.Color(0x1a0a2e);
-
       const nightAmount = Math.max(0, Math.sin(this.dayTime * Math.PI * 2 - Math.PI / 2)) * 0.5;
 
-      this.skyMaterial.uniforms.topColor.value.lerpColors(topDay, topNight, nightAmount);
-      this.skyMaterial.uniforms.midColor.value.lerpColors(midDay, midNight, nightAmount);
-      this.skyMaterial.uniforms.bottomColor.value.lerpColors(botDay, botNight, nightAmount);
+      this.skyMaterial.uniforms.topColor.value.lerpColors(this.topDay, this.topNight, nightAmount);
+      this.skyMaterial.uniforms.midColor.value.lerpColors(this.midDay, this.midNight, nightAmount);
+      this.skyMaterial.uniforms.bottomColor.value.lerpColors(this.botDay, this.botNight, nightAmount);
     }
 
     if (this.sun) {
