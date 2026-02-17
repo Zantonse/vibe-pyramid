@@ -1,14 +1,14 @@
 # HANDOVER.md — Pyramid Claude Code Visualization
 
 **Session Date:** 2026-02-16
-**Last Commit:** `cab41b0` (docs: add milestone levels design document)
-**Branch:** master (1 commit ahead of origin/master)
+**Last Commit:** `9eb440d` (feat: add pyramid era milestone levels with XP thresholds)
+**Branch:** master (pushed to origin/master)
 
 ---
 
 ## Session Summary
 
-Completed comprehensive app review with Playwright, implemented 9 major improvements via subagent-driven development, committed and pushed changes, then began designing and implementing a new **milestone levels system** to add a construction-phase progression with named tiers. Designed the milestone system, wrote the implementation plan, and completed Tasks 1–2 of the 4-task plan (MILESTONES constant and playLevelUp chime). Tasks 3–4 (HUD milestone tracking and wiring) remain pending.
+Completed comprehensive app review with Playwright, implemented 9 major improvements via subagent-driven development, committed and pushed changes, then designed and fully implemented a **milestone levels system** with construction-phase progression and named tiers. All 4 implementation tasks completed: MILESTONES constant, playLevelUp chime, HUD milestone tracking with shimmer/floating text effects, and main.ts audio wiring. Visually verified with Playwright, committed, and pushed.
 
 ---
 
@@ -39,18 +39,18 @@ Implemented via 3 parallel subagent batches and committed as single mega-commit 
 - ✅ Wrote comprehensive design document (saved to `/docs/plans/2026-02-16-milestone-levels-design.md`)
 - ✅ Wrote 4-task implementation plan (saved to `/docs/plans/2026-02-16-milestone-levels-plan.md`)
 
-### Phase 3: Milestone Levels Implementation (Partial)
+### Phase 3: Milestone Levels Implementation (Complete)
 **Task 1: Add MILESTONES constant** ✅
 → Added `Milestone` interface and `MILESTONES` array to `/shared/types.ts` (6 tiers with exponential XP thresholds: 0, 50, 500, 2000, 5000, 7500)
 
 **Task 2: Add playLevelUp chime** ✅
 → Implemented `playLevelUp()` method in `/src/audio/BlockAudio.ts` (two-note rising chime: C5→E5, 0.8s total duration)
 
-**Task 3: Milestone tracking in HUD** ⏳ PENDING
-→ Needs: currentMilestoneIndex field, onLevelUp callback, getMilestoneIndex() helper, updated updateXP() with milestone detection, triggerLevelUp() method with shimmer + floating text, CSS keyframes for pyr-hud-shimmer
+**Task 3: Milestone tracking in HUD** ✅
+→ Added `currentMilestoneIndex` field, `onLevelUp` callback, `getMilestoneIndex()` helper, updated `updateXP()` with milestone detection, `triggerLevelUp()` method with shimmer + floating text, CSS keyframes for `pyr-hud-shimmer`
 
-**Task 4: Wire level-up audio in main.ts** ⏳ PENDING
-→ Needs: Single line in main.ts after pyramid.onBlockLand wiring → `hud.onLevelUp(() => audio.playLevelUp());`
+**Task 4: Wire level-up audio in main.ts** ✅
+→ Added `hud.onLevelUp(() => audio.playLevelUp());` after pyramid.onBlockLand wiring
 
 ---
 
@@ -143,27 +143,19 @@ Implemented via 3 parallel subagent batches and committed as single mega-commit 
 ### Repository Status
 ```
 Branch: master
-Ahead of origin/master: 1 commit
-Untracked files:
-  - docs/plans/2026-02-16-pyramid-improvements.md (14-item design brief)
-  - docs/plans/2026-02-16-pyramid-implementation-plan.md (8-task structure)
-  - docs/plans/2026-02-16-pyramid-visualization-design.md (Playwright review summary)
-  - docs/plans/2026-02-16-milestone-levels-design.md (6-tier milestone spec)
-  - docs/plans/2026-02-16-milestone-levels-plan.md (4-task implementation plan)
-  - pyramid-*.png (4 Playwright screenshots from initial review)
+Up to date with origin/master
+Latest commit: 9eb440d (feat: add pyramid era milestone levels with XP thresholds)
 ```
 
 ### Code Status
-- All 9 visual improvements committed and pushed to remote (`935b0fd`)
-- MILESTONES constant added to `shared/types.ts` (committed as `cab41b0`)
-- playLevelUp chime method added to `src/audio/BlockAudio.ts` (committed as `cab41b0`)
-- HUD milestone tracking NOT YET implemented
-- Level-up audio wiring NOT YET implemented in main.ts
+- All 9 visual improvements committed and pushed (`935b0fd`)
+- All 4 milestone level tasks committed and pushed (`9eb440d`)
+- Full feature complete: milestones display inline in HUD, level-up triggers shimmer + floating text + chime
 
 ### Working Build Status
 - TypeScript compiles cleanly: `npx tsc --noEmit` ✅
 - No uncommitted changes to source files
-- Browser app loads and runs (last tested with 9 improvements + MILESTONES constant)
+- Browser app loads and runs with all features (verified via Playwright)
 
 ### Critical Files Map
 
@@ -173,14 +165,14 @@ Untracked files:
 - `/src/effects/SandParticles.ts` — 1500 wind-blown sand particles with soft circles
 
 #### UI & HUD
-- `/src/hud/HUD.ts` — Fixed HTML overlay HUD (need to add milestone tracking here)
+- `/src/hud/HUD.ts` — Fixed HTML overlay HUD with milestone tracking and level-up effects
 - `/src/ui/Sidebar.ts` — Session activity log, task list
 - `index.html` — Main entry point with pyramid emoji favicon
 
 #### Audio & Events
 - `/src/audio/BlockAudio.ts` — Web Audio API: block thunk + playLevelUp chime
 - `/src/events/EventRouter.ts` — WebSocket message handler, idle filter, activity routing
-- `/src/main.ts` — App initialization and render loop (need to wire hud.onLevelUp() here)
+- `/src/main.ts` — App initialization, render loop, audio + level-up wiring
 
 #### Characters & Networking
 - `/src/characters/CharacterFactory.ts` — Pharaoh + Worker character creation
@@ -194,74 +186,13 @@ Untracked files:
 
 ## Clear Next Steps
 
-### Immediate (Continue Milestone Levels Plan)
+All planned work is complete. Potential future enhancements:
 
-**Step 1: Complete Task 3 — Milestone tracking in HUD**
-Location: `/src/hud/HUD.ts`
-Required changes:
-1. Import MILESTONES from shared/types.ts
-2. Add fields: `private currentMilestoneIndex = 0;` and `private onLevelUpCallback`
-3. Add `onLevelUp(callback)` registration method
-4. Add `getMilestoneIndex(xp)` helper to find milestone from threshold
-5. Replace `updateXP()` to compute milestone and detect transitions
-6. Add `triggerLevelUp(milestoneName)` method with shimmer animation + floating text
-7. Add CSS keyframes for `pyrHudShimmer` animation
-
-Verification:
-```bash
-npx tsc --noEmit  # Should compile cleanly
-```
-
-**Step 2: Complete Task 4 — Wire audio in main.ts**
-Location: `/src/main.ts`
-Required change: Add one line after pyramid.onBlockLand wiring:
-```typescript
-hud.onLevelUp(() => audio.playLevelUp());
-```
-
-**Step 3: Visual Verification with Playwright**
-- Navigate to app
-- Simulate high XP or mock state_snapshot to reach milestone threshold
-- Verify: shimmer animation on stats bar, floating milestone text appears, chime plays
-- Capture screenshots
-
-**Step 4: Commit & Push**
-```bash
-git add src/hud/HUD.ts src/main.ts
-git commit -m "feat: add milestone tracking with level-up effects to HUD"
-git push origin master
-```
-
-### Follow-Up Work (Post-Milestone)
-
-1. **Enhance Milestone Display**
-   - Add milestone progress bar (XP until next milestone)
-   - Show milestone icons/emojis different from pyramid (scarab, sphinx, etc.)
-
-2. **Persistent Milestone History**
-   - Save milestone unlock timestamps to state
-   - Display achievement timeline in sidebar
-
-3. **Audio Enhancements**
-   - Different chime sounds for each milestone tier (ascending pitch)
-   - Celebration sound effects on reaching final tier
-
-4. **Game Balance**
-   - Adjust XP thresholds based on real session data
-   - Rebalance XP_TABLE for tools if milestones feel too slow/fast
-
----
-
-## Implementation Checklist for Next Session
-
-- [ ] Read `/docs/plans/2026-02-16-milestone-levels-plan.md` Tasks 3–4
-- [ ] Implement Task 3 (HUD milestone tracking)
-- [ ] Implement Task 4 (main.ts wiring)
-- [ ] Run `npx tsc --noEmit` to verify compilation
-- [ ] Test in browser (navigate to app, verify shimmer + floating text + chime)
-- [ ] Commit and push changes
-- [ ] Verify remote received commit: `git log --oneline origin/master -3`
-- [ ] Mark session complete
+1. **Milestone Progress Bar** — Show XP progress toward next milestone (e.g., "1,577 / 2,000 XP to Inner Chambers")
+2. **Per-Milestone Icons** — Different emojis per tier (scarab, sphinx, ankh) instead of generic 🏛
+3. **Persistent Milestone History** — Save unlock timestamps to server state, display achievement timeline in sidebar
+4. **Audio Scaling** — Different chime pitches per milestone tier (ascending), celebration sound on final tier
+5. **Game Balance** — Tune XP thresholds based on real session data, adjust XP_TABLE per tool if milestones feel too slow/fast
 
 ---
 
