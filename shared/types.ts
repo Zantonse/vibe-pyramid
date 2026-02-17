@@ -3,12 +3,12 @@ export const XP_TABLE: Record<string, number> = {
   Read: 1,
   Glob: 1,
   Grep: 1,
-  Bash: 2,
-  WebFetch: 2,
-  WebSearch: 2,
-  Edit: 3,
-  Task: 4,
-  Write: 5,
+  Bash: 3,
+  WebFetch: 3,
+  WebSearch: 3,
+  Edit: 5,
+  Task: 7,
+  Write: 8,
 };
 
 export const XP_PER_BLOCK = 5;
@@ -16,16 +16,22 @@ export const XP_PER_BLOCK = 5;
 export interface Milestone {
   name: string;
   xpThreshold: number;
+  icon: string;
 }
 
 export const MILESTONES: Milestone[] = [
-  { name: 'Surveying the Sands', xpThreshold: 0 },
-  { name: 'Laying Foundations', xpThreshold: 50 },
-  { name: 'Rising Walls', xpThreshold: 500 },
-  { name: 'Inner Chambers', xpThreshold: 2000 },
-  { name: 'Gilding the Facade', xpThreshold: 5000 },
-  { name: 'Placing the Capstone', xpThreshold: 7500 },
+  { name: 'Surveying the Sands', xpThreshold: 0, icon: '\u{1F3DC}' },
+  { name: 'Laying Foundations', xpThreshold: 50, icon: '\u{1F9F1}' },
+  { name: 'Rising Walls', xpThreshold: 500, icon: '\u{1F3D7}' },
+  { name: 'Inner Chambers', xpThreshold: 2000, icon: '\u{1F3FA}' },
+  { name: 'Gilding the Facade', xpThreshold: 5000, icon: '\u{2728}' },
+  { name: 'Placing the Capstone', xpThreshold: 7500, icon: '\u{1F3DB}' },
 ];
+
+export interface MilestoneUnlock {
+  milestoneIndex: number;
+  unlockedAt: string; // ISO 8601
+}
 
 // Inbound: Claude Code hook events POSTed to the server
 export interface HookEvent {
@@ -41,7 +47,8 @@ export interface HookEvent {
 export type WSMessage =
   | ToolActivityMessage
   | SessionUpdateMessage
-  | StateSnapshotMessage;
+  | StateSnapshotMessage
+  | MilestoneUnlockMessage;
 
 export interface ToolActivityMessage {
   type: 'tool_activity';
@@ -65,12 +72,22 @@ export interface StateSnapshotMessage {
   state: PyramidState;
 }
 
+export interface MilestoneUnlockMessage {
+  type: 'milestone_unlock';
+  milestone_index: number;
+  milestone_name: string;
+  milestone_icon: string;
+  unlocked_at: string;
+  total_xp: number;
+}
+
 // Persisted state
 export interface PyramidState {
   total_xp: number;
   blocks_placed: number;
   pyramid_layer: number;
   sessions: Record<string, SessionState>;
+  milestone_unlocks: MilestoneUnlock[];
 }
 
 export interface SessionState {

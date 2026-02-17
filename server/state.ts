@@ -1,6 +1,6 @@
 import fs from 'fs';
 import path from 'path';
-import { PyramidState, XP_TABLE, XP_PER_BLOCK } from '../shared/types.js';
+import { PyramidState, XP_TABLE, XP_PER_BLOCK, MILESTONES } from '../shared/types.js';
 
 const PYRAMID_DIR = path.join(process.env.HOME || '~', '.pyramid');
 const STATE_FILE = path.join(PYRAMID_DIR, 'state.json');
@@ -10,6 +10,7 @@ const DEFAULT_STATE: PyramidState = {
   blocks_placed: 0,
   pyramid_layer: 0,
   sessions: {},
+  milestone_unlocks: [],
 };
 
 let state: PyramidState = DEFAULT_STATE;
@@ -66,8 +67,14 @@ export function processToolEvent(
   sessionId: string,
   toolName: string,
   metadata: { file?: string; command?: string }
-): { xp_earned: number; total_xp: number; blocks_placed: number } {
+): { xp_earned: number; total_xp: number; blocks_placed: number; new_milestone_index: number | null } {
   const xp = XP_TABLE[toolName] ?? 1;
+  const prevXp = state.total_xp;
+
+  // Backward compatibility
+  if (!state.milestone_unlocks) {
+    state.milestone_unlocks = [];
+  }
 
   state.total_xp += xp;
   state.blocks_placed = Math.floor(state.total_xp / XP_PER_BLOCK);
@@ -85,12 +92,30 @@ export function processToolEvent(
   state.sessions[sessionId].last_active = new Date().toISOString();
   state.sessions[sessionId].status = 'active';
 
+  // Milestone detection
+  let new_milestone_index: number | null = null;
+  for (let i = 0; i < MILESTONES.length; i++) {
+    const milestone = MILESTONES[i];
+    const wasAlreadyUnlocked = prevXp >= milestone.xpThreshold;
+    const isNowUnlocked = state.total_xp >= milestone.xpThreshold;
+    const alreadyRecorded = state.milestone_unlocks.some(u => u.milestoneIndex === i);
+
+    if (isNowUnlocked && !wasAlreadyUnlocked && !alreadyRecorded) {
+      state.milestone_unlocks.push({
+        milestoneIndex: i,
+        unlockedAt: new Date().toISOString(),
+      });
+      new_milestone_index = i;
+    }
+  }
+
   saveState();
 
   return {
     xp_earned: xp,
     total_xp: state.total_xp,
     blocks_placed: state.blocks_placed,
+    new_milestone_index,
   };
 }
 

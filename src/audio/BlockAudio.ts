@@ -57,35 +57,59 @@ export class BlockAudio {
     noise.stop(now + 0.06);
   }
 
-  playLevelUp(): void {
+  playLevelUp(tierIndex: number): void {
     const ctx = this.ensureContext();
     const now = ctx.currentTime;
 
+    // Base frequencies rise with each tier
+    const baseFreqs = [523, 587, 659, 740, 831];
+    const thirdFreqs = [659, 740, 831, 932, 1047];
+    const idx = Math.min(tierIndex - 1, baseFreqs.length - 1);
+    const freq1 = baseFreqs[Math.max(0, idx)];
+    const freq2 = thirdFreqs[Math.max(0, idx)];
+
+    const isFinalTier = tierIndex >= 5;
+    const duration = isFinalTier ? 1.5 : 0.8;
+    const volume = isFinalTier ? 0.18 : 0.12;
+
     // Two-note rising chime
     const masterGain = ctx.createGain();
-    masterGain.gain.setValueAtTime(0.12, now);
-    masterGain.gain.exponentialRampToValueAtTime(0.001, now + 0.8);
+    masterGain.gain.setValueAtTime(volume, now);
+    masterGain.gain.exponentialRampToValueAtTime(0.001, now + duration);
     masterGain.connect(ctx.destination);
 
-    // Note 1: C5
     const osc1 = ctx.createOscillator();
     osc1.type = 'sine';
-    osc1.frequency.setValueAtTime(523, now);
+    osc1.frequency.setValueAtTime(freq1, now);
     osc1.connect(masterGain);
     osc1.start(now);
-    osc1.stop(now + 0.3);
+    osc1.stop(now + duration * 0.4);
 
-    // Note 2: E5 (delayed)
     const osc2 = ctx.createOscillator();
     osc2.type = 'sine';
-    osc2.frequency.setValueAtTime(659, now + 0.15);
+    osc2.frequency.setValueAtTime(freq2, now + 0.15);
     const gain2 = ctx.createGain();
     gain2.gain.setValueAtTime(0, now);
-    gain2.gain.setValueAtTime(0.12, now + 0.15);
-    gain2.gain.exponentialRampToValueAtTime(0.001, now + 0.8);
+    gain2.gain.setValueAtTime(volume, now + 0.15);
+    gain2.gain.exponentialRampToValueAtTime(0.001, now + duration);
     osc2.connect(gain2);
     gain2.connect(ctx.destination);
     osc2.start(now + 0.15);
-    osc2.stop(now + 0.8);
+    osc2.stop(now + duration);
+
+    // Final tier: triumphant third note (octave)
+    if (isFinalTier) {
+      const osc3 = ctx.createOscillator();
+      osc3.type = 'sine';
+      osc3.frequency.setValueAtTime(freq1 * 2, now + 0.3);
+      const gain3 = ctx.createGain();
+      gain3.gain.setValueAtTime(0, now);
+      gain3.gain.setValueAtTime(volume * 0.8, now + 0.3);
+      gain3.gain.exponentialRampToValueAtTime(0.001, now + 1.5);
+      osc3.connect(gain3);
+      gain3.connect(ctx.destination);
+      osc3.start(now + 0.3);
+      osc3.stop(now + 1.5);
+    }
   }
 }

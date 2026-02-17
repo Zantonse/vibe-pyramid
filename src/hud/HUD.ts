@@ -14,7 +14,7 @@ export class HUD {
   private blocksPlaced = 0;
   private totalSlots = 0;
   private currentMilestoneIndex = 0;
-  private onLevelUpCallback: ((milestoneName: string) => void) | null = null;
+  private onLevelUpCallback: ((milestoneName: string, milestoneIndex: number) => void) | null = null;
 
   constructor() {
     this.createHUDContainer();
@@ -25,7 +25,7 @@ export class HUD {
     this.ensureAnimationStyles();
   }
 
-  onLevelUp(callback: (milestoneName: string) => void): void {
+  onLevelUp(callback: (milestoneName: string, milestoneIndex: number) => void): void {
     this.onLevelUpCallback = callback;
   }
 
@@ -137,8 +137,16 @@ export class HUD {
 
     const newIndex = this.getMilestoneIndex(totalXp);
     const milestone = MILESTONES[newIndex];
+    const nextMilestone = MILESTONES[newIndex + 1];
 
-    this.statsBar.textContent = `\u{1F3DB} ${milestone.name}  |  Blocks: ${blocksPlaced.toLocaleString()} / ${totalSlots.toLocaleString()}  |  XP: ${totalXp.toLocaleString()}`;
+    let xpText: string;
+    if (nextMilestone) {
+      xpText = `XP: ${totalXp.toLocaleString()} / ${nextMilestone.xpThreshold.toLocaleString()}`;
+    } else {
+      xpText = `XP: ${totalXp.toLocaleString()} (MAX)`;
+    }
+
+    this.statsBar.textContent = `${milestone.icon} ${milestone.name}  |  Blocks: ${blocksPlaced.toLocaleString()} / ${totalSlots.toLocaleString()}  |  ${xpText}`;
 
     const progress = totalSlots > 0 ? (blocksPlaced / totalSlots) * 100 : 0;
     const fillElement = this.progressBar.querySelector('div') as HTMLElement;
@@ -148,13 +156,13 @@ export class HUD {
 
     if (newIndex > this.currentMilestoneIndex) {
       this.currentMilestoneIndex = newIndex;
-      this.triggerLevelUp(milestone.name);
+      this.triggerLevelUp(milestone.name, milestone.icon);
     } else if (newIndex > 0 && this.currentMilestoneIndex === 0) {
       this.currentMilestoneIndex = newIndex;
     }
   }
 
-  private triggerLevelUp(milestoneName: string): void {
+  private triggerLevelUp(milestoneName: string, icon: string): void {
     this.statsBar.classList.remove('pyr-hud-shimmer');
     void this.statsBar.offsetWidth;
     this.statsBar.classList.add('pyr-hud-shimmer');
@@ -174,7 +182,7 @@ export class HUD {
       text-shadow: 0 0 12px rgba(255, 215, 0, 0.6), 0 0 4px rgba(0, 0, 0, 0.8);
       animation: hudFloatUp 3s ease-out forwards;
     `;
-    floatingDiv.textContent = `\u{1F3DB} ${milestoneName}`;
+    floatingDiv.textContent = `${icon} ${milestoneName}`;
 
     document.body.appendChild(floatingDiv);
 
@@ -184,7 +192,7 @@ export class HUD {
     });
 
     if (this.onLevelUpCallback) {
-      this.onLevelUpCallback(milestoneName);
+      this.onLevelUpCallback(milestoneName, this.currentMilestoneIndex);
     }
   }
 

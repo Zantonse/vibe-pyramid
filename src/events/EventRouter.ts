@@ -32,6 +32,9 @@ export class EventRouter {
       case 'state_snapshot':
         this.handleStateSnapshot(msg.state);
         break;
+      case 'milestone_unlock':
+        this.sidebar.addMilestoneUnlock(msg.milestone_index, msg.unlocked_at);
+        break;
     }
   }
 
@@ -86,6 +89,13 @@ export class EventRouter {
     for (const [sessionId, sessionState] of Object.entries(state.sessions)) {
       if (sessionState.status !== 'ended') {
         this.characters.getOrCreate(sessionId);
+      }
+    }
+
+    // Restore milestone unlocks in sidebar
+    if (state.milestone_unlocks) {
+      for (const unlock of state.milestone_unlocks) {
+        this.sidebar.addMilestoneUnlock(unlock.milestoneIndex, unlock.unlockedAt);
       }
     }
   }

@@ -1,4 +1,6 @@
 import type { WorkerActivity } from '../../shared/types.js';
+import type { MilestoneUnlock } from '../../shared/types.js';
+import { MILESTONES } from '../../shared/types.js';
 
 const ACTIVITY_COLORS: Record<WorkerActivity, string> = {
   survey: '#4fc3f7',
@@ -43,6 +45,8 @@ export class Sidebar {
   private container: HTMLElement;
   private sessionsMap: Map<string, SessionEntry> = new Map();
   private listEl: HTMLElement;
+  private achievementsEl!: HTMLElement;
+  private unlockedIndices: Set<number> = new Set();
 
   constructor() {
     this.injectStyles();
@@ -71,6 +75,11 @@ export class Sidebar {
     this.listEl = document.createElement('div');
     this.listEl.className = 'pyr-sidebar-list';
     this.container.appendChild(this.listEl);
+
+    this.achievementsEl = document.createElement('div');
+    this.achievementsEl.className = 'pyr-achievements';
+    this.achievementsEl.style.display = 'none';
+    this.container.insertBefore(this.achievementsEl, this.listEl);
 
     document.body.appendChild(this.container);
   }
@@ -138,6 +147,61 @@ export class Sidebar {
     session.status = status;
     session.nameEl.textContent = name || sessionId.slice(0, 8);
     session.statusEl.className = 'pyr-session-status pyr-status--' + status;
+  }
+
+  addMilestoneUnlock(milestoneIndex: number, unlockedAt: string): void {
+    if (this.unlockedIndices.has(milestoneIndex)) return;
+    this.unlockedIndices.add(milestoneIndex);
+
+    const milestone = MILESTONES[milestoneIndex];
+    if (!milestone) return;
+
+    this.achievementsEl.style.display = 'block';
+
+    const entry = document.createElement('div');
+    entry.className = 'pyr-achievement';
+    entry.setAttribute('data-idx', String(milestoneIndex));
+
+    const icon = document.createElement('span');
+    icon.className = 'pyr-achievement-icon';
+    icon.textContent = milestone.icon;
+    entry.appendChild(icon);
+
+    const info = document.createElement('div');
+    info.className = 'pyr-achievement-info';
+
+    const name = document.createElement('div');
+    name.className = 'pyr-achievement-name';
+    name.textContent = milestone.name;
+    info.appendChild(name);
+
+    const time = document.createElement('div');
+    time.className = 'pyr-achievement-time';
+    const date = new Date(unlockedAt);
+    time.textContent = date.toLocaleDateString([], { month: 'short', day: 'numeric' }) + ' ' + date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+    info.appendChild(time);
+
+    entry.appendChild(info);
+
+    const xpBadge = document.createElement('span');
+    xpBadge.className = 'pyr-achievement-xp';
+    xpBadge.textContent = milestone.xpThreshold.toLocaleString() + ' XP';
+    entry.appendChild(xpBadge);
+
+    // Insert sorted by milestone index (highest at top)
+    const existingEntries = this.achievementsEl.querySelectorAll('.pyr-achievement');
+    let inserted = false;
+    for (const existing of existingEntries) {
+      const existingIdx = parseInt(existing.getAttribute('data-idx') || '0', 10);
+      if (milestoneIndex > existingIdx) {
+        this.achievementsEl.insertBefore(entry, existing);
+        inserted = true;
+        break;
+      }
+    }
+    if (!inserted) {
+      this.achievementsEl.appendChild(entry);
+    }
   }
 
   private ensureSession(sessionId: string): SessionEntry {
@@ -347,6 +411,44 @@ export class Sidebar {
       .pyr-task-time {
         color: #666;
         font-size: 10px;
+        flex-shrink: 0;
+      }
+      .pyr-achievements {
+        padding: 8px 14px;
+        border-bottom: 1px solid #c9a84c55;
+      }
+      .pyr-achievement {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        padding: 6px 0;
+        border-bottom: 1px solid #ffffff08;
+      }
+      .pyr-achievement-icon {
+        font-size: 20px;
+        flex-shrink: 0;
+        width: 28px;
+        text-align: center;
+      }
+      .pyr-achievement-info {
+        flex: 1;
+        min-width: 0;
+      }
+      .pyr-achievement-name {
+        font-weight: 600;
+        color: #ffd700;
+        font-size: 12px;
+      }
+      .pyr-achievement-time {
+        color: #888;
+        font-size: 10px;
+      }
+      .pyr-achievement-xp {
+        font-size: 10px;
+        color: #c9a84c;
+        background: #c9a84c22;
+        padding: 2px 6px;
+        border-radius: 3px;
         flex-shrink: 0;
       }
     `;

@@ -2,7 +2,8 @@ import express from 'express';
 import { WebSocketServer, WebSocket } from 'ws';
 import http from 'http';
 import { loadState, getState, processToolEvent, updateSessionStatus } from './state.js';
-import type { HookEvent, WSMessage, ToolActivityMessage, SessionUpdateMessage, StateSnapshotMessage } from '../shared/types.js';
+import type { HookEvent, WSMessage, ToolActivityMessage, SessionUpdateMessage, StateSnapshotMessage, MilestoneUnlockMessage } from '../shared/types.js';
+import { MILESTONES } from '../shared/types.js';
 
 const PORT = parseInt(process.env.PYRAMID_PORT || '4200', 10);
 
@@ -54,6 +55,19 @@ app.post('/event', (req, res) => {
       metadata: { file, command },
     };
     broadcast(msg);
+
+    if (result.new_milestone_index !== null) {
+      const milestone = MILESTONES[result.new_milestone_index];
+      const milestoneMsg: MilestoneUnlockMessage = {
+        type: 'milestone_unlock',
+        milestone_index: result.new_milestone_index,
+        milestone_name: milestone.name,
+        milestone_icon: milestone.icon,
+        unlocked_at: new Date().toISOString(),
+        total_xp: result.total_xp,
+      };
+      broadcast(milestoneMsg);
+    }
   }
 
   if (event.hook_event_name === 'SessionStart') {
