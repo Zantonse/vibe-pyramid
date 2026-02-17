@@ -17,6 +17,7 @@ const sand = new SandParticles(sceneManager.scene);
 const sidebar = new Sidebar();
 const audio = new BlockAudio();
 pyramid.onBlockLand(() => audio.playBlockLand());
+hud.onLevelUp(() => audio.playLevelUp());
 
 // Networking
 const ws = new WSClient();

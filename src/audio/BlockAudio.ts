@@ -56,4 +56,36 @@ export class BlockAudio {
     noise.start(now);
     noise.stop(now + 0.06);
   }
+
+  playLevelUp(): void {
+    const ctx = this.ensureContext();
+    const now = ctx.currentTime;
+
+    // Two-note rising chime
+    const masterGain = ctx.createGain();
+    masterGain.gain.setValueAtTime(0.12, now);
+    masterGain.gain.exponentialRampToValueAtTime(0.001, now + 0.8);
+    masterGain.connect(ctx.destination);
+
+    // Note 1: C5
+    const osc1 = ctx.createOscillator();
+    osc1.type = 'sine';
+    osc1.frequency.setValueAtTime(523, now);
+    osc1.connect(masterGain);
+    osc1.start(now);
+    osc1.stop(now + 0.3);
+
+    // Note 2: E5 (delayed)
+    const osc2 = ctx.createOscillator();
+    osc2.type = 'sine';
+    osc2.frequency.setValueAtTime(659, now + 0.15);
+    const gain2 = ctx.createGain();
+    gain2.gain.setValueAtTime(0, now);
+    gain2.gain.setValueAtTime(0.12, now + 0.15);
+    gain2.gain.exponentialRampToValueAtTime(0.001, now + 0.8);
+    osc2.connect(gain2);
+    gain2.connect(ctx.destination);
+    osc2.start(now + 0.15);
+    osc2.stop(now + 0.8);
+  }
 }

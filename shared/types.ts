@@ -13,6 +13,20 @@ export const XP_TABLE: Record<string, number> = {
 
 export const XP_PER_BLOCK = 5;
 
+export interface Milestone {
+  name: string;
+  xpThreshold: number;
+}
+
+export const MILESTONES: Milestone[] = [
+  { name: 'Surveying the Sands', xpThreshold: 0 },
+  { name: 'Laying Foundations', xpThreshold: 50 },
+  { name: 'Rising Walls', xpThreshold: 500 },
+  { name: 'Inner Chambers', xpThreshold: 2000 },
+  { name: 'Gilding the Facade', xpThreshold: 5000 },
+  { name: 'Placing the Capstone', xpThreshold: 7500 },
+];
+
 // Inbound: Claude Code hook events POSTed to the server
 export interface HookEvent {
   hook_event_name: string;

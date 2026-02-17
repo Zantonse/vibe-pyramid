@@ -1,3 +1,5 @@
+import { MILESTONES } from '../../shared/types.js';
+
 interface FloatingTextElement {
   element: HTMLElement;
   createdAt: number;
@@ -11,6 +13,8 @@ export class HUD {
   private totalXp = 0;
   private blocksPlaced = 0;
   private totalSlots = 0;
+  private currentMilestoneIndex = 0;
+  private onLevelUpCallback: ((milestoneName: string) => void) | null = null;
 
   constructor() {
     this.createHUDContainer();
@@ -19,6 +23,21 @@ export class HUD {
     this.container.appendChild(this.statsBar);
     this.container.appendChild(this.progressBar);
     this.ensureAnimationStyles();
+  }
+
+  onLevelUp(callback: (milestoneName: string) => void): void {
+    this.onLevelUpCallback = callback;
+  }
+
+  private getMilestoneIndex(xp: number): number {
+    let index = 0;
+    for (let i = MILESTONES.length - 1; i >= 0; i--) {
+      if (xp >= MILESTONES[i].xpThreshold) {
+        index = i;
+        break;
+      }
+    }
+    return index;
   }
 
   private createHUDContainer(): void {
@@ -99,6 +118,13 @@ export class HUD {
             transform: translateX(-50%) translateY(-60px);
           }
         }
+        @keyframes pyrHudShimmer {
+          0% { border-color: rgba(255, 215, 0, 0.8); box-shadow: 0 0 12px rgba(255, 215, 0, 0.4); }
+          100% { border-color: rgba(201, 168, 76, 0.3); box-shadow: none; }
+        }
+        .pyr-hud-shimmer {
+          animation: pyrHudShimmer 1.5s ease-out forwards;
+        }
       `;
       document.head.appendChild(style);
     }
@@ -109,12 +135,56 @@ export class HUD {
     this.blocksPlaced = blocksPlaced;
     this.totalSlots = totalSlots;
 
-    this.statsBar.textContent = `Blocks: ${blocksPlaced.toLocaleString()} / ${totalSlots.toLocaleString()}  |  XP: ${totalXp.toLocaleString()}`;
+    const newIndex = this.getMilestoneIndex(totalXp);
+    const milestone = MILESTONES[newIndex];
+
+    this.statsBar.textContent = `\u{1F3DB} ${milestone.name}  |  Blocks: ${blocksPlaced.toLocaleString()} / ${totalSlots.toLocaleString()}  |  XP: ${totalXp.toLocaleString()}`;
 
     const progress = totalSlots > 0 ? (blocksPlaced / totalSlots) * 100 : 0;
     const fillElement = this.progressBar.querySelector('div') as HTMLElement;
     if (fillElement) {
       fillElement.style.width = `${progress}%`;
+    }
+
+    if (newIndex > this.currentMilestoneIndex) {
+      this.currentMilestoneIndex = newIndex;
+      this.triggerLevelUp(milestone.name);
+    } else if (newIndex > 0 && this.currentMilestoneIndex === 0) {
+      this.currentMilestoneIndex = newIndex;
+    }
+  }
+
+  private triggerLevelUp(milestoneName: string): void {
+    this.statsBar.classList.remove('pyr-hud-shimmer');
+    void this.statsBar.offsetWidth;
+    this.statsBar.classList.add('pyr-hud-shimmer');
+
+    const floatingDiv = document.createElement('div');
+    floatingDiv.style.cssText = `
+      position: fixed;
+      bottom: 160px;
+      left: 50%;
+      transform: translateX(-50%);
+      color: #ffd700;
+      font-size: 28px;
+      font-weight: bold;
+      font-family: monospace;
+      white-space: nowrap;
+      pointer-events: none;
+      text-shadow: 0 0 12px rgba(255, 215, 0, 0.6), 0 0 4px rgba(0, 0, 0, 0.8);
+      animation: hudFloatUp 3s ease-out forwards;
+    `;
+    floatingDiv.textContent = `\u{1F3DB} ${milestoneName}`;
+
+    document.body.appendChild(floatingDiv);
+
+    this.floatingTexts.push({
+      element: floatingDiv,
+      createdAt: performance.now(),
+    });
+
+    if (this.onLevelUpCallback) {
+      this.onLevelUpCallback(milestoneName);
     }
   }
 
