@@ -155,10 +155,22 @@ export class HUD {
 
     this.statsBar.textContent = `${milestone.icon} ${milestone.name}  |  Blocks: ${blocksPlaced.toLocaleString()} / ${totalSlots.toLocaleString()}  |  ${xpText}`;
 
-    const progress = totalSlots > 0 ? (blocksPlaced / totalSlots) * 100 : 0;
+    let progress = 0;
+    if (nextMilestone) {
+      const currentThreshold = milestone.xpThreshold;
+      const nextThreshold = nextMilestone.xpThreshold;
+      const xpIntoLevel = totalXp - currentThreshold;
+      const xpNeeded = nextThreshold - currentThreshold;
+      progress = xpIntoLevel > 0 && xpNeeded > 0
+        ? (xpIntoLevel / xpNeeded) * 100
+        : 0;
+    } else {
+      progress = 100;
+    }
+
     const fillElement = this.progressBar.querySelector('div') as HTMLElement;
     if (fillElement) {
-      fillElement.style.width = `${progress}%`;
+      fillElement.style.width = `${Math.min(progress, 100)}%`;
     }
 
     if (newIndex > this.currentMilestoneIndex) {

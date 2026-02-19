@@ -14,6 +14,14 @@ export class SandParticles {
     new THREE.Color(0xdbb070), // L3: faint gold tint
     new THREE.Color(0xe0b850), // L4: golden dust
     new THREE.Color(0xffd700), // L5: bright golden sparkle
+    new THREE.Color(0xffd700), // L6: golden
+    new THREE.Color(0xffd700), // L7: golden
+    new THREE.Color(0xffd700), // L8: golden
+    new THREE.Color(0xffd700), // L9: golden
+    new THREE.Color(0xffd700), // L10: golden
+    new THREE.Color(0xffd700), // L11: golden
+    new THREE.Color(0xffd700), // L12: golden
+    new THREE.Color(0xffd700), // L13: golden
   ];
 
   constructor(scene: THREE.Scene) {

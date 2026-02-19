@@ -26,6 +26,14 @@ export const MILESTONES: Milestone[] = [
   { name: 'Inner Chambers', xpThreshold: 2000, icon: '\u{1F3FA}' },
   { name: 'Gilding the Facade', xpThreshold: 5000, icon: '\u{2728}' },
   { name: 'Placing the Capstone', xpThreshold: 7500, icon: '\u{1F3DB}' },
+  { name: 'Sheathing in Limestone', xpThreshold: 10000, icon: '\u{1F3E6}' },
+  { name: 'Inscribing the Ages', xpThreshold: 15000, icon: '\u{1F4DC}' },
+  { name: 'Crown of Gold', xpThreshold: 20000, icon: '\u{1F451}' },
+  { name: 'Raising the Obelisk', xpThreshold: 27500, icon: '\u{1F5FC}' },
+  { name: 'Guardian of the Sands', xpThreshold: 37500, icon: '\u{1F981}' },
+  { name: 'Path of the Gods', xpThreshold: 50000, icon: '\u{1F6E4}' },
+  { name: 'Pyramid of the Queen', xpThreshold: 65000, icon: '\u{1F53A}' },
+  { name: 'Solar Barque', xpThreshold: 85000, icon: '\u{26F5}' },
 ];
 
 export interface EraVisual {
@@ -53,6 +61,18 @@ export const ERA_VISUALS: EraVisual[] = [
   { hue: 0.12, hueRange: 0.03, saturation: 0.65, saturationRange: 0.1, lightness: 0.6, lightnessRange: 0.08, roughness: 0.35, metalness: 0.3, emissiveIntensity: 0.08 },
   // Level 5: Placing the Capstone — electrum/royal gold
   { hue: 0.13, hueRange: 0.02, saturation: 0.75, saturationRange: 0.1, lightness: 0.65, lightnessRange: 0.08, roughness: 0.25, metalness: 0.5, emissiveIntensity: 0.15 },
+  // Level 6: Sheathing in Limestone — smooth white limestone
+  { hue: 0.12, hueRange: 0.02, saturation: 0.15, saturationRange: 0.08, lightness: 0.85, lightnessRange: 0.05, roughness: 0.5, metalness: 0.1, emissiveIntensity: 0 },
+  // Level 7: Inscribing the Ages — decorated warm stone
+  { hue: 0.11, hueRange: 0.02, saturation: 0.25, saturationRange: 0.08, lightness: 0.75, lightnessRange: 0.06, roughness: 0.45, metalness: 0.15, emissiveIntensity: 0.05 },
+  // Level 8: Crown of Gold — pure gold
+  { hue: 0.13, hueRange: 0.015, saturation: 0.8, saturationRange: 0.08, lightness: 0.7, lightnessRange: 0.06, roughness: 0.2, metalness: 0.6, emissiveIntensity: 0.2 },
+  // Levels 9-13: Placeholder — reuse gold era for future structure building
+  { hue: 0.13, hueRange: 0.015, saturation: 0.8, saturationRange: 0.08, lightness: 0.7, lightnessRange: 0.06, roughness: 0.2, metalness: 0.6, emissiveIntensity: 0.2 },
+  { hue: 0.13, hueRange: 0.015, saturation: 0.8, saturationRange: 0.08, lightness: 0.7, lightnessRange: 0.06, roughness: 0.2, metalness: 0.6, emissiveIntensity: 0.2 },
+  { hue: 0.13, hueRange: 0.015, saturation: 0.8, saturationRange: 0.08, lightness: 0.7, lightnessRange: 0.06, roughness: 0.2, metalness: 0.6, emissiveIntensity: 0.2 },
+  { hue: 0.13, hueRange: 0.015, saturation: 0.8, saturationRange: 0.08, lightness: 0.7, lightnessRange: 0.06, roughness: 0.2, metalness: 0.6, emissiveIntensity: 0.2 },
+  { hue: 0.13, hueRange: 0.015, saturation: 0.8, saturationRange: 0.08, lightness: 0.7, lightnessRange: 0.06, roughness: 0.2, metalness: 0.6, emissiveIntensity: 0.2 },
 ];
 
 export interface MilestoneUnlock {

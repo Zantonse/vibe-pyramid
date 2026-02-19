@@ -16,6 +16,14 @@ const ATMOSPHERE_CONFIGS: AtmosphereConfig[] = [
   { midColorBoost: 0.3, ambientBoost: 0.1, sunIntensityBoost: 0.15, innerGlow: true, capstoneBeacon: false },
   { midColorBoost: 0.45, ambientBoost: 0.15, sunIntensityBoost: 0.2, innerGlow: true, capstoneBeacon: false },
   { midColorBoost: 0.6, ambientBoost: 0.25, sunIntensityBoost: 0.3, innerGlow: true, capstoneBeacon: true },
+  { midColorBoost: 0.6, ambientBoost: 0.28, sunIntensityBoost: 0.32, innerGlow: true, capstoneBeacon: true },
+  { midColorBoost: 0.65, ambientBoost: 0.3, sunIntensityBoost: 0.35, innerGlow: true, capstoneBeacon: true },
+  { midColorBoost: 0.7, ambientBoost: 0.35, sunIntensityBoost: 0.4, innerGlow: true, capstoneBeacon: true },
+  { midColorBoost: 0.7, ambientBoost: 0.35, sunIntensityBoost: 0.4, innerGlow: true, capstoneBeacon: true },
+  { midColorBoost: 0.7, ambientBoost: 0.35, sunIntensityBoost: 0.4, innerGlow: true, capstoneBeacon: true },
+  { midColorBoost: 0.7, ambientBoost: 0.35, sunIntensityBoost: 0.4, innerGlow: true, capstoneBeacon: true },
+  { midColorBoost: 0.7, ambientBoost: 0.35, sunIntensityBoost: 0.4, innerGlow: true, capstoneBeacon: true },
+  { midColorBoost: 0.7, ambientBoost: 0.35, sunIntensityBoost: 0.4, innerGlow: true, capstoneBeacon: true },
 ];
 
 const _tempGold = new THREE.Color();
@@ -37,6 +45,11 @@ export class SceneManager {
   private currentMilestoneLevel = 0;
   private innerGlowLight: THREE.PointLight | null = null;
   private capstoneLight: THREE.PointLight | null = null;
+  private limestoneCasing: THREE.Group | null = null;
+  private entrancePortal: THREE.Mesh | null = null;
+  private torchLights: THREE.PointLight[] = [];
+  private goldCapstone: THREE.Mesh | null = null;
+  private pyramidAura: THREE.Mesh | null = null;
 
   // Day/night cycle color pairs (allocated once)
   private readonly topDay = new THREE.Color(0x1a237e);
@@ -230,6 +243,133 @@ export class SceneManager {
       this.scene.remove(this.capstoneLight);
       this.capstoneLight.dispose();
       this.capstoneLight = null;
+    }
+
+    // Phase 2 visual enhancements
+    if (level >= 6) {
+      this.createLimestoneCasing();
+    } else {
+      this.removeLimestoneCasing();
+    }
+
+    if (level >= 7) {
+      this.createEntrancePortal();
+    } else {
+      this.removeEntrancePortal();
+    }
+
+    if (level >= 8) {
+      this.createGoldCapstone();
+    } else {
+      this.removeGoldCapstone();
+    }
+  }
+
+  private createLimestoneCasing(): void {
+    if (this.limestoneCasing) return;
+    const casingMat = new THREE.MeshStandardMaterial({
+      color: 0xf5f5dc,
+      roughness: 0.5,
+      metalness: 0.1,
+    });
+    const group = new THREE.Group();
+    // Thin slabs on each visible face of the pyramid base
+    const faceGeo = new THREE.BoxGeometry(21.2, 10.5, 0.15);
+    const positions = [
+      { x: 0, z: 10.6, ry: 0 },
+      { x: 0, z: -10.6, ry: Math.PI },
+      { x: -10.6, z: 0, ry: Math.PI / 2 },
+      { x: 10.6, z: 0, ry: -Math.PI / 2 },
+    ];
+    for (const pos of positions) {
+      const face = new THREE.Mesh(faceGeo, casingMat);
+      face.position.set(pos.x, 5.25, pos.z);
+      face.rotation.y = pos.ry;
+      face.receiveShadow = true;
+      group.add(face);
+    }
+    this.scene.add(group);
+    this.limestoneCasing = group;
+  }
+
+  private createEntrancePortal(): void {
+    if (this.entrancePortal) return;
+    const portalGeo = new THREE.PlaneGeometry(2, 3);
+    const portalMat = new THREE.MeshStandardMaterial({
+      color: 0xffd700,
+      emissive: 0xffd700,
+      emissiveIntensity: 0.6,
+      side: THREE.DoubleSide,
+    });
+    const portal = new THREE.Mesh(portalGeo, portalMat);
+    portal.position.set(0, 1.5, 10.7);
+    this.scene.add(portal);
+    this.entrancePortal = portal;
+
+    const torchPositions = [{ x: -1.5 }, { x: 1.5 }];
+    for (const tp of torchPositions) {
+      const torch = new THREE.PointLight(0xff8800, 1.5, 8, 2);
+      torch.position.set(tp.x, 2.5, 11);
+      this.scene.add(torch);
+      this.torchLights.push(torch);
+    }
+  }
+
+  private createGoldCapstone(): void {
+    if (this.goldCapstone) return;
+    const capGeo = new THREE.ConeGeometry(1.5, 1.5, 4);
+    const capMat = new THREE.MeshStandardMaterial({
+      color: 0xffd700,
+      roughness: 0.2,
+      metalness: 0.7,
+      emissive: 0xffd700,
+      emissiveIntensity: 0.3,
+    });
+    const cap = new THREE.Mesh(capGeo, capMat);
+    cap.position.set(0, 11.25, 0);
+    cap.rotation.y = Math.PI / 4;
+    this.scene.add(cap);
+    this.goldCapstone = cap;
+
+    const auraGeo = new THREE.SphereGeometry(14, 16, 16);
+    const auraMat = new THREE.MeshBasicMaterial({
+      color: 0xffd700,
+      transparent: true,
+      opacity: 0.06,
+      side: THREE.BackSide,
+    });
+    const aura = new THREE.Mesh(auraGeo, auraMat);
+    aura.position.set(0, 5, 0);
+    this.scene.add(aura);
+    this.pyramidAura = aura;
+  }
+
+  private removeLimestoneCasing(): void {
+    if (!this.limestoneCasing) return;
+    this.scene.remove(this.limestoneCasing);
+    this.limestoneCasing = null;
+  }
+
+  private removeEntrancePortal(): void {
+    if (this.entrancePortal) {
+      this.scene.remove(this.entrancePortal);
+      this.entrancePortal = null;
+    }
+    for (const light of this.torchLights) {
+      this.scene.remove(light);
+      light.dispose();
+    }
+    this.torchLights = [];
+  }
+
+  private removeGoldCapstone(): void {
+    if (this.goldCapstone) {
+      this.scene.remove(this.goldCapstone);
+      this.goldCapstone = null;
+    }
+    if (this.pyramidAura) {
+      this.scene.remove(this.pyramidAura);
+      this.pyramidAura = null;
     }
   }
 

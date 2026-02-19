@@ -68,13 +68,13 @@ export class BlockAudio {
     const now = ctx.currentTime;
 
     // Base frequencies rise with each tier
-    const baseFreqs = [523, 587, 659, 740, 831];
-    const thirdFreqs = [659, 740, 831, 932, 1047];
+    const baseFreqs = [523, 587, 659, 740, 831, 932, 1047, 1175, 1319, 1480, 1661, 1865, 2093, 2349];
+    const thirdFreqs = [659, 740, 831, 932, 1047, 1175, 1319, 1480, 1661, 1865, 2093, 2349, 2637, 2960];
     const idx = Math.min(tierIndex - 1, baseFreqs.length - 1);
     const freq1 = baseFreqs[Math.max(0, idx)];
     const freq2 = thirdFreqs[Math.max(0, idx)];
 
-    const isFinalTier = tierIndex >= 5;
+    const isFinalTier = tierIndex >= 8;
     const duration = isFinalTier ? 1.5 : 0.8;
     const volume = isFinalTier ? 0.18 : 0.12;
 
