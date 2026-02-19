@@ -241,7 +241,7 @@ export class SceneManager {
 
     // Oasis basin params for palm Y placement (must match createOasis)
     const oasisCx = 40, oasisCz = 35, oasisBasinR = 16;
-    const oasisWaterY = 3.0, oasisBasinDepth = 3.5;
+    const oasisBasinFloor = -0.3, oasisBasinRim = 0.8;
 
     for (const p of palmPositions) {
       const group = new THREE.Group();
@@ -279,7 +279,7 @@ export class SceneManager {
       const dist = Math.sqrt(dx * dx + dz * dz);
       if (dist < oasisBasinR) {
         const t = Math.min(dist / oasisBasinR, 1);
-        py = (oasisWaterY - 0.3) + t * t * oasisBasinDepth;
+        py = oasisBasinFloor + t * t * (oasisBasinRim - oasisBasinFloor);
       }
 
       group.position.set(p.x, py, p.z);
@@ -291,8 +291,9 @@ export class SceneManager {
     const cx = 40;
     const cz = 35;
     const basinRadius = 16;
-    const basinDepth = 3.5;
-    const waterY = 3.0; // Water surface height — well above terrain
+    const basinFloor = -0.3; // Bowl center — slightly below ground
+    const basinRim = 0.8;    // Bowl edge — slight raised lip
+    const waterY = 0.5;      // Water surface — sits inside the bowl
 
     // Bowl-shaped basin mesh: high-res circle with vertices shaped into a bowl
     // This overlays the coarse terrain and creates a visible depression
@@ -304,8 +305,7 @@ export class SceneManager {
       const z = basinPos.getZ(i);
       const dist = Math.sqrt(x * x + z * z);
       const t = Math.min(dist / basinRadius, 1); // 0 at center, 1 at edge
-      // Bowl: edges at ~1.2 (above terrain), center dips to waterY - 0.3
-      const y = (waterY - 0.3) + t * t * (basinDepth);
+      const y = basinFloor + t * t * (basinRim - basinFloor);
       basinPos.setY(i, y);
     }
     basinGeo.computeVertexNormals();
@@ -326,7 +326,7 @@ export class SceneManager {
     // Helper: get ground Y at a given radius in the basin
     const groundY = (r: number): number => {
       const t = Math.min(r / basinRadius, 1);
-      return (waterY - 0.3) + t * t * basinDepth;
+      return basinFloor + t * t * (basinRim - basinFloor);
     };
 
     // Reeds — thin cylinders clustered around the water edge

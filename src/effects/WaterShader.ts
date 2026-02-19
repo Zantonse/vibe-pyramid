@@ -96,7 +96,7 @@ export class WaterShader {
     this.mesh.rotation.x = -Math.PI / 2;
 
     // Position water at oasis location
-    this.mesh.position.set(40, 3.0, 35);
+    this.mesh.position.set(40, 0.5, 35);
 
     // Add to scene
     this.scene.add(this.mesh);
