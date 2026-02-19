@@ -158,24 +158,13 @@ export class SceneManager {
     const geo = new THREE.PlaneGeometry(500, 500, 64, 64);
     geo.rotateX(-Math.PI / 2);
 
-    // Subtle dune displacement with oasis depression
-    const oasisCx = 40, oasisCz = 35, oasisR = 10;
+    // Subtle dune displacement
     const positions = geo.getAttribute('position');
     for (let i = 0; i < positions.count; i++) {
       const x = positions.getX(i);
       const z = positions.getZ(i);
-      let y = Math.sin(x * 0.02) * Math.cos(z * 0.03) * 0.5
-            + Math.sin(x * 0.05 + z * 0.04) * 0.3;
-
-      // Depress terrain around oasis to create a natural basin
-      const dx = x - oasisCx;
-      const dz = z - oasisCz;
-      const dist = Math.sqrt(dx * dx + dz * dz);
-      if (dist < oasisR) {
-        const t = 1 - dist / oasisR; // 1 at center, 0 at edge
-        y -= t * t * 1.2; // Smooth parabolic depression, ~1.2 deep at center
-      }
-
+      const y = Math.sin(x * 0.02) * Math.cos(z * 0.03) * 0.5
+              + Math.sin(x * 0.05 + z * 0.04) * 0.3;
       positions.setY(i, y);
     }
     geo.computeVertexNormals();
@@ -246,8 +235,9 @@ export class SceneManager {
       { x: -30, z: -15, h: 6, s: 0.9 },
     ];
 
-    // Oasis basin params for palm Y placement
-    const oasisCx = 40, oasisCz = 35, oasisBasinR = 10, oasisBasinDepth = 1.2;
+    // Oasis basin params for palm Y placement (must match createOasis)
+    const oasisCx = 40, oasisCz = 35, oasisBasinR = 12;
+    const oasisWaterY = 0.6, oasisBasinDepth = 1.8;
 
     for (const p of palmPositions) {
       const group = new THREE.Group();
@@ -279,16 +269,16 @@ export class SceneManager {
         group.add(frond);
       }
 
-      // Lower palms near oasis into the basin
-      let groundY = 0;
+      // Place palms on the basin slope if near oasis
+      let py = 0;
       const dx = p.x - oasisCx, dz = p.z - oasisCz;
       const dist = Math.sqrt(dx * dx + dz * dz);
       if (dist < oasisBasinR) {
-        const t = 1 - dist / oasisBasinR;
-        groundY = -(t * t * oasisBasinDepth);
+        const t = Math.min(dist / oasisBasinR, 1);
+        py = (oasisWaterY - 0.3) + t * t * oasisBasinDepth;
       }
 
-      group.position.set(p.x, groundY, p.z);
+      group.position.set(p.x, py, p.z);
       this.scene.add(group);
     }
   }
@@ -296,47 +286,58 @@ export class SceneManager {
   private createOasis(): void {
     const cx = 40;
     const cz = 35;
-    const basinDepth = 1.2; // Must match terrain depression
-    const basinR = 10;
+    const basinRadius = 12;
+    const basinDepth = 1.8;
+    const waterY = 0.6; // Water surface height — above max terrain (~0.8 worst case)
 
-    // Helper: get basin Y offset at a given radius from center
-    const basinY = (r: number): number => {
-      if (r >= basinR) return 0;
-      const t = 1 - r / basinR;
-      return -(t * t * basinDepth);
-    };
-
-    // Water surface is handled by WaterShader in main.ts
-
-    // Sandy bank ring around the water (sized for radius-6 pool)
-    const bankGeo = new THREE.RingGeometry(5.5, 8.0, 24);
-    bankGeo.rotateX(-Math.PI / 2);
-    const bankMat = new THREE.MeshLambertMaterial({ color: 0xc4a060 });
-    const bank = new THREE.Mesh(bankGeo, bankMat);
-    bank.position.set(cx, basinY(6.5) + 0.03, cz);
-    this.scene.add(bank);
+    // Bowl-shaped basin mesh: high-res circle with vertices shaped into a bowl
+    // This overlays the coarse terrain and creates a visible depression
+    const basinGeo = new THREE.CircleGeometry(basinRadius, 32, 0, Math.PI * 2);
+    basinGeo.rotateX(-Math.PI / 2);
+    const basinPos = basinGeo.getAttribute('position');
+    for (let i = 0; i < basinPos.count; i++) {
+      const x = basinPos.getX(i);
+      const z = basinPos.getZ(i);
+      const dist = Math.sqrt(x * x + z * z);
+      const t = Math.min(dist / basinRadius, 1); // 0 at center, 1 at edge
+      // Bowl: edges at ~1.2 (above terrain), center dips to waterY - 0.3
+      const y = (waterY - 0.3) + t * t * (basinDepth);
+      basinPos.setY(i, y);
+    }
+    basinGeo.computeVertexNormals();
+    const basinMat = new THREE.MeshLambertMaterial({ color: 0xc4a060 });
+    const basin = new THREE.Mesh(basinGeo, basinMat);
+    basin.position.set(cx, 0, cz);
+    basin.receiveShadow = true;
+    this.scene.add(basin);
 
     // Darker wet sand ring at water's edge
-    const wetBankGeo = new THREE.RingGeometry(5.2, 6.2, 24);
+    const wetBankGeo = new THREE.RingGeometry(5.5, 7.0, 24);
     wetBankGeo.rotateX(-Math.PI / 2);
     const wetBankMat = new THREE.MeshLambertMaterial({ color: 0x8a7a50 });
     const wetBank = new THREE.Mesh(wetBankGeo, wetBankMat);
-    wetBank.position.set(cx, basinY(5.7) + 0.04, cz);
+    wetBank.position.set(cx, waterY + 0.02, cz);
     this.scene.add(wetBank);
+
+    // Helper: get ground Y at a given radius in the basin
+    const groundY = (r: number): number => {
+      const t = Math.min(r / basinRadius, 1);
+      return (waterY - 0.3) + t * t * basinDepth;
+    };
 
     // Reeds — thin cylinders clustered around the water edge
     const reedMat = new THREE.MeshLambertMaterial({ color: 0x4a7a2e });
     const darkReedMat = new THREE.MeshLambertMaterial({ color: 0x3a6a20 });
     for (let i = 0; i < 18; i++) {
       const angle = (i / 18) * Math.PI * 2 + Math.random() * 0.4;
-      const r = 5.0 + Math.random() * 2.0;
+      const r = 5.5 + Math.random() * 2.0;
       const height = 1.2 + Math.random() * 2.0;
       const reedGeo = new THREE.CylinderGeometry(0.03, 0.05, height, 4);
       const mat = Math.random() > 0.4 ? reedMat : darkReedMat;
       const reed = new THREE.Mesh(reedGeo, mat);
       reed.position.set(
         cx + Math.cos(angle) * r,
-        basinY(r) + height / 2,
+        groundY(r) + height / 2,
         cz + Math.sin(angle) * r
       );
       reed.rotation.z = (Math.random() - 0.5) * 0.25;
@@ -344,16 +345,16 @@ export class SceneManager {
       this.scene.add(reed);
     }
 
-    // Small grass tufts near the bank
+    // Small grass tufts on the basin slope
     const grassMat = new THREE.MeshLambertMaterial({ color: 0x5a8a32 });
     for (let i = 0; i < 10; i++) {
       const angle = Math.random() * Math.PI * 2;
-      const r = 6.8 + Math.random() * 2.0;
+      const r = 7.5 + Math.random() * 2.5;
       const turfGeo = new THREE.ConeGeometry(0.2 + Math.random() * 0.15, 0.6 + Math.random() * 0.4, 5);
       const turf = new THREE.Mesh(turfGeo, grassMat);
       turf.position.set(
         cx + Math.cos(angle) * r,
-        basinY(r) + 0.2,
+        groundY(r) + 0.2,
         cz + Math.sin(angle) * r
       );
       this.scene.add(turf);
@@ -363,13 +364,13 @@ export class SceneManager {
     const rockMat = new THREE.MeshLambertMaterial({ color: 0x7a7060 });
     for (let i = 0; i < 5; i++) {
       const angle = Math.random() * Math.PI * 2;
-      const r = 5.8 + Math.random() * 1.5;
+      const r = 6.0 + Math.random() * 1.5;
       const s = 0.15 + Math.random() * 0.25;
       const rockGeo = new THREE.DodecahedronGeometry(s, 0);
       const rock = new THREE.Mesh(rockGeo, rockMat);
       rock.position.set(
         cx + Math.cos(angle) * r,
-        basinY(r) + s * 0.5,
+        groundY(r) + s * 0.5,
         cz + Math.sin(angle) * r
       );
       rock.rotation.set(Math.random(), Math.random(), Math.random());
