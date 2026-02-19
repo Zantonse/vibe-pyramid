@@ -62,6 +62,7 @@ interface AnimatingBlock {
   meshInstanceIdx: number;
   eraIndex: number;
   geoType: BlockGeometry;
+  meshKey: string; // cached key to avoid per-frame string allocation
   target: THREE.Vector3;
   startY: number;
   progress: number;
@@ -76,10 +77,14 @@ interface AnimatingBlock {
 export class BuildManager {
   private pyramid: PyramidBuilder;
   private structures: Structure[];
-  // Key format: "${structureIndex}-${geoType}-${eraIndex}"
+  // Key format: "${structureIndex}-${geoType}-${eraIndex}" — lazily created
   private structureMeshes: Map<string, THREE.InstancedMesh> = new Map();
   private structureInstanceCounts: Map<string, number> = new Map();
   private structurePlacedCounts: Map<number, number> = new Map();
+  // Pre-computed slot capacities per (structureIndex, geoType)
+  private geoSlotCapacities: Map<string, number> = new Map();
+  // Shared material pool: one material per era (not per structure)
+  private eraMaterials: THREE.MeshStandardMaterial[] = [];
   private currentMilestoneIndex = 0;
   private scene: THREE.Scene;
   private pendingPlacements: { structureIndex: number; slotIndex: number }[] = [];
@@ -91,48 +96,51 @@ export class BuildManager {
     this.pyramid = new PyramidBuilder(scene);
     this.structures = getStructureRegistry();
 
+    // Create shared material pool (36 materials instead of ~2800)
+    for (let ei = 0; ei < ERA_VISUALS.length; ei++) {
+      const era = ERA_VISUALS[ei];
+      this.eraMaterials.push(new THREE.MeshStandardMaterial({
+        roughness: era.roughness,
+        metalness: era.metalness,
+        emissive: new THREE.Color().setHSL(era.hue, era.saturation, era.lightness * 0.3),
+        emissiveIntensity: era.emissiveIntensity,
+      }));
+    }
+
+    // Pre-compute slot capacities per (structure, geoType) for lazy mesh creation
     for (let si = 0; si < this.structures.length; si++) {
       const structure = this.structures[si];
-      // Find unique geometry types used by this structure
-      const geoTypes = new Set<BlockGeometry>();
-      for (const slot of structure.slots) {
-        geoTypes.add(slot.geometry || 'cube');
-      }
-
-      // Count slots per geometry type for InstancedMesh capacity
-      const geoSlotCounts = new Map<BlockGeometry, number>();
+      const counts = new Map<string, number>();
       for (const slot of structure.slots) {
         const gt = slot.geometry || 'cube';
-        geoSlotCounts.set(gt, (geoSlotCounts.get(gt) || 0) + 1);
+        counts.set(gt, (counts.get(gt) || 0) + 1);
       }
-
-      // Create meshes for each (geoType, era) pair
-      for (const geoType of geoTypes) {
-        const geo = getBlockGeometry(geoType);
-        const capacity = geoSlotCounts.get(geoType)!;
-
-        for (let ei = 0; ei < ERA_VISUALS.length; ei++) {
-          const era = ERA_VISUALS[ei];
-          const mat = new THREE.MeshStandardMaterial({
-            roughness: era.roughness,
-            metalness: era.metalness,
-            emissive: new THREE.Color().setHSL(era.hue, era.saturation, era.lightness * 0.3),
-            emissiveIntensity: era.emissiveIntensity,
-          });
-          const mesh = new THREE.InstancedMesh(geo, mat, capacity);
-          mesh.count = 0;
-          mesh.castShadow = true;
-          mesh.receiveShadow = true;
-          scene.add(mesh);
-
-          const key = `${si}-${geoType}-${ei}`;
-          this.structureMeshes.set(key, mesh);
-          this.structureInstanceCounts.set(key, 0);
-        }
+      for (const [gt, count] of counts) {
+        this.geoSlotCapacities.set(`${si}-${gt}`, count);
       }
-
       this.structurePlacedCounts.set(si, 0);
     }
+    // Meshes are NOT created here — they're created lazily on first block placement
+  }
+
+  /** Get or create an InstancedMesh for the given (structure, geoType, era) combo */
+  private getOrCreateMesh(structureIndex: number, geoType: BlockGeometry, eraIndex: number): THREE.InstancedMesh {
+    const key = `${structureIndex}-${geoType}-${eraIndex}`;
+    const existing = this.structureMeshes.get(key);
+    if (existing) return existing;
+
+    const geo = getBlockGeometry(geoType);
+    const mat = this.eraMaterials[Math.min(eraIndex, this.eraMaterials.length - 1)];
+    const capacity = this.geoSlotCapacities.get(`${structureIndex}-${geoType}`) || 1;
+    const mesh = new THREE.InstancedMesh(geo, mat, capacity);
+    mesh.count = 0;
+    mesh.castShadow = true;
+    mesh.receiveShadow = true;
+    this.scene.add(mesh);
+
+    this.structureMeshes.set(key, mesh);
+    this.structureInstanceCounts.set(key, 0);
+    return mesh;
   }
 
   get pyramidBuilder(): PyramidBuilder {
@@ -251,8 +259,8 @@ export class BuildManager {
 
     const geoType: BlockGeometry = slot.geometry || 'cube';
     const era = Math.min(eraIndex, ERA_VISUALS.length - 1);
+    const mesh = this.getOrCreateMesh(structureIndex, geoType, era);
     const key = `${structureIndex}-${geoType}-${era}`;
-    const mesh = this.structureMeshes.get(key)!;
     const instanceIdx = this.structureInstanceCounts.get(key)!;
 
     _tempMatrix.makeTranslation(slot.position.x, slot.position.y, slot.position.z);
@@ -339,8 +347,7 @@ export class BuildManager {
     // Animate structure blocks
     for (let i = this.animatingBlocks.length - 1; i >= 0; i--) {
       const anim = this.animatingBlocks[i];
-      const key = `${anim.structureIndex}-${anim.geoType}-${anim.eraIndex}`;
-      const mesh = this.structureMeshes.get(key)!;
+      const mesh = this.structureMeshes.get(anim.meshKey)!;
       anim.progress += delta * anim.speed;
 
       if (anim.progress >= 1) {
@@ -377,8 +384,8 @@ export class BuildManager {
 
     const geoType: BlockGeometry = slot.geometry || 'cube';
     const era = Math.min(this.currentMilestoneIndex, ERA_VISUALS.length - 1);
+    const mesh = this.getOrCreateMesh(structureIndex, geoType, era);
     const key = `${structureIndex}-${geoType}-${era}`;
-    const mesh = this.structureMeshes.get(key)!;
     const instanceIdx = this.structureInstanceCounts.get(key)!;
     const startY = slot.position.y + 15;
     const color = this.randomBlockColor(era);
@@ -394,6 +401,8 @@ export class BuildManager {
 
     this.structurePlacedCounts.set(structureIndex, (this.structurePlacedCounts.get(structureIndex) || 0) + 1);
 
+    // Cache the mesh key to avoid string allocation in update loop
+    const meshKey = key;
     this.animatingBlocks.push({
       structureIndex,
       meshInstanceIdx: instanceIdx,
@@ -403,6 +412,7 @@ export class BuildManager {
       startY,
       progress: 0,
       speed: 1.5,
+      meshKey,
     });
   }
 
