@@ -22,24 +22,23 @@ class Bird {
     this.group = new THREE.Group();
     this.nextPosition = new THREE.Vector3();
 
-    // Create body: elongated sphere
-    const bodyGeometry = new THREE.SphereGeometry(0.5, 8, 8);
-    const bodyScale = new THREE.Vector3(1, 0.6, 2);
-    bodyGeometry.scale(bodyScale.x, bodyScale.y, bodyScale.z);
-    const bodyMaterial = new THREE.MeshLambertMaterial({ color: 0x333333 });
+    // Create body: elongated sphere — warm brown like desert birds
+    const bodyGeometry = new THREE.SphereGeometry(0.3, 6, 6);
+    bodyGeometry.scale(1, 0.6, 2);
+    const bodyMaterial = new THREE.MeshLambertMaterial({ color: 0x6b4226 });
     this.body = new THREE.Mesh(bodyGeometry, bodyMaterial);
     this.group.add(this.body);
 
     // Create left wing: triangle
     const wingGeometry1 = new THREE.BufferGeometry();
     const wingVertices1 = new Float32Array([
-      0, 0, 0,      // origin
-      -1.5, 0.2, -0.2,  // tip
-      -1.5, -0.2, 0.2,  // bottom
+      0, 0, 0,
+      -1.0, 0.15, -0.15,
+      -1.0, -0.15, 0.15,
     ]);
     wingGeometry1.setAttribute('position', new THREE.BufferAttribute(wingVertices1, 3));
     wingGeometry1.computeVertexNormals();
-    const wingMaterial1 = new THREE.MeshLambertMaterial({ color: 0x222222 });
+    const wingMaterial1 = new THREE.MeshLambertMaterial({ color: 0x4a2e14 });
     this.leftWing = new THREE.Mesh(wingGeometry1, wingMaterial1);
     this.leftWing.position.set(-0.3, 0, 0);
     this.group.add(this.leftWing);
@@ -47,13 +46,13 @@ class Bird {
     // Create right wing: triangle
     const wingGeometry2 = new THREE.BufferGeometry();
     const wingVertices2 = new Float32Array([
-      0, 0, 0,      // origin
-      1.5, 0.2, -0.2,   // tip
-      1.5, -0.2, 0.2,   // bottom
+      0, 0, 0,
+      1.0, 0.15, -0.15,
+      1.0, -0.15, 0.15,
     ]);
     wingGeometry2.setAttribute('position', new THREE.BufferAttribute(wingVertices2, 3));
     wingGeometry2.computeVertexNormals();
-    const wingMaterial2 = new THREE.MeshLambertMaterial({ color: 0x222222 });
+    const wingMaterial2 = new THREE.MeshLambertMaterial({ color: 0x4a2e14 });
     this.rightWing = new THREE.Mesh(wingGeometry2, wingMaterial2);
     this.rightWing.position.set(0.3, 0, 0);
     this.group.add(this.rightWing);
