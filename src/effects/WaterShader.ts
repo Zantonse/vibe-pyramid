@@ -8,8 +8,8 @@ export class WaterShader {
   constructor(scene: THREE.Scene) {
     this.scene = scene;
 
-    // Water disc — radius 6 for a visible oasis pool
-    const geometry = new THREE.CircleGeometry(6, 32);
+    // Water disc — radius 10 for a proper oasis lake
+    const geometry = new THREE.CircleGeometry(10, 48);
 
     // Vertex shader
     const vertexShader = `

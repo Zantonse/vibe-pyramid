@@ -223,11 +223,15 @@ export class SceneManager {
     const frondDarkMat = new THREE.MeshLambertMaterial({ color: 0x1e4a12 });
 
     const palmPositions = [
-      // Cluster around oasis (40, 35)
-      { x: 38, z: 33, h: 6.5, s: 0.95 },
-      { x: 42, z: 37, h: 7, s: 1.0 },
-      { x: 37, z: 38, h: 5.5, s: 0.8 },
-      { x: 44, z: 34, h: 6, s: 0.85 },
+      // Ring around oasis lake (40, 35) — spread at ~11-13 units from center
+      { x: 30, z: 32, h: 7, s: 1.0 },
+      { x: 33, z: 25, h: 6.5, s: 0.95 },
+      { x: 42, z: 23, h: 6, s: 0.85 },
+      { x: 50, z: 30, h: 7.5, s: 1.05 },
+      { x: 52, z: 38, h: 6.5, s: 0.9 },
+      { x: 48, z: 45, h: 5.5, s: 0.8 },
+      { x: 38, z: 47, h: 7, s: 1.0 },
+      { x: 31, z: 42, h: 6, s: 0.85 },
       // Scattered elsewhere
       { x: -15, z: -22, h: 6.5, s: 0.85 },
       { x: -17, z: -25, h: 7.5, s: 1.1 },
@@ -236,8 +240,8 @@ export class SceneManager {
     ];
 
     // Oasis basin params for palm Y placement (must match createOasis)
-    const oasisCx = 40, oasisCz = 35, oasisBasinR = 12;
-    const oasisWaterY = 0.6, oasisBasinDepth = 1.8;
+    const oasisCx = 40, oasisCz = 35, oasisBasinR = 16;
+    const oasisWaterY = 0.6, oasisBasinDepth = 2.2;
 
     for (const p of palmPositions) {
       const group = new THREE.Group();
@@ -286,9 +290,9 @@ export class SceneManager {
   private createOasis(): void {
     const cx = 40;
     const cz = 35;
-    const basinRadius = 12;
-    const basinDepth = 1.8;
-    const waterY = 0.6; // Water surface height — above max terrain (~0.8 worst case)
+    const basinRadius = 16;
+    const basinDepth = 2.2;
+    const waterY = 0.6; // Water surface height — above max terrain
 
     // Bowl-shaped basin mesh: high-res circle with vertices shaped into a bowl
     // This overlays the coarse terrain and creates a visible depression
@@ -312,7 +316,7 @@ export class SceneManager {
     this.scene.add(basin);
 
     // Darker wet sand ring at water's edge
-    const wetBankGeo = new THREE.RingGeometry(5.5, 7.0, 24);
+    const wetBankGeo = new THREE.RingGeometry(9.5, 11.5, 32);
     wetBankGeo.rotateX(-Math.PI / 2);
     const wetBankMat = new THREE.MeshLambertMaterial({ color: 0x8a7a50 });
     const wetBank = new THREE.Mesh(wetBankGeo, wetBankMat);
@@ -328,9 +332,9 @@ export class SceneManager {
     // Reeds — thin cylinders clustered around the water edge
     const reedMat = new THREE.MeshLambertMaterial({ color: 0x4a7a2e });
     const darkReedMat = new THREE.MeshLambertMaterial({ color: 0x3a6a20 });
-    for (let i = 0; i < 18; i++) {
-      const angle = (i / 18) * Math.PI * 2 + Math.random() * 0.4;
-      const r = 5.5 + Math.random() * 2.0;
+    for (let i = 0; i < 28; i++) {
+      const angle = (i / 28) * Math.PI * 2 + Math.random() * 0.3;
+      const r = 9.5 + Math.random() * 2.5;
       const height = 1.2 + Math.random() * 2.0;
       const reedGeo = new THREE.CylinderGeometry(0.03, 0.05, height, 4);
       const mat = Math.random() > 0.4 ? reedMat : darkReedMat;
@@ -345,11 +349,11 @@ export class SceneManager {
       this.scene.add(reed);
     }
 
-    // Small grass tufts on the basin slope
+    // Grass tufts on the basin slope
     const grassMat = new THREE.MeshLambertMaterial({ color: 0x5a8a32 });
-    for (let i = 0; i < 10; i++) {
+    for (let i = 0; i < 18; i++) {
       const angle = Math.random() * Math.PI * 2;
-      const r = 7.5 + Math.random() * 2.5;
+      const r = 11.0 + Math.random() * 3.0;
       const turfGeo = new THREE.ConeGeometry(0.2 + Math.random() * 0.15, 0.6 + Math.random() * 0.4, 5);
       const turf = new THREE.Mesh(turfGeo, grassMat);
       turf.position.set(
@@ -360,12 +364,12 @@ export class SceneManager {
       this.scene.add(turf);
     }
 
-    // Small rocks at water edge
+    // Rocks at water edge
     const rockMat = new THREE.MeshLambertMaterial({ color: 0x7a7060 });
-    for (let i = 0; i < 5; i++) {
+    for (let i = 0; i < 8; i++) {
       const angle = Math.random() * Math.PI * 2;
-      const r = 6.0 + Math.random() * 1.5;
-      const s = 0.15 + Math.random() * 0.25;
+      const r = 9.8 + Math.random() * 2.0;
+      const s = 0.2 + Math.random() * 0.3;
       const rockGeo = new THREE.DodecahedronGeometry(s, 0);
       const rock = new THREE.Mesh(rockGeo, rockMat);
       rock.position.set(
