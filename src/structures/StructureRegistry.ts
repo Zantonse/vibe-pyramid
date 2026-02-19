@@ -1386,6 +1386,433 @@ function generateCanopicShrineSlots(offset: THREE.Vector3): BlockSlot[] {
   return slots;
 }
 
+function generateIrrigationCanalSlots(offset: THREE.Vector3): BlockSlot[] {
+  const slots: BlockSlot[] = [];
+  // Long narrow channel: cube walls (2 high, 1 wide) on both sides running 16 long
+  // Slab floor between walls (1 wide, 16 long)
+  // Slab water surface floating slightly above floor
+  // Small sluice gate (2x2x1) at one end
+
+  const canalLength = 16;
+  const canalWidth = 1;
+
+  // Floor: slab running 16 long down the center
+  for (let z = 0; z < canalLength; z++) {
+    slots.push({
+      position: new THREE.Vector3(
+        offset.x,
+        BLOCK_SIZE * 0.125,
+        offset.z + z * BLOCK_UNIT
+      ),
+      placed: false,
+      geometry: 'slab',
+    });
+  }
+
+  // Water surface: slab floating above floor
+  for (let z = 0; z < canalLength; z++) {
+    slots.push({
+      position: new THREE.Vector3(
+        offset.x,
+        BLOCK_UNIT + BLOCK_SIZE * 0.125,
+        offset.z + z * BLOCK_UNIT
+      ),
+      placed: false,
+      geometry: 'slab',
+    });
+  }
+
+  // Left wall (x = -1 block): 2 high, 16 long
+  for (let y = 0; y < 2; y++) {
+    for (let z = 0; z < canalLength; z++) {
+      slots.push({
+        position: new THREE.Vector3(
+          offset.x - BLOCK_UNIT,
+          y * BLOCK_UNIT + BLOCK_SIZE / 2,
+          offset.z + z * BLOCK_UNIT
+        ),
+        placed: false,
+      });
+    }
+  }
+
+  // Right wall (x = +1 block): 2 high, 16 long
+  for (let y = 0; y < 2; y++) {
+    for (let z = 0; z < canalLength; z++) {
+      slots.push({
+        position: new THREE.Vector3(
+          offset.x + BLOCK_UNIT,
+          y * BLOCK_UNIT + BLOCK_SIZE / 2,
+          offset.z + z * BLOCK_UNIT
+        ),
+        placed: false,
+      });
+    }
+  }
+
+  // Sluice gate at one end (2x2x1 block): positioned at z = 0
+  for (let gx = 0; gx < 2; gx++) {
+    for (let gz = 0; gz < 1; gz++) {
+      slots.push({
+        position: new THREE.Vector3(
+          offset.x - BLOCK_UNIT / 2 + gx * BLOCK_UNIT,
+          BLOCK_SIZE / 2,
+          offset.z - BLOCK_UNIT + gz * BLOCK_UNIT + BLOCK_UNIT / 2
+        ),
+        placed: false,
+      });
+    }
+  }
+
+  return slots;
+}
+
+function generateCliffTempleSlots(offset: THREE.Vector3): BlockSlot[] {
+  const slots: BlockSlot[] = [];
+  // Tall flat facade: 12 wide x 8 tall cube wall (front face only, 1 block deep)
+  // 4 standing figures: each is 1x1x5 cube tall, spaced evenly across facade
+  // Wedge cornice: 12 wedges across the very top
+
+  const facadeW = 12;
+  const facadeH = 8;
+
+  const halfW = (facadeW * BLOCK_UNIT) / 2;
+
+  // Main facade wall: 12 wide x 8 tall (front face)
+  for (let y = 0; y < facadeH; y++) {
+    for (let x = 0; x < facadeW; x++) {
+      slots.push({
+        position: new THREE.Vector3(
+          offset.x - halfW + x * BLOCK_UNIT + BLOCK_UNIT / 2,
+          y * BLOCK_UNIT + BLOCK_SIZE / 2,
+          offset.z
+        ),
+        placed: false,
+      });
+    }
+  }
+
+  // 4 standing figures: 1x1x5 columns, evenly spaced
+  const figureSpacing = (facadeW * BLOCK_UNIT) / 5; // 5 sections, 4 figures
+  for (let f = 1; f <= 4; f++) {
+    const fx = offset.x - halfW + f * figureSpacing;
+    for (let y = facadeH; y < facadeH + 5; y++) {
+      slots.push({
+        position: new THREE.Vector3(
+          fx,
+          y * BLOCK_UNIT + BLOCK_SIZE / 2,
+          offset.z
+        ),
+        placed: false,
+      });
+    }
+  }
+
+  // Wedge cornice across the top (12 wedges)
+  for (let x = 0; x < facadeW; x++) {
+    slots.push({
+      position: new THREE.Vector3(
+        offset.x - halfW + x * BLOCK_UNIT + BLOCK_UNIT / 2,
+        (facadeH + 5) * BLOCK_UNIT + BLOCK_SIZE / 2,
+        offset.z
+      ),
+      placed: false,
+      geometry: 'wedge',
+    });
+  }
+
+  return slots;
+}
+
+function generateMarketplaceSlots(offset: THREE.Vector3): BlockSlot[] {
+  const slots: BlockSlot[] = [];
+  // 4 market stalls in 2x2 grid (spaced 4 blocks apart)
+  // Each stall: 3x2 cube base (1 high), 4 cylinder posts (2 tall), 3x2 slab roof
+
+  const stallSpacing = 4 * BLOCK_UNIT;
+  const stallW = 3;
+  const stallD = 2;
+  const postH = 2;
+
+  const stalls = [
+    { gx: 0, gz: 0 },
+    { gx: 1, gz: 0 },
+    { gx: 0, gz: 1 },
+    { gx: 1, gz: 1 },
+  ];
+
+  for (const stall of stalls) {
+    const stx = offset.x - stallSpacing / 2 + stall.gx * stallSpacing;
+    const stz = offset.z - stallSpacing / 2 + stall.gz * stallSpacing;
+    const halfW = (stallW * BLOCK_UNIT) / 2;
+    const halfD = (stallD * BLOCK_UNIT) / 2;
+
+    // Base platform: 3x2 cubes (1 high)
+    for (let x = 0; x < stallW; x++) {
+      for (let z = 0; z < stallD; z++) {
+        slots.push({
+          position: new THREE.Vector3(
+            stx - halfW + x * BLOCK_UNIT + BLOCK_UNIT / 2,
+            BLOCK_SIZE / 2,
+            stz - halfD + z * BLOCK_UNIT + BLOCK_UNIT / 2
+          ),
+          placed: false,
+        });
+      }
+    }
+
+    // 4 cylinder corner posts (2 tall each)
+    const corners = [
+      { x: 0, z: 0 },
+      { x: stallW - 1, z: 0 },
+      { x: 0, z: stallD - 1 },
+      { x: stallW - 1, z: stallD - 1 },
+    ];
+
+    for (const corner of corners) {
+      for (let y = 1; y <= postH; y++) {
+        slots.push({
+          position: new THREE.Vector3(
+            stx - halfW + corner.x * BLOCK_UNIT + BLOCK_UNIT / 2,
+            y * BLOCK_UNIT + BLOCK_SIZE / 2,
+            stz - halfD + corner.z * BLOCK_UNIT + BLOCK_UNIT / 2
+          ),
+          placed: false,
+          geometry: 'cylinder',
+        });
+      }
+    }
+
+    // Slab roof: 3x2 slabs on top
+    for (let x = 0; x < stallW; x++) {
+      for (let z = 0; z < stallD; z++) {
+        slots.push({
+          position: new THREE.Vector3(
+            stx - halfW + x * BLOCK_UNIT + BLOCK_UNIT / 2,
+            (postH + 1) * BLOCK_UNIT + BLOCK_SIZE * 0.125,
+            stz - halfD + z * BLOCK_UNIT + BLOCK_UNIT / 2
+          ),
+          placed: false,
+          geometry: 'slab',
+        });
+      }
+    }
+  }
+
+  return slots;
+}
+
+function generateSarcophagusChamberSlots(offset: THREE.Vector3): BlockSlot[] {
+  const slots: BlockSlot[] = [];
+  // Enclosed chamber: 6x4 room (3 blocks tall, 1 block thick walls on all 4 sides)
+  // Slab ceiling on top
+  // Cube sarcophagus in center (3x1x1, 1 high)
+  // Entrance corridor: 1 wide x 3 long extending from front (walls on both sides, 2 tall)
+
+  const roomW = 6;
+  const roomD = 4;
+  const roomH = 3;
+  const hallW = 1;
+  const hallD = 3;
+  const hallH = 2;
+
+  const halfW = (roomW * BLOCK_UNIT) / 2;
+  const halfD = (roomD * BLOCK_UNIT) / 2;
+
+  // Main chamber walls: 6x4, 3 high
+  for (let y = 0; y < roomH; y++) {
+    for (let x = 0; x < roomW; x++) {
+      // Front and back walls
+      for (const z of [0, roomD - 1]) {
+        slots.push({
+          position: new THREE.Vector3(
+            offset.x - halfW + x * BLOCK_UNIT + BLOCK_UNIT / 2,
+            y * BLOCK_UNIT + BLOCK_SIZE / 2,
+            offset.z - halfD + z * BLOCK_UNIT + BLOCK_UNIT / 2
+          ),
+          placed: false,
+        });
+      }
+    }
+    // Side walls
+    for (let z = 1; z < roomD - 1; z++) {
+      for (const x of [0, roomW - 1]) {
+        slots.push({
+          position: new THREE.Vector3(
+            offset.x - halfW + x * BLOCK_UNIT + BLOCK_UNIT / 2,
+            y * BLOCK_UNIT + BLOCK_SIZE / 2,
+            offset.z - halfD + z * BLOCK_UNIT + BLOCK_UNIT / 2
+          ),
+          placed: false,
+        });
+      }
+    }
+  }
+
+  // Slab ceiling on top
+  for (let x = 0; x < roomW; x++) {
+    for (let z = 0; z < roomD; z++) {
+      slots.push({
+        position: new THREE.Vector3(
+          offset.x - halfW + x * BLOCK_UNIT + BLOCK_UNIT / 2,
+          roomH * BLOCK_UNIT + BLOCK_SIZE * 0.125,
+          offset.z - halfD + z * BLOCK_UNIT + BLOCK_UNIT / 2
+        ),
+        placed: false,
+        geometry: 'slab',
+      });
+    }
+  }
+
+  // Sarcophagus in center: 3x1x1 block
+  for (let x = 0; x < 3; x++) {
+    slots.push({
+      position: new THREE.Vector3(
+        offset.x - BLOCK_UNIT + x * BLOCK_UNIT,
+        BLOCK_SIZE / 2 + roomH * BLOCK_UNIT / 2,
+        offset.z
+      ),
+      placed: false,
+    });
+  }
+
+  // Entrance corridor: 1 wide x 3 long, extending from front (z=-3)
+  // Walls on both sides (x = -1 and x = +1), 2 tall
+  const corridorHalfW = BLOCK_UNIT / 2;
+  for (let cz = 0; cz < hallD; cz++) {
+    // Floor of corridor
+    slots.push({
+      position: new THREE.Vector3(
+        offset.x,
+        BLOCK_SIZE / 2,
+        offset.z - halfD - cz * BLOCK_UNIT - BLOCK_UNIT / 2
+      ),
+      placed: false,
+    });
+
+    // Left wall (x = -1)
+    for (let y = 0; y < hallH; y++) {
+      slots.push({
+        position: new THREE.Vector3(
+          offset.x - BLOCK_UNIT,
+          y * BLOCK_UNIT + BLOCK_SIZE / 2,
+          offset.z - halfD - cz * BLOCK_UNIT - BLOCK_UNIT / 2
+        ),
+        placed: false,
+      });
+    }
+
+    // Right wall (x = +1)
+    for (let y = 0; y < hallH; y++) {
+      slots.push({
+        position: new THREE.Vector3(
+          offset.x + BLOCK_UNIT,
+          y * BLOCK_UNIT + BLOCK_SIZE / 2,
+          offset.z - halfD - cz * BLOCK_UNIT - BLOCK_UNIT / 2
+        ),
+        placed: false,
+      });
+    }
+  }
+
+  return slots;
+}
+
+function generateLighthouseSlots(offset: THREE.Vector3): BlockSlot[] {
+  const slots: BlockSlot[] = [];
+  // Square cube base: 4x4, 2 high
+  // Cylinder tower: 2x2 arrangement (4 cylinders per layer) for 4 layers, then tapers to 1 cylinder for 6 layers
+  // Half-block cap on very top
+  // Slab observation platform (3x3 slabs) at transition point
+
+  const baseSize = 4;
+  const baseH = 2;
+
+  const halfBase = (baseSize * BLOCK_UNIT) / 2;
+
+  // Base: 4x4, 2 high
+  for (let y = 0; y < baseH; y++) {
+    for (let x = 0; x < baseSize; x++) {
+      for (let z = 0; z < baseSize; z++) {
+        slots.push({
+          position: new THREE.Vector3(
+            offset.x - halfBase + x * BLOCK_UNIT + BLOCK_UNIT / 2,
+            y * BLOCK_UNIT + BLOCK_SIZE / 2,
+            offset.z - halfBase + z * BLOCK_UNIT + BLOCK_UNIT / 2
+          ),
+          placed: false,
+        });
+      }
+    }
+  }
+
+  // Cylinder tower: 2x2 arrangement (4 cylinders per layer) for 4 layers
+  const cylinderPositions = [
+    { x: 0.5, z: 0.5 },
+    { x: 0.5, z: 1.5 },
+    { x: 1.5, z: 0.5 },
+    { x: 1.5, z: 1.5 },
+  ];
+
+  for (let y = baseH; y < baseH + 4; y++) {
+    for (const pos of cylinderPositions) {
+      slots.push({
+        position: new THREE.Vector3(
+          offset.x - BLOCK_UNIT + pos.x * BLOCK_UNIT,
+          y * BLOCK_UNIT + BLOCK_SIZE / 2,
+          offset.z - BLOCK_UNIT + pos.z * BLOCK_UNIT
+        ),
+        placed: false,
+        geometry: 'cylinder',
+      });
+    }
+  }
+
+  // Slab observation platform (3x3 slabs) at transition point
+  const platformSize = 3;
+  const platformHalf = (platformSize * BLOCK_UNIT) / 2;
+  const platformY = (baseH + 4) * BLOCK_UNIT + BLOCK_SIZE * 0.125;
+  for (let x = 0; x < platformSize; x++) {
+    for (let z = 0; z < platformSize; z++) {
+      slots.push({
+        position: new THREE.Vector3(
+          offset.x - platformHalf + x * BLOCK_UNIT + BLOCK_UNIT / 2,
+          platformY,
+          offset.z - platformHalf + z * BLOCK_UNIT + BLOCK_UNIT / 2
+        ),
+        placed: false,
+        geometry: 'slab',
+      });
+    }
+  }
+
+  // Single cylinder for 6 more layers (above the platform)
+  for (let y = baseH + 4; y < baseH + 10; y++) {
+    slots.push({
+      position: new THREE.Vector3(
+        offset.x,
+        y * BLOCK_UNIT + BLOCK_SIZE / 2,
+        offset.z
+      ),
+      placed: false,
+      geometry: 'cylinder',
+    });
+  }
+
+  // Half-block cap on very top
+  slots.push({
+    position: new THREE.Vector3(
+      offset.x,
+      (baseH + 10) * BLOCK_UNIT + BLOCK_SIZE * 0.25,
+      offset.z
+    ),
+    placed: false,
+    geometry: 'half',
+  });
+
+  return slots;
+}
+
 /** Ordered registry of all buildable structures after the main pyramid */
 export function getStructureRegistry(): Structure[] {
   return [
@@ -1535,6 +1962,41 @@ export function getStructureRegistry(): Structure[] {
       icon: '\u{1F3FA}',
       worldOffset: new THREE.Vector3(45, 0, -45),
       slots: generateCanopicShrineSlots(new THREE.Vector3(45, 0, -45)),
+    },
+    {
+      id: 'irrigation-canal',
+      name: 'Irrigation Canal',
+      icon: '\u{1F6BF}',
+      worldOffset: new THREE.Vector3(-30, 0, 50),
+      slots: generateIrrigationCanalSlots(new THREE.Vector3(-30, 0, 50)),
+    },
+    {
+      id: 'cliff-temple',
+      name: 'Cliff Temple',
+      icon: '\u{1F3D4}',
+      worldOffset: new THREE.Vector3(60, 0, -40),
+      slots: generateCliffTempleSlots(new THREE.Vector3(60, 0, -40)),
+    },
+    {
+      id: 'marketplace',
+      name: 'Marketplace',
+      icon: '\u{1F3EA}',
+      worldOffset: new THREE.Vector3(-60, 0, 40),
+      slots: generateMarketplaceSlots(new THREE.Vector3(-60, 0, 40)),
+    },
+    {
+      id: 'sarcophagus-chamber',
+      name: 'Sarcophagus Chamber',
+      icon: '\u{26B0}',
+      worldOffset: new THREE.Vector3(40, 0, 50),
+      slots: generateSarcophagusChamberSlots(new THREE.Vector3(40, 0, 50)),
+    },
+    {
+      id: 'lighthouse',
+      name: 'Lighthouse of Pharos',
+      icon: '\u{1F5FC}',
+      worldOffset: new THREE.Vector3(-45, 0, 55),
+      slots: generateLighthouseSlots(new THREE.Vector3(-45, 0, 55)),
     },
   ];
 }
