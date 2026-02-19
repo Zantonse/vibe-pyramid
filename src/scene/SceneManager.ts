@@ -43,6 +43,10 @@ export class SceneManager {
   private nudgeProgress = 0;
   private baseTarget = new THREE.Vector3(0, 5, 0);
   private currentMilestoneLevel = 0;
+
+  get currentDayTime(): number {
+    return this.dayTime;
+  }
   private innerGlowLight: THREE.PointLight | null = null;
   private capstoneLight: THREE.PointLight | null = null;
   private limestoneCasing: THREE.Group | null = null;
