@@ -4,9 +4,12 @@ const BLOCK_SIZE = 1.0;
 const BLOCK_GAP = 0.05;
 const BLOCK_UNIT = BLOCK_SIZE + BLOCK_GAP;
 
+export type BlockGeometry = 'cube' | 'cylinder' | 'wedge' | 'half' | 'capital' | 'slab';
+
 export interface BlockSlot {
   position: THREE.Vector3;
   placed: boolean;
+  geometry?: BlockGeometry;
 }
 
 export interface Structure {
@@ -439,8 +442,8 @@ export function getStructureRegistry(): Structure[] {
       id: 'small-pyramid',
       name: 'Queen\'s Pyramid',
       icon: '\u{1F53A}',
-      worldOffset: new THREE.Vector3(-20, 0, 8),
-      slots: generateSmallPyramidSlots(new THREE.Vector3(-20, 0, 8)),
+      worldOffset: new THREE.Vector3(-20, 0, -8),
+      slots: generateSmallPyramidSlots(new THREE.Vector3(-20, 0, -8)),
     },
     {
       id: 'boat',
