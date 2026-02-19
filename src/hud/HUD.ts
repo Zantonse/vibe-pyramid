@@ -1,4 +1,5 @@
 import { MILESTONES } from '../../shared/types.js';
+import type { BuildManager } from '../structures/BuildManager.js';
 
 interface FloatingTextElement {
   element: HTMLElement;
@@ -12,7 +13,6 @@ export class HUD {
   private floatingTexts: FloatingTextElement[] = [];
   private totalXp = 0;
   private blocksPlaced = 0;
-  private totalSlots = 0;
   private currentMilestoneIndex = 0;
   private onLevelUpCallback: ((milestoneName: string, milestoneIndex: number) => void) | null = null;
 
@@ -137,10 +137,9 @@ export class HUD {
     }
   }
 
-  updateXP(totalXp: number, blocksPlaced: number, totalSlots: number): void {
+  updateXP(totalXp: number, blocksPlaced: number, buildManager: BuildManager): void {
     this.totalXp = totalXp;
     this.blocksPlaced = blocksPlaced;
-    this.totalSlots = totalSlots;
 
     const newIndex = this.getMilestoneIndex(totalXp);
     const milestone = MILESTONES[newIndex];
@@ -153,8 +152,10 @@ export class HUD {
       xpText = `XP: ${totalXp.toLocaleString()} (MAX)`;
     }
 
-    const displayedBlocks = Math.min(blocksPlaced, totalSlots);
-    this.statsBar.textContent = `${milestone.icon} ${milestone.name}  |  Blocks: ${displayedBlocks.toLocaleString()} / ${totalSlots.toLocaleString()}  |  ${xpText}`;
+    const progress_info = buildManager.activeStructureProgress;
+    const structureName = buildManager.activeStructureName;
+    const structureIcon = buildManager.activeStructureIcon;
+    this.statsBar.textContent = `${milestone.icon} ${milestone.name}  |  ${structureIcon} ${structureName}: ${progress_info.placed.toLocaleString()} / ${progress_info.total.toLocaleString()}  |  ${xpText}`;
 
     let progress = 0;
     if (nextMilestone) {

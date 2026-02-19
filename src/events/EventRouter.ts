@@ -1,5 +1,5 @@
 import { CharacterFactory } from '../characters/CharacterFactory.js';
-import { PyramidBuilder } from '../pyramid/PyramidBuilder.js';
+import { BuildManager } from '../structures/BuildManager.js';
 import { HUD } from '../hud/HUD.js';
 import { Sidebar } from '../ui/Sidebar.js';
 import { SceneManager } from '../scene/SceneManager.js';
@@ -9,15 +9,15 @@ import { SandParticles } from '../effects/SandParticles.js';
 
 export class EventRouter {
   private characters: CharacterFactory;
-  private pyramid: PyramidBuilder;
+  private buildManager: BuildManager;
   private hud: HUD;
   private sidebar: Sidebar;
   private sceneManager: SceneManager;
   private sand: SandParticles;
 
-  constructor(characters: CharacterFactory, pyramid: PyramidBuilder, hud: HUD, sidebar: Sidebar, sceneManager: SceneManager, sand: SandParticles) {
+  constructor(characters: CharacterFactory, buildManager: BuildManager, hud: HUD, sidebar: Sidebar, sceneManager: SceneManager, sand: SandParticles) {
     this.characters = characters;
-    this.pyramid = pyramid;
+    this.buildManager = buildManager;
     this.hud = hud;
     this.sidebar = sidebar;
     this.sceneManager = sceneManager;
@@ -66,10 +66,10 @@ export class EventRouter {
     }
 
     // Queue blocks on the pyramid with current era
-    this.pyramid.queueBlocks(blocksPlaced, currentMilestoneIndex);
+    this.buildManager.queueBlocks(blocksPlaced, currentMilestoneIndex);
 
     // Update HUD
-    this.hud.updateXP(totalXp, blocksPlaced, this.pyramid.totalSlots);
+    this.hud.updateXP(totalXp, blocksPlaced, this.buildManager);
 
     // Update atmosphere and sand for current milestone
     this.sceneManager.setMilestoneLevel(currentMilestoneIndex);
@@ -93,8 +93,8 @@ export class EventRouter {
   }
 
   private handleStateSnapshot(state: PyramidState): void {
-    this.pyramid.restoreBlocks(state.blocks_placed, state.milestone_block_ranges || []);
-    this.hud.updateXP(state.total_xp, state.blocks_placed, this.pyramid.totalSlots);
+    this.buildManager.restoreBlocks(state.blocks_placed, state.milestone_block_ranges || []);
+    this.hud.updateXP(state.total_xp, state.blocks_placed, this.buildManager);
 
     // Determine current milestone from XP
     let currentMilestone = 0;
