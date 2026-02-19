@@ -147,15 +147,18 @@ export class HUD {
 
     let xpText: string;
     if (nextMilestone) {
-      xpText = `XP: ${totalXp.toLocaleString()} / ${nextMilestone.xpThreshold.toLocaleString()}`;
+      xpText = `XP: ${totalXp.toLocaleString()} / ${nextMilestone.xpThreshold.toLocaleString()} → ${nextMilestone.icon} ${nextMilestone.name}`;
     } else {
       xpText = `XP: ${totalXp.toLocaleString()} (MAX)`;
     }
 
-    const progress_info = buildManager.activeStructureProgress;
+    const progressInfo = buildManager.activeStructureProgress;
     const structureName = buildManager.activeStructureName;
     const structureIcon = buildManager.activeStructureIcon;
-    this.statsBar.textContent = `${milestone.icon} ${milestone.name}  |  ${structureIcon} ${structureName}: ${progress_info.placed.toLocaleString()} / ${progress_info.total.toLocaleString()}  |  ${xpText}`;
+    const structureText = progressInfo.placed >= progressInfo.total
+      ? `${structureIcon} ${structureName} \u2713`
+      : `${structureIcon} ${structureName}: ${progressInfo.placed.toLocaleString()} / ${progressInfo.total.toLocaleString()}`;
+    this.statsBar.textContent = `${milestone.icon} ${milestone.name}  |  ${structureText}  |  ${xpText}`;
 
     let progress = 0;
     if (nextMilestone) {
