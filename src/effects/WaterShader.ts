@@ -67,7 +67,7 @@ export class WaterShader {
         vec3 finalColor = waterColor + vec3(shimmer);
 
         // Apply edge fade as alpha and adjust for transparency
-        float alpha = edgeFade * 0.7;
+        float alpha = edgeFade * 0.85;
 
         gl_FragColor = vec4(finalColor, alpha);
       }
@@ -78,8 +78,8 @@ export class WaterShader {
       uniforms: {
         uTime: { value: 0 },
         uDayTime: { value: 0 },
-        uBaseColor: { value: new THREE.Color(0x1a6b8a) },
-        uNightColor: { value: new THREE.Color(0x0a3040) },
+        uBaseColor: { value: new THREE.Color(0x2196f3) },
+        uNightColor: { value: new THREE.Color(0x0d47a1) },
       },
       vertexShader,
       fragmentShader,
@@ -96,7 +96,7 @@ export class WaterShader {
     this.mesh.rotation.x = -Math.PI / 2;
 
     // Position water at oasis location
-    this.mesh.position.set(40, 1.5, 35);
+    this.mesh.position.set(40, 3.0, 35);
 
     // Add to scene
     this.scene.add(this.mesh);

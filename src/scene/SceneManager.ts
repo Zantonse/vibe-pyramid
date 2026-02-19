@@ -241,7 +241,7 @@ export class SceneManager {
 
     // Oasis basin params for palm Y placement (must match createOasis)
     const oasisCx = 40, oasisCz = 35, oasisBasinR = 16;
-    const oasisWaterY = 1.5, oasisBasinDepth = 2.2;
+    const oasisWaterY = 3.0, oasisBasinDepth = 3.5;
 
     for (const p of palmPositions) {
       const group = new THREE.Group();
@@ -291,8 +291,8 @@ export class SceneManager {
     const cx = 40;
     const cz = 35;
     const basinRadius = 16;
-    const basinDepth = 2.2;
-    const waterY = 1.5; // Water surface height — well above terrain
+    const basinDepth = 3.5;
+    const waterY = 3.0; // Water surface height — well above terrain
 
     // Bowl-shaped basin mesh: high-res circle with vertices shaped into a bowl
     // This overlays the coarse terrain and creates a visible depression
