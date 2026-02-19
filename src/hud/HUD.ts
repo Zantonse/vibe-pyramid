@@ -153,7 +153,8 @@ export class HUD {
       xpText = `XP: ${totalXp.toLocaleString()} (MAX)`;
     }
 
-    this.statsBar.textContent = `${milestone.icon} ${milestone.name}  |  Blocks: ${blocksPlaced.toLocaleString()} / ${totalSlots.toLocaleString()}  |  ${xpText}`;
+    const displayedBlocks = Math.min(blocksPlaced, totalSlots);
+    this.statsBar.textContent = `${milestone.icon} ${milestone.name}  |  Blocks: ${displayedBlocks.toLocaleString()} / ${totalSlots.toLocaleString()}  |  ${xpText}`;
 
     let progress = 0;
     if (nextMilestone) {
