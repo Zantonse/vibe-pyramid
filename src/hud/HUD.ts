@@ -253,20 +253,19 @@ export class HUD {
     console.log(`Session ${name} (${sessionId.slice(0, 8)}): ${status}`);
   }
 
-  update(delta: number): void {
+  update(_delta: number): void {
     const now = performance.now();
     const maxAge = 2500;
 
-    for (let i = this.floatingTexts.length - 1; i >= 0; i--) {
+    let writeIdx = 0;
+    for (let i = 0; i < this.floatingTexts.length; i++) {
       const ft = this.floatingTexts[i];
-      const age = now - ft.createdAt;
-
-      if (age >= maxAge) {
-        if (ft.element.parentNode) {
-          ft.element.parentNode.removeChild(ft.element);
-        }
-        this.floatingTexts.splice(i, 1);
+      if (now - ft.createdAt >= maxAge) {
+        ft.element.remove();
+      } else {
+        this.floatingTexts[writeIdx++] = ft;
       }
     }
+    this.floatingTexts.length = writeIdx;
   }
 }

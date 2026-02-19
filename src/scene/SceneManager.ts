@@ -543,6 +543,7 @@ export class SceneManager {
 
   private createDistantDunes(): void {
     const duneMat = new THREE.MeshStandardMaterial({ color: 0xc9a06a, roughness: 0.9, metalness: 0.0 });
+    const duneGeo = new THREE.SphereGeometry(1, 12, 6, 0, Math.PI * 2, 0, Math.PI / 2);
 
     const dunes = [
       { x: -80, z: -60, sx: 40, sy: 6, sz: 15 },
@@ -553,15 +554,24 @@ export class SceneManager {
       { x: -100, z: 20, sx: 30, sy: 5, sz: 12 },
     ];
 
-    for (const d of dunes) {
-      const duneGeo = new THREE.SphereGeometry(1, 12, 6, 0, Math.PI * 2, 0, Math.PI / 2);
-      duneGeo.scale(d.sx, d.sy, d.sz);
-      const dune = new THREE.Mesh(duneGeo, duneMat);
-      dune.position.set(d.x, -0.5, d.z);
-      dune.rotation.y = Math.random() * Math.PI;
-      dune.receiveShadow = true;
-      this.scene.add(dune);
+    // Single InstancedMesh with per-instance scale encoded in transform matrix
+    const duneMesh = new THREE.InstancedMesh(duneGeo, duneMat, dunes.length);
+    duneMesh.receiveShadow = true;
+    const matrix = new THREE.Matrix4();
+    const rotation = new THREE.Matrix4();
+    const scale = new THREE.Matrix4();
+    const translation = new THREE.Matrix4();
+
+    for (let i = 0; i < dunes.length; i++) {
+      const d = dunes[i];
+      translation.makeTranslation(d.x, -0.5, d.z);
+      rotation.makeRotationY(Math.random() * Math.PI);
+      scale.makeScale(d.sx, d.sy, d.sz);
+      matrix.copy(translation).multiply(rotation).multiply(scale);
+      duneMesh.setMatrixAt(i, matrix);
     }
+    duneMesh.instanceMatrix.needsUpdate = true;
+    this.scene.add(duneMesh);
   }
 
   private createDesertScrub(): void {
