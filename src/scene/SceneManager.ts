@@ -223,11 +223,11 @@ export class SceneManager {
     const frondDarkMat = new THREE.MeshLambertMaterial({ color: 0x1e4a12 });
 
     const palmPositions = [
-      // Cluster around oasis (25, 18)
-      { x: 23, z: 16, h: 6.5, s: 0.95 },
-      { x: 27, z: 20, h: 7, s: 1.0 },
-      { x: 22, z: 21, h: 5.5, s: 0.8 },
-      { x: 29, z: 17, h: 6, s: 0.85 },
+      // Cluster around oasis (40, 35)
+      { x: 38, z: 33, h: 6.5, s: 0.95 },
+      { x: 42, z: 37, h: 7, s: 1.0 },
+      { x: 37, z: 38, h: 5.5, s: 0.8 },
+      { x: 44, z: 34, h: 6, s: 0.85 },
       // Scattered elsewhere
       { x: -15, z: -22, h: 6.5, s: 0.85 },
       { x: -17, z: -25, h: 7.5, s: 1.1 },
@@ -271,8 +271,8 @@ export class SceneManager {
   }
 
   private createOasis(): void {
-    const cx = 25;
-    const cz = 18;
+    const cx = 40;
+    const cz = 35;
 
     // Water surface is now handled by WaterShader in main.ts — no duplicate here
 
