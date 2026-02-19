@@ -8,8 +8,8 @@ export class WaterShader {
   constructor(scene: THREE.Scene) {
     this.scene = scene;
 
-    // Create geometry: CircleGeometry with 4 segments and 32 rings
-    const geometry = new THREE.CircleGeometry(4, 32);
+    // Water disc — radius 6 for a visible oasis pool
+    const geometry = new THREE.CircleGeometry(6, 32);
 
     // Vertex shader
     const vertexShader = `
@@ -95,8 +95,8 @@ export class WaterShader {
     // Rotate -PI/2 around X axis (to face upward)
     this.mesh.rotation.x = -Math.PI / 2;
 
-    // Position water at (26, 0.05, -17)
-    this.mesh.position.set(26, 0.05, -17);
+    // Position water at oasis location
+    this.mesh.position.set(25, 0.05, 18);
 
     // Add to scene
     this.scene.add(this.mesh);

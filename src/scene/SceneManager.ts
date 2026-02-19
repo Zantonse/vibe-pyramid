@@ -223,9 +223,12 @@ export class SceneManager {
     const frondDarkMat = new THREE.MeshLambertMaterial({ color: 0x1e4a12 });
 
     const palmPositions = [
-      { x: 25, z: -18, h: 6, s: 0.9 },
-      { x: 28, z: -15, h: 7, s: 1.0 },
-      { x: 23, z: -20, h: 5, s: 0.7 },
+      // Cluster around oasis (25, 18)
+      { x: 23, z: 16, h: 6.5, s: 0.95 },
+      { x: 27, z: 20, h: 7, s: 1.0 },
+      { x: 22, z: 21, h: 5.5, s: 0.8 },
+      { x: 29, z: 17, h: 6, s: 0.85 },
+      // Scattered elsewhere
       { x: -15, z: -22, h: 6.5, s: 0.85 },
       { x: -17, z: -25, h: 7.5, s: 1.1 },
       { x: 35, z: 5, h: 5.5, s: 0.8 },
@@ -268,13 +271,13 @@ export class SceneManager {
   }
 
   private createOasis(): void {
-    const cx = 26;
-    const cz = -17;
+    const cx = 25;
+    const cz = 18;
 
     // Water surface is now handled by WaterShader in main.ts — no duplicate here
 
-    // Sandy bank ring around the water
-    const bankGeo = new THREE.RingGeometry(3.8, 6.0, 24);
+    // Sandy bank ring around the water (sized for radius-6 pool)
+    const bankGeo = new THREE.RingGeometry(5.5, 8.0, 24);
     bankGeo.rotateX(-Math.PI / 2);
     const bankMat = new THREE.MeshLambertMaterial({ color: 0xc4a060 });
     const bank = new THREE.Mesh(bankGeo, bankMat);
@@ -282,7 +285,7 @@ export class SceneManager {
     this.scene.add(bank);
 
     // Darker wet sand ring at water's edge
-    const wetBankGeo = new THREE.RingGeometry(3.5, 4.2, 24);
+    const wetBankGeo = new THREE.RingGeometry(5.2, 6.2, 24);
     wetBankGeo.rotateX(-Math.PI / 2);
     const wetBankMat = new THREE.MeshLambertMaterial({ color: 0x8a7a50 });
     const wetBank = new THREE.Mesh(wetBankGeo, wetBankMat);
@@ -294,7 +297,7 @@ export class SceneManager {
     const darkReedMat = new THREE.MeshLambertMaterial({ color: 0x3a6a20 });
     for (let i = 0; i < 18; i++) {
       const angle = (i / 18) * Math.PI * 2 + Math.random() * 0.4;
-      const r = 3.2 + Math.random() * 1.5;
+      const r = 5.0 + Math.random() * 2.0;
       const height = 1.2 + Math.random() * 2.0;
       const reedGeo = new THREE.CylinderGeometry(0.03, 0.05, height, 4);
       const mat = Math.random() > 0.4 ? reedMat : darkReedMat;
@@ -313,7 +316,7 @@ export class SceneManager {
     const grassMat = new THREE.MeshLambertMaterial({ color: 0x5a8a32 });
     for (let i = 0; i < 10; i++) {
       const angle = Math.random() * Math.PI * 2;
-      const r = 4.5 + Math.random() * 2.0;
+      const r = 6.8 + Math.random() * 2.0;
       const turfGeo = new THREE.ConeGeometry(0.2 + Math.random() * 0.15, 0.6 + Math.random() * 0.4, 5);
       const turf = new THREE.Mesh(turfGeo, grassMat);
       turf.position.set(
@@ -328,7 +331,7 @@ export class SceneManager {
     const rockMat = new THREE.MeshLambertMaterial({ color: 0x7a7060 });
     for (let i = 0; i < 5; i++) {
       const angle = Math.random() * Math.PI * 2;
-      const r = 3.8 + Math.random() * 1.0;
+      const r = 5.8 + Math.random() * 1.5;
       const s = 0.15 + Math.random() * 0.25;
       const rockGeo = new THREE.DodecahedronGeometry(s, 0);
       const rock = new THREE.Mesh(rockGeo, rockMat);
