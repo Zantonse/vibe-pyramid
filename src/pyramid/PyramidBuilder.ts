@@ -207,7 +207,12 @@ export class PyramidBuilder {
         _tempMatrix.makeTranslation(anim.target.x, anim.target.y, anim.target.z);
         mesh.setMatrixAt(anim.meshInstanceIdx, _tempMatrix);
         mesh.instanceMatrix.needsUpdate = true;
-        this.animatingBlocks.splice(i, 1);
+        // Swap-and-pop for O(1) removal
+        const lastIdx = this.animatingBlocks.length - 1;
+        if (i !== lastIdx) {
+          this.animatingBlocks[i] = this.animatingBlocks[lastIdx];
+        }
+        this.animatingBlocks.pop();
         if (this.onBlockLandCallback) this.onBlockLandCallback();
         continue;
       }

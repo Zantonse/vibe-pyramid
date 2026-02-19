@@ -25,6 +25,9 @@ export class TorchFire {
   private sizes: Float32Array;
   private points: THREE.Points;
 
+  // Pre-allocated temp vectors to avoid per-frame allocations
+  private readonly _tempPos = new THREE.Vector3();
+
   constructor(scene: THREE.Scene, maxTorches: number = 12) {
     this.scene = scene;
     this.maxTorches = maxTorches;
@@ -147,16 +150,22 @@ export class TorchFire {
         emitter.particles.push(particle);
       }
 
-      // Update particles for this emitter
-      for (let i = emitter.particles.length - 1; i >= 0; i--) {
+      // Update particles for this emitter (swap-and-pop for O(1) removal)
+      let aliveCount = emitter.particles.length;
+      for (let i = aliveCount - 1; i >= 0; i--) {
         const particle = emitter.particles[i];
 
         // Increment life
         particle.life += delta;
 
-        // Reset if life exceeds maxLife
+        // Swap-and-pop if life exceeds maxLife
         if (particle.life >= particle.maxLife) {
-          emitter.particles.splice(i, 1);
+          const lastIdx = aliveCount - 1;
+          if (i !== lastIdx) {
+            emitter.particles[i] = emitter.particles[lastIdx];
+          }
+          emitter.particles.pop();
+          aliveCount--;
           continue;
         }
 
@@ -177,15 +186,11 @@ export class TorchFire {
 
     for (const emitter of this.emitters) {
       for (const particle of emitter.particles) {
-        // Calculate position: origin + velocity * life
-        const pos = emitter.origin
-          .clone()
-          .add(new THREE.Vector3(
-            (Math.random() - 0.5) * 0.6, // ±0.3
-            0,
-            (Math.random() - 0.5) * 0.6, // ±0.3
-          ))
-          .addScaledVector(particle.velocity, particle.life);
+        // Calculate position using pre-allocated temp vector
+        const pos = this._tempPos.copy(emitter.origin);
+        pos.x += (Math.random() - 0.5) * 0.6;
+        pos.z += (Math.random() - 0.5) * 0.6;
+        pos.addScaledVector(particle.velocity, particle.life);
 
         const pi3 = bufferIndex * 3;
         this.positions[pi3] = pos.x;

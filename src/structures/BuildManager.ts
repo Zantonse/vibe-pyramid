@@ -233,11 +233,16 @@ export class BuildManager {
     let blocksToQueue = targetStructureBlocks - currentStructureBlocks;
     let runningTotal = 0;
 
+    // Pre-compute pending counts per structure to avoid O(n) filter
+    const pendingByStructure = new Map<number, number>();
+    for (const p of this.pendingPlacements) {
+      pendingByStructure.set(p.structureIndex, (pendingByStructure.get(p.structureIndex) ?? 0) + 1);
+    }
+
     for (let si = 0; si < this.structures.length && blocksToQueue > 0; si++) {
       const structure = this.structures[si];
       const placed = this.structurePlacedCounts.get(si) || 0;
-      // Count pending for this structure
-      const pendingForThis = this.pendingPlacements.filter(p => p.structureIndex === si).length;
+      const pendingForThis = pendingByStructure.get(si) ?? 0;
       const available = structure.slots.length - placed - pendingForThis;
 
       if (available <= 0) {
@@ -275,7 +280,12 @@ export class BuildManager {
         _tempMatrix.makeTranslation(anim.target.x, anim.target.y, anim.target.z);
         mesh.setMatrixAt(anim.meshInstanceIdx, _tempMatrix);
         mesh.instanceMatrix.needsUpdate = true;
-        this.animatingBlocks.splice(i, 1);
+        // Swap-and-pop for O(1) removal
+        const lastIdx = this.animatingBlocks.length - 1;
+        if (i !== lastIdx) {
+          this.animatingBlocks[i] = this.animatingBlocks[lastIdx];
+        }
+        this.animatingBlocks.pop();
         if (this.onBlockLandCallback) this.onBlockLandCallback();
         continue;
       }

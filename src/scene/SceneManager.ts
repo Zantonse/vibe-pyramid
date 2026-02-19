@@ -432,23 +432,57 @@ export class SceneManager {
       color: 0xf5f5dc,
       roughness: 0.5,
       metalness: 0.1,
+      side: THREE.DoubleSide,
     });
     const group = new THREE.Group();
-    // Thin slabs on each visible face of the pyramid base
-    const faceGeo = new THREE.BoxGeometry(21.2, 10.5, 0.15);
-    const positions = [
-      { x: 0, z: 10.6, ry: 0 },
-      { x: 0, z: -10.6, ry: Math.PI },
-      { x: -10.6, z: 0, ry: Math.PI / 2 },
-      { x: 10.6, z: 0, ry: -Math.PI / 2 },
+
+    // Pyramid dimensions: base ~21 wide, ~10.5 high (10 layers * 1.05 block unit)
+    const halfBase = 10.5;
+    const height = 10.5;
+    const offset = 0.15; // Slight outward offset from blocks
+
+    // 4 triangular faces matching the pyramid slope
+    const faces = [
+      // Front (positive Z)
+      [
+        new THREE.Vector3(-halfBase - offset, 0, halfBase + offset),
+        new THREE.Vector3(halfBase + offset, 0, halfBase + offset),
+        new THREE.Vector3(0, height, 0),
+      ],
+      // Back (negative Z)
+      [
+        new THREE.Vector3(halfBase + offset, 0, -halfBase - offset),
+        new THREE.Vector3(-halfBase - offset, 0, -halfBase - offset),
+        new THREE.Vector3(0, height, 0),
+      ],
+      // Left (negative X)
+      [
+        new THREE.Vector3(-halfBase - offset, 0, -halfBase - offset),
+        new THREE.Vector3(-halfBase - offset, 0, halfBase + offset),
+        new THREE.Vector3(0, height, 0),
+      ],
+      // Right (positive X)
+      [
+        new THREE.Vector3(halfBase + offset, 0, halfBase + offset),
+        new THREE.Vector3(halfBase + offset, 0, -halfBase - offset),
+        new THREE.Vector3(0, height, 0),
+      ],
     ];
-    for (const pos of positions) {
-      const face = new THREE.Mesh(faceGeo, casingMat);
-      face.position.set(pos.x, 5.25, pos.z);
-      face.rotation.y = pos.ry;
+
+    for (const verts of faces) {
+      const geo = new THREE.BufferGeometry();
+      const positions = new Float32Array([
+        verts[0].x, verts[0].y, verts[0].z,
+        verts[1].x, verts[1].y, verts[1].z,
+        verts[2].x, verts[2].y, verts[2].z,
+      ]);
+      geo.setAttribute('position', new THREE.BufferAttribute(positions, 3));
+      geo.computeVertexNormals();
+      const face = new THREE.Mesh(geo, casingMat);
       face.receiveShadow = true;
       group.add(face);
     }
+
     this.scene.add(group);
     this.limestoneCasing = group;
   }
