@@ -1,15 +1,67 @@
 import * as THREE from 'three';
 import { PyramidBuilder } from '../pyramid/PyramidBuilder.js';
-import { getStructureRegistry, Structure, BlockSlot } from './StructureRegistry.js';
+import { getStructureRegistry, Structure, BlockSlot, BlockGeometry } from './StructureRegistry.js';
 import { ERA_VISUALS, MilestoneBlockRange } from '../../shared/types.js';
 
 const _tempMatrix = new THREE.Matrix4();
 const _tempColor = new THREE.Color();
 
+const GEOMETRY_CACHE: Map<string, THREE.BufferGeometry> = new Map();
+
+function getBlockGeometry(type: BlockGeometry = 'cube'): THREE.BufferGeometry {
+  const cached = GEOMETRY_CACHE.get(type);
+  if (cached) return cached;
+
+  let geo: THREE.BufferGeometry;
+  switch (type) {
+    case 'cylinder':
+      geo = new THREE.CylinderGeometry(0.45, 0.45, 1.0, 8);
+      break;
+    case 'wedge': {
+      // Triangular prism: full bottom, sloped from left-top to right-bottom
+      geo = new THREE.BufferGeometry();
+      const verts = new Float32Array([
+        // Front face (triangle)
+        -0.5, -0.5, 0.5,   0.5, -0.5, 0.5,   -0.5, 0.5, 0.5,
+        // Back face (triangle)
+        0.5, -0.5, -0.5,   -0.5, -0.5, -0.5,   -0.5, 0.5, -0.5,
+        // Bottom face (quad as 2 tris)
+        -0.5, -0.5, -0.5,   0.5, -0.5, -0.5,   0.5, -0.5, 0.5,
+        -0.5, -0.5, -0.5,   0.5, -0.5, 0.5,   -0.5, -0.5, 0.5,
+        // Slope face (quad as 2 tris) — from left-top to right-bottom
+        -0.5, 0.5, -0.5,   -0.5, 0.5, 0.5,   0.5, -0.5, 0.5,
+        -0.5, 0.5, -0.5,   0.5, -0.5, 0.5,   0.5, -0.5, -0.5,
+        // Left face (quad as 2 tris)
+        -0.5, -0.5, -0.5,   -0.5, -0.5, 0.5,   -0.5, 0.5, 0.5,
+        -0.5, -0.5, -0.5,   -0.5, 0.5, 0.5,   -0.5, 0.5, -0.5,
+      ]);
+      geo.setAttribute('position', new THREE.BufferAttribute(verts, 3));
+      geo.computeVertexNormals();
+      break;
+    }
+    case 'half':
+      geo = new THREE.BoxGeometry(1.0, 0.5, 1.0);
+      break;
+    case 'capital':
+      geo = new THREE.CylinderGeometry(0.6, 0.45, 0.4, 8);
+      break;
+    case 'slab':
+      geo = new THREE.BoxGeometry(1.0, 0.25, 1.0);
+      break;
+    case 'cube':
+    default:
+      geo = new THREE.BoxGeometry(1.0, 1.0, 1.0);
+      break;
+  }
+  GEOMETRY_CACHE.set(type, geo);
+  return geo;
+}
+
 interface AnimatingBlock {
   structureIndex: number;
   meshInstanceIdx: number;
   eraIndex: number;
+  geoType: BlockGeometry;
   target: THREE.Vector3;
   startY: number;
   progress: number;
@@ -24,8 +76,9 @@ interface AnimatingBlock {
 export class BuildManager {
   private pyramid: PyramidBuilder;
   private structures: Structure[];
-  private structureMeshes: Map<number, THREE.InstancedMesh[]> = new Map();
-  private structureInstanceCounts: Map<number, number[]> = new Map();
+  // Key format: "${structureIndex}-${geoType}-${eraIndex}"
+  private structureMeshes: Map<string, THREE.InstancedMesh> = new Map();
+  private structureInstanceCounts: Map<string, number> = new Map();
   private structurePlacedCounts: Map<number, number> = new Map();
   private currentMilestoneIndex = 0;
   private scene: THREE.Scene;
@@ -38,32 +91,46 @@ export class BuildManager {
     this.pyramid = new PyramidBuilder(scene);
     this.structures = getStructureRegistry();
 
-    // Pre-create InstancedMeshes for each structure
-    const geo = new THREE.BoxGeometry(1.0, 1.0, 1.0);
     for (let si = 0; si < this.structures.length; si++) {
       const structure = this.structures[si];
-      const meshes: THREE.InstancedMesh[] = [];
-      const counts: number[] = [];
-
-      for (let ei = 0; ei < ERA_VISUALS.length; ei++) {
-        const era = ERA_VISUALS[ei];
-        const mat = new THREE.MeshStandardMaterial({
-          roughness: era.roughness,
-          metalness: era.metalness,
-          emissive: new THREE.Color().setHSL(era.hue, era.saturation, era.lightness * 0.3),
-          emissiveIntensity: era.emissiveIntensity,
-        });
-        const mesh = new THREE.InstancedMesh(geo, mat, structure.slots.length);
-        mesh.count = 0;
-        mesh.castShadow = true;
-        mesh.receiveShadow = true;
-        scene.add(mesh);
-        meshes.push(mesh);
-        counts.push(0);
+      // Find unique geometry types used by this structure
+      const geoTypes = new Set<BlockGeometry>();
+      for (const slot of structure.slots) {
+        geoTypes.add(slot.geometry || 'cube');
       }
 
-      this.structureMeshes.set(si, meshes);
-      this.structureInstanceCounts.set(si, counts);
+      // Count slots per geometry type for InstancedMesh capacity
+      const geoSlotCounts = new Map<BlockGeometry, number>();
+      for (const slot of structure.slots) {
+        const gt = slot.geometry || 'cube';
+        geoSlotCounts.set(gt, (geoSlotCounts.get(gt) || 0) + 1);
+      }
+
+      // Create meshes for each (geoType, era) pair
+      for (const geoType of geoTypes) {
+        const geo = getBlockGeometry(geoType);
+        const capacity = geoSlotCounts.get(geoType)!;
+
+        for (let ei = 0; ei < ERA_VISUALS.length; ei++) {
+          const era = ERA_VISUALS[ei];
+          const mat = new THREE.MeshStandardMaterial({
+            roughness: era.roughness,
+            metalness: era.metalness,
+            emissive: new THREE.Color().setHSL(era.hue, era.saturation, era.lightness * 0.3),
+            emissiveIntensity: era.emissiveIntensity,
+          });
+          const mesh = new THREE.InstancedMesh(geo, mat, capacity);
+          mesh.count = 0;
+          mesh.castShadow = true;
+          mesh.receiveShadow = true;
+          scene.add(mesh);
+
+          const key = `${si}-${geoType}-${ei}`;
+          this.structureMeshes.set(key, mesh);
+          this.structureInstanceCounts.set(key, 0);
+        }
+      }
+
       this.structurePlacedCounts.set(si, 0);
     }
   }
@@ -182,18 +249,18 @@ export class BuildManager {
     if (slot.placed) return;
     slot.placed = true;
 
-    const meshes = this.structureMeshes.get(structureIndex)!;
-    const counts = this.structureInstanceCounts.get(structureIndex)!;
-    const era = Math.min(eraIndex, meshes.length - 1);
-    const mesh = meshes[era];
-    const instanceIdx = counts[era];
+    const geoType: BlockGeometry = slot.geometry || 'cube';
+    const era = Math.min(eraIndex, ERA_VISUALS.length - 1);
+    const key = `${structureIndex}-${geoType}-${era}`;
+    const mesh = this.structureMeshes.get(key)!;
+    const instanceIdx = this.structureInstanceCounts.get(key)!;
 
     _tempMatrix.makeTranslation(slot.position.x, slot.position.y, slot.position.z);
     mesh.setMatrixAt(instanceIdx, _tempMatrix);
     mesh.setColorAt(instanceIdx, this.randomBlockColor(era));
 
-    counts[era]++;
-    mesh.count = counts[era];
+    this.structureInstanceCounts.set(key, instanceIdx + 1);
+    mesh.count = instanceIdx + 1;
     mesh.instanceMatrix.needsUpdate = true;
     if (mesh.instanceColor) mesh.instanceColor.needsUpdate = true;
 
@@ -272,8 +339,8 @@ export class BuildManager {
     // Animate structure blocks
     for (let i = this.animatingBlocks.length - 1; i >= 0; i--) {
       const anim = this.animatingBlocks[i];
-      const meshes = this.structureMeshes.get(anim.structureIndex)!;
-      const mesh = meshes[anim.eraIndex];
+      const key = `${anim.structureIndex}-${anim.geoType}-${anim.eraIndex}`;
+      const mesh = this.structureMeshes.get(key)!;
       anim.progress += delta * anim.speed;
 
       if (anim.progress >= 1) {
@@ -308,11 +375,11 @@ export class BuildManager {
     if (slot.placed) return;
     slot.placed = true;
 
-    const meshes = this.structureMeshes.get(structureIndex)!;
-    const counts = this.structureInstanceCounts.get(structureIndex)!;
-    const era = Math.min(this.currentMilestoneIndex, meshes.length - 1);
-    const mesh = meshes[era];
-    const instanceIdx = counts[era];
+    const geoType: BlockGeometry = slot.geometry || 'cube';
+    const era = Math.min(this.currentMilestoneIndex, ERA_VISUALS.length - 1);
+    const key = `${structureIndex}-${geoType}-${era}`;
+    const mesh = this.structureMeshes.get(key)!;
+    const instanceIdx = this.structureInstanceCounts.get(key)!;
     const startY = slot.position.y + 15;
     const color = this.randomBlockColor(era);
 
@@ -320,8 +387,8 @@ export class BuildManager {
     mesh.setMatrixAt(instanceIdx, _tempMatrix);
     mesh.setColorAt(instanceIdx, color);
 
-    counts[era]++;
-    mesh.count = counts[era];
+    this.structureInstanceCounts.set(key, instanceIdx + 1);
+    mesh.count = instanceIdx + 1;
     mesh.instanceMatrix.needsUpdate = true;
     if (mesh.instanceColor) mesh.instanceColor.needsUpdate = true;
 
@@ -331,6 +398,7 @@ export class BuildManager {
       structureIndex,
       meshInstanceIdx: instanceIdx,
       eraIndex: era,
+      geoType,
       target: slot.position.clone(),
       startY,
       progress: 0,
