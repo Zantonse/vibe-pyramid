@@ -44,6 +44,16 @@ function generateObeliskSlots(offset: THREE.Vector3): BlockSlot[] {
       }
     }
   }
+  // Pyramidion cap on top
+  slots.push({
+    position: new THREE.Vector3(
+      offset.x,
+      15 * BLOCK_UNIT + BLOCK_SIZE * 0.25,
+      offset.z
+    ),
+    placed: false,
+    geometry: 'half',
+  });
   return slots;
 }
 
@@ -85,6 +95,8 @@ function generateSphinxSlots(offset: THREE.Vector3): BlockSlot[] {
   // Front paws: two 1x2x3 extensions in front
   for (let y = 0; y < 2; y++) {
     for (let z = -3; z < 0; z++) {
+      // Wedge tips at the front-most paw blocks (z=-3)
+      const isWedgeTip = z === -3 && y === 0;
       // Left paw
       slots.push({
         position: new THREE.Vector3(
@@ -93,6 +105,7 @@ function generateSphinxSlots(offset: THREE.Vector3): BlockSlot[] {
           offset.z - 5 * BLOCK_UNIT + z * BLOCK_UNIT + BLOCK_UNIT / 2
         ),
         placed: false,
+        ...(isWedgeTip ? { geometry: 'wedge' as BlockGeometry } : {}),
       });
       // Right paw
       slots.push({
@@ -102,8 +115,22 @@ function generateSphinxSlots(offset: THREE.Vector3): BlockSlot[] {
           offset.z - 5 * BLOCK_UNIT + z * BLOCK_UNIT + BLOCK_UNIT / 2
         ),
         placed: false,
+        ...(isWedgeTip ? { geometry: 'wedge' as BlockGeometry } : {}),
       });
     }
+  }
+
+  // Headdress: half-blocks extending above head
+  for (let z = 0; z < 3; z++) {
+    slots.push({
+      position: new THREE.Vector3(
+        offset.x,
+        7 * BLOCK_UNIT + BLOCK_SIZE * 0.25,
+        offset.z - 5 * BLOCK_UNIT + z * BLOCK_UNIT + BLOCK_UNIT / 2
+      ),
+      placed: false,
+      geometry: 'half',
+    });
   }
 
   return slots;
@@ -120,35 +147,42 @@ function generateColonnadeSlots(offset: THREE.Vector3): BlockSlot[] {
     for (let row = 0; row < 2; row++) {
       const x = offset.x + (row === 0 ? -rowSpacing / 2 : rowSpacing / 2);
 
-      // 2x2 base, 6 blocks tall
-      for (let y = 0; y < 6; y++) {
-        for (let bx = 0; bx < 2; bx++) {
-          for (let bz = 0; bz < 2; bz++) {
-            slots.push({
-              position: new THREE.Vector3(
-                x + (bx - 0.5) * BLOCK_UNIT,
-                y * BLOCK_UNIT + BLOCK_SIZE / 2,
-                z + (bz - 0.5) * BLOCK_UNIT
-              ),
-              placed: false,
-            });
-          }
-        }
+      // Cube base (1 block)
+      slots.push({
+        position: new THREE.Vector3(x, BLOCK_SIZE / 2, z),
+        placed: false,
+      });
+
+      // Cylinder shaft (4 blocks tall)
+      for (let y = 1; y < 5; y++) {
+        slots.push({
+          position: new THREE.Vector3(x, y * BLOCK_UNIT + BLOCK_SIZE / 2, z),
+          placed: false,
+          geometry: 'cylinder',
+        });
       }
+
+      // Capital on top
+      slots.push({
+        position: new THREE.Vector3(x, 5 * BLOCK_UNIT + 0.2, z),
+        placed: false,
+        geometry: 'capital',
+      });
     }
   }
 
-  // Lintel beams connecting column tops
+  // Slab lintel beams connecting column tops
   for (let col = 0; col < columnCount; col++) {
     const z = offset.z + col * spacing;
     for (let bx = 0; bx < 5; bx++) {
       slots.push({
         position: new THREE.Vector3(
           offset.x - rowSpacing / 2 + bx * BLOCK_UNIT,
-          6 * BLOCK_UNIT + BLOCK_SIZE / 2,
+          6 * BLOCK_UNIT + BLOCK_SIZE * 0.125,
           z
         ),
         placed: false,
+        geometry: 'slab',
       });
     }
   }
@@ -324,6 +358,35 @@ function generateTempleSlots(offset: THREE.Vector3): BlockSlot[] {
     }
   }
 
+  // Interior cylinder columns (4 columns in courtyard)
+  const colPositions = [
+    { x: 3, z: 2 }, { x: 8, z: 2 },
+    { x: 3, z: 5 }, { x: 8, z: 5 },
+  ];
+  for (const cp of colPositions) {
+    for (let y = 1; y < 4; y++) {
+      slots.push({
+        position: new THREE.Vector3(
+          offset.x - 6 * BLOCK_UNIT + cp.x * BLOCK_UNIT + BLOCK_UNIT / 2,
+          y * BLOCK_UNIT + BLOCK_SIZE / 2,
+          offset.z - 4 * BLOCK_UNIT + cp.z * BLOCK_UNIT + BLOCK_UNIT / 2
+        ),
+        placed: false,
+        geometry: 'cylinder',
+      });
+    }
+    // Capital on each column
+    slots.push({
+      position: new THREE.Vector3(
+        offset.x - 6 * BLOCK_UNIT + cp.x * BLOCK_UNIT + BLOCK_UNIT / 2,
+        4 * BLOCK_UNIT + 0.2,
+        offset.z - 4 * BLOCK_UNIT + cp.z * BLOCK_UNIT + BLOCK_UNIT / 2
+      ),
+      placed: false,
+      geometry: 'capital',
+    });
+  }
+
   return slots;
 }
 
@@ -394,6 +457,22 @@ function generatePylonGateSlots(offset: THREE.Vector3): BlockSlot[] {
           });
         }
       }
+    }
+  }
+
+  // Wedge slopes on tower tops
+  for (const side of [-1, 1]) {
+    const towerCx = offset.x + side * (gateHalf + 2 * BLOCK_UNIT);
+    for (let z = 0; z < 2; z++) {
+      slots.push({
+        position: new THREE.Vector3(
+          towerCx,
+          8 * BLOCK_UNIT + BLOCK_SIZE / 2,
+          offset.z + (z - 1) * BLOCK_UNIT + BLOCK_UNIT / 2
+        ),
+        placed: false,
+        geometry: 'wedge',
+      });
     }
   }
 
