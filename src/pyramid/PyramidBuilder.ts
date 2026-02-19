@@ -1,4 +1,5 @@
 import * as THREE from 'three';
+import { ERA_VISUALS, MilestoneBlockRange } from '../../shared/types.js';
 
 const BLOCK_SIZE = 1.0;
 const BLOCK_GAP = 0.05;
@@ -16,7 +17,9 @@ interface BlockSlot {
 }
 
 interface AnimatingBlock {
-  index: number;
+  slotIndex: number;
+  eraIndex: number;
+  meshInstanceIdx: number;
   target: THREE.Vector3;
   startY: number;
   progress: number;
@@ -28,10 +31,11 @@ const _tempMatrix = new THREE.Matrix4();
 const _tempColor = new THREE.Color();
 
 export class PyramidBuilder {
-  private instancedMesh: THREE.InstancedMesh;
+  private eraMeshes: THREE.InstancedMesh[] = [];
+  private eraInstanceCounts: number[] = [];
+  private currentMilestoneIndex = 0;
   private slots: BlockSlot[] = [];
   private placedCount = 0;
-  private visibleCount = 0;
   private animatingBlocks: AnimatingBlock[] = [];
   private pendingPlacements: number[] = [];
   private onBlockLandCallback: (() => void) | null = null;
@@ -40,12 +44,23 @@ export class PyramidBuilder {
     this.generateSlots();
 
     const geo = new THREE.BoxGeometry(BLOCK_SIZE, BLOCK_SIZE, BLOCK_SIZE);
-    const mat = new THREE.MeshLambertMaterial();
-    this.instancedMesh = new THREE.InstancedMesh(geo, mat, this.slots.length);
-    this.instancedMesh.count = 0;
-    this.instancedMesh.castShadow = true;
-    this.instancedMesh.receiveShadow = true;
-    scene.add(this.instancedMesh);
+
+    for (let i = 0; i < ERA_VISUALS.length; i++) {
+      const era = ERA_VISUALS[i];
+      const mat = new THREE.MeshStandardMaterial({
+        roughness: era.roughness,
+        metalness: era.metalness,
+        emissive: new THREE.Color().setHSL(era.hue, era.saturation, era.lightness * 0.3),
+        emissiveIntensity: era.emissiveIntensity,
+      });
+      const mesh = new THREE.InstancedMesh(geo, mat, this.slots.length);
+      mesh.count = 0;
+      mesh.castShadow = true;
+      mesh.receiveShadow = true;
+      scene.add(mesh);
+      this.eraMeshes.push(mesh);
+      this.eraInstanceCounts.push(0);
+    }
   }
 
   private generateSlots(): void {
@@ -113,38 +128,58 @@ export class PyramidBuilder {
     this.onBlockLandCallback = callback;
   }
 
-  restoreBlocks(count: number): void {
+  restoreBlocks(count: number, milestoneBlockRanges: MilestoneBlockRange[]): void {
     const toPlace = Math.min(count, this.slots.length);
     for (let i = this.placedCount; i < toPlace; i++) {
-      this.placeBlockInstant(i);
+      const era = this.getEraForBlock(i, milestoneBlockRanges);
+      this.placeBlockInstant(i, era);
     }
   }
 
-  private placeBlockInstant(index: number): void {
+  private getEraForBlock(blockIndex: number, ranges: MilestoneBlockRange[]): number {
+    for (const range of ranges) {
+      if (blockIndex >= range.startBlock && blockIndex < range.endBlock) {
+        return range.milestoneIndex;
+      }
+    }
+    // Fallback: use current milestone
+    return this.currentMilestoneIndex;
+  }
+
+  private placeBlockInstant(index: number, eraIndex: number): void {
     const slot = this.slots[index];
     if (slot.placed) return;
     slot.placed = true;
 
-    const instanceIdx = this.visibleCount;
-    _tempMatrix.makeTranslation(slot.position.x, slot.position.y, slot.position.z);
-    this.instancedMesh.setMatrixAt(instanceIdx, _tempMatrix);
-    this.instancedMesh.setColorAt(instanceIdx, this.randomBlockColor());
+    const era = Math.min(eraIndex, this.eraMeshes.length - 1);
+    const mesh = this.eraMeshes[era];
+    const instanceIdx = this.eraInstanceCounts[era];
 
-    this.visibleCount++;
+    _tempMatrix.makeTranslation(slot.position.x, slot.position.y, slot.position.z);
+    mesh.setMatrixAt(instanceIdx, _tempMatrix);
+    mesh.setColorAt(instanceIdx, this.randomBlockColor(era));
+
+    this.eraInstanceCounts[era]++;
+    mesh.count = this.eraInstanceCounts[era];
+    mesh.instanceMatrix.needsUpdate = true;
+    if (mesh.instanceColor) mesh.instanceColor.needsUpdate = true;
+
     this.placedCount++;
-    this.instancedMesh.count = this.visibleCount;
-    this.instancedMesh.instanceMatrix.needsUpdate = true;
-    if (this.instancedMesh.instanceColor) this.instancedMesh.instanceColor.needsUpdate = true;
   }
 
-  private randomBlockColor(): THREE.Color {
-    const hue = 0.08 + Math.random() * 0.04;
-    const sat = 0.3 + Math.random() * 0.2;
-    const light = 0.6 + Math.random() * 0.15;
+  private randomBlockColor(eraIndex: number): THREE.Color {
+    const era = ERA_VISUALS[eraIndex];
+    const hue = era.hue + (Math.random() - 0.5) * era.hueRange;
+    const sat = era.saturation + (Math.random() - 0.5) * era.saturationRange;
+    const light = era.lightness + (Math.random() - 0.5) * era.lightnessRange;
     return _tempColor.setHSL(hue, sat, light);
   }
 
-  queueBlocks(targetTotal: number): void {
+  queueBlocks(targetTotal: number, milestoneIndex?: number): void {
+    if (milestoneIndex !== undefined) {
+      this.currentMilestoneIndex = milestoneIndex;
+    }
+
     while (this.placedCount + this.pendingPlacements.length < targetTotal
            && this.placedCount + this.pendingPlacements.length < this.slots.length) {
       const nextIndex = this.placedCount + this.pendingPlacements.length;
@@ -165,14 +200,13 @@ export class PyramidBuilder {
 
     for (let i = this.animatingBlocks.length - 1; i >= 0; i--) {
       const anim = this.animatingBlocks[i];
+      const mesh = this.eraMeshes[anim.eraIndex];
       anim.progress += delta * anim.speed;
-
-      const instanceIdx = anim.index;
 
       if (anim.progress >= 1) {
         _tempMatrix.makeTranslation(anim.target.x, anim.target.y, anim.target.z);
-        this.instancedMesh.setMatrixAt(instanceIdx, _tempMatrix);
-        this.instancedMesh.instanceMatrix.needsUpdate = true;
+        mesh.setMatrixAt(anim.meshInstanceIdx, _tempMatrix);
+        mesh.instanceMatrix.needsUpdate = true;
         this.animatingBlocks.splice(i, 1);
         if (this.onBlockLandCallback) this.onBlockLandCallback();
         continue;
@@ -184,8 +218,8 @@ export class PyramidBuilder {
       const y = anim.startY + (anim.target.y - anim.startY) * eased + bounceY;
 
       _tempMatrix.makeTranslation(anim.target.x, y, anim.target.z);
-      this.instancedMesh.setMatrixAt(instanceIdx, _tempMatrix);
-      this.instancedMesh.instanceMatrix.needsUpdate = true;
+      mesh.setMatrixAt(anim.meshInstanceIdx, _tempMatrix);
+      mesh.instanceMatrix.needsUpdate = true;
     }
   }
 
@@ -195,22 +229,27 @@ export class PyramidBuilder {
     if (slot.placed) return;
     slot.placed = true;
 
-    const instanceIdx = this.visibleCount;
+    const era = Math.min(this.currentMilestoneIndex, this.eraMeshes.length - 1);
+    const mesh = this.eraMeshes[era];
+    const instanceIdx = this.eraInstanceCounts[era];
     const startY = slot.position.y + 15;
-    const color = this.randomBlockColor();
+    const color = this.randomBlockColor(era);
 
     _tempMatrix.makeTranslation(slot.position.x, startY, slot.position.z);
-    this.instancedMesh.setMatrixAt(instanceIdx, _tempMatrix);
-    this.instancedMesh.setColorAt(instanceIdx, color);
+    mesh.setMatrixAt(instanceIdx, _tempMatrix);
+    mesh.setColorAt(instanceIdx, color);
 
-    this.visibleCount++;
+    this.eraInstanceCounts[era]++;
+    mesh.count = this.eraInstanceCounts[era];
+    mesh.instanceMatrix.needsUpdate = true;
+    if (mesh.instanceColor) mesh.instanceColor.needsUpdate = true;
+
     this.placedCount++;
-    this.instancedMesh.count = this.visibleCount;
-    this.instancedMesh.instanceMatrix.needsUpdate = true;
-    if (this.instancedMesh.instanceColor) this.instancedMesh.instanceColor.needsUpdate = true;
 
     this.animatingBlocks.push({
-      index: instanceIdx,
+      slotIndex: index,
+      eraIndex: era,
+      meshInstanceIdx: instanceIdx,
       target: slot.position.clone(),
       startY,
       progress: 0,

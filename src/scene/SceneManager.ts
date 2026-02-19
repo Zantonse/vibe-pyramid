@@ -1,6 +1,25 @@
 import * as THREE from 'three';
 import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
 
+interface AtmosphereConfig {
+  midColorBoost: number;
+  ambientBoost: number;
+  sunIntensityBoost: number;
+  innerGlow: boolean;
+  capstoneBeacon: boolean;
+}
+
+const ATMOSPHERE_CONFIGS: AtmosphereConfig[] = [
+  { midColorBoost: 0, ambientBoost: 0, sunIntensityBoost: 0, innerGlow: false, capstoneBeacon: false },
+  { midColorBoost: 0, ambientBoost: 0, sunIntensityBoost: 0, innerGlow: false, capstoneBeacon: false },
+  { midColorBoost: 0.15, ambientBoost: 0.05, sunIntensityBoost: 0.1, innerGlow: false, capstoneBeacon: false },
+  { midColorBoost: 0.3, ambientBoost: 0.1, sunIntensityBoost: 0.15, innerGlow: true, capstoneBeacon: false },
+  { midColorBoost: 0.45, ambientBoost: 0.15, sunIntensityBoost: 0.2, innerGlow: true, capstoneBeacon: false },
+  { midColorBoost: 0.6, ambientBoost: 0.25, sunIntensityBoost: 0.3, innerGlow: true, capstoneBeacon: true },
+];
+
+const _tempGold = new THREE.Color();
+
 export class SceneManager {
   scene: THREE.Scene;
   camera: THREE.PerspectiveCamera;
@@ -15,6 +34,9 @@ export class SceneManager {
   private _nudgeTarget: THREE.Vector3 | null = null;
   private nudgeProgress = 0;
   private baseTarget = new THREE.Vector3(0, 5, 0);
+  private currentMilestoneLevel = 0;
+  private innerGlowLight: THREE.PointLight | null = null;
+  private capstoneLight: THREE.PointLight | null = null;
 
   // Day/night cycle color pairs (allocated once)
   private readonly topDay = new THREE.Color(0x1a237e);
@@ -186,6 +208,31 @@ export class SceneManager {
     this.nudgeProgress = 0;
   }
 
+  setMilestoneLevel(level: number): void {
+    this.currentMilestoneLevel = Math.min(level, ATMOSPHERE_CONFIGS.length - 1);
+    const config = ATMOSPHERE_CONFIGS[this.currentMilestoneLevel];
+
+    if (config.innerGlow && !this.innerGlowLight) {
+      this.innerGlowLight = new THREE.PointLight(0xffaa44, 2, 30, 1.5);
+      this.innerGlowLight.position.set(0, 3, 0);
+      this.scene.add(this.innerGlowLight);
+    } else if (!config.innerGlow && this.innerGlowLight) {
+      this.scene.remove(this.innerGlowLight);
+      this.innerGlowLight.dispose();
+      this.innerGlowLight = null;
+    }
+
+    if (config.capstoneBeacon && !this.capstoneLight) {
+      this.capstoneLight = new THREE.PointLight(0xffd700, 4, 60, 1);
+      this.capstoneLight.position.set(0, 11, 0);
+      this.scene.add(this.capstoneLight);
+    } else if (!config.capstoneBeacon && this.capstoneLight) {
+      this.scene.remove(this.capstoneLight);
+      this.capstoneLight.dispose();
+      this.capstoneLight = null;
+    }
+  }
+
   update(delta: number): void {
     this.controls.update();
 
@@ -198,6 +245,13 @@ export class SceneManager {
       this.skyMaterial.uniforms.topColor.value.lerpColors(this.topDay, this.topNight, nightAmount);
       this.skyMaterial.uniforms.midColor.value.lerpColors(this.midDay, this.midNight, nightAmount);
       this.skyMaterial.uniforms.bottomColor.value.lerpColors(this.botDay, this.botNight, nightAmount);
+
+      // Apply milestone atmosphere boost to mid-color (warmer horizon)
+      const atmosConfig = ATMOSPHERE_CONFIGS[this.currentMilestoneLevel];
+      if (atmosConfig.midColorBoost > 0 && this.skyMaterial) {
+        const gold = _tempGold.set(0xffd700);
+        this.skyMaterial.uniforms.midColor.value.lerp(gold, atmosConfig.midColorBoost * 0.3);
+      }
     }
 
     if (this.sun) {
@@ -208,11 +262,13 @@ export class SceneManager {
 
     if (this.sunLight) {
       const dayFactor = 0.5 + 0.5 * Math.sin(this.dayTime * Math.PI * 2 - Math.PI / 2);
-      this.sunLight.intensity = 0.4 + dayFactor * 1.1;
+      const atmosConfig = ATMOSPHERE_CONFIGS[this.currentMilestoneLevel];
+      this.sunLight.intensity = (0.4 + dayFactor * 1.1) + atmosConfig.sunIntensityBoost;
     }
     if (this.ambientLight) {
       const dayFactor = 0.5 + 0.5 * Math.sin(this.dayTime * Math.PI * 2 - Math.PI / 2);
-      this.ambientLight.intensity = 0.15 + dayFactor * 0.25;
+      const atmosConfig = ATMOSPHERE_CONFIGS[this.currentMilestoneLevel];
+      this.ambientLight.intensity = (0.15 + dayFactor * 0.25) + atmosConfig.ambientBoost;
     }
 
     // Camera nudge

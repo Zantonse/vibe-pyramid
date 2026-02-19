@@ -53,6 +53,7 @@ app.post('/event', (req, res) => {
       total_xp: result.total_xp,
       blocks_placed: result.blocks_placed,
       metadata: { file, command },
+      current_milestone_index: result.current_milestone_index,
     };
     broadcast(msg);
 

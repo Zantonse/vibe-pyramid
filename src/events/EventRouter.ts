@@ -3,8 +3,9 @@ import { PyramidBuilder } from '../pyramid/PyramidBuilder.js';
 import { HUD } from '../hud/HUD.js';
 import { Sidebar } from '../ui/Sidebar.js';
 import { SceneManager } from '../scene/SceneManager.js';
-import { TOOL_ACTIVITY_MAP, type WorkerActivity } from '../../shared/types.js';
+import { TOOL_ACTIVITY_MAP, MILESTONES, type WorkerActivity } from '../../shared/types.js';
 import type { WSMessage, PyramidState } from '../../shared/types.js';
+import { SandParticles } from '../effects/SandParticles.js';
 
 export class EventRouter {
   private characters: CharacterFactory;
@@ -12,19 +13,21 @@ export class EventRouter {
   private hud: HUD;
   private sidebar: Sidebar;
   private sceneManager: SceneManager;
+  private sand: SandParticles;
 
-  constructor(characters: CharacterFactory, pyramid: PyramidBuilder, hud: HUD, sidebar: Sidebar, sceneManager: SceneManager) {
+  constructor(characters: CharacterFactory, pyramid: PyramidBuilder, hud: HUD, sidebar: Sidebar, sceneManager: SceneManager, sand: SandParticles) {
     this.characters = characters;
     this.pyramid = pyramid;
     this.hud = hud;
     this.sidebar = sidebar;
     this.sceneManager = sceneManager;
+    this.sand = sand;
   }
 
   handle(msg: WSMessage): void {
     switch (msg.type) {
       case 'tool_activity':
-        this.handleToolActivity(msg.session_id, msg.tool, msg.xp_earned, msg.total_xp, msg.blocks_placed, msg.metadata);
+        this.handleToolActivity(msg.session_id, msg.tool, msg.xp_earned, msg.total_xp, msg.blocks_placed, msg.metadata, msg.current_milestone_index);
         break;
       case 'session_update':
         this.handleSessionUpdate(msg.session_id, msg.status, msg.name);
@@ -46,7 +49,8 @@ export class EventRouter {
     xpEarned: number,
     totalXp: number,
     blocksPlaced: number,
-    metadata: { file?: string; command?: string }
+    metadata: { file?: string; command?: string },
+    currentMilestoneIndex: number
   ): void {
     const chars = this.characters.getOrCreate(sessionId);
 
@@ -61,11 +65,15 @@ export class EventRouter {
       this.sceneManager.nudgeTo(workerPos);
     }
 
-    // Queue blocks on the pyramid
-    this.pyramid.queueBlocks(blocksPlaced);
+    // Queue blocks on the pyramid with current era
+    this.pyramid.queueBlocks(blocksPlaced, currentMilestoneIndex);
 
     // Update HUD
     this.hud.updateXP(totalXp, blocksPlaced, this.pyramid.totalSlots);
+
+    // Update atmosphere and sand for current milestone
+    this.sceneManager.setMilestoneLevel(currentMilestoneIndex);
+    this.sand.setMilestoneLevel(currentMilestoneIndex);
 
     if (activity !== 'idle') {
       const label = metadata.file || metadata.command || tool;
@@ -85,8 +93,19 @@ export class EventRouter {
   }
 
   private handleStateSnapshot(state: PyramidState): void {
-    this.pyramid.restoreBlocks(state.blocks_placed);
+    this.pyramid.restoreBlocks(state.blocks_placed, state.milestone_block_ranges || []);
     this.hud.updateXP(state.total_xp, state.blocks_placed, this.pyramid.totalSlots);
+
+    // Determine current milestone from XP
+    let currentMilestone = 0;
+    for (let i = MILESTONES.length - 1; i >= 0; i--) {
+      if (state.total_xp >= MILESTONES[i].xpThreshold) {
+        currentMilestone = i;
+        break;
+      }
+    }
+    this.sceneManager.setMilestoneLevel(currentMilestone);
+    this.sand.setMilestoneLevel(currentMilestone);
 
     for (const [sessionId, sessionState] of Object.entries(state.sessions)) {
       if (sessionState.status !== 'ended') {

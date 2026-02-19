@@ -7,6 +7,15 @@ export class SandParticles {
   private velocities: Float32Array;
   private sizes: Float32Array;
 
+  private static readonly SAND_COLORS: THREE.Color[] = [
+    new THREE.Color(0xd5a574), // L0: default sand
+    new THREE.Color(0xd5a574), // L1: default sand
+    new THREE.Color(0xd5a574), // L2: default sand
+    new THREE.Color(0xdbb070), // L3: faint gold tint
+    new THREE.Color(0xe0b850), // L4: golden dust
+    new THREE.Color(0xffd700), // L5: bright golden sparkle
+  ];
+
   constructor(scene: THREE.Scene) {
     const geometry = new THREE.BufferGeometry();
     const positions = new Float32Array(PARTICLE_COUNT * 3);
@@ -47,6 +56,7 @@ export class SandParticles {
     `;
 
     const fragmentShader = `
+      uniform vec3 uColor;
       varying float vOpacity;
 
       void main() {
@@ -58,11 +68,14 @@ export class SandParticles {
         }
 
         float edge = smoothstep(0.5, 0.3, distance);
-        gl_FragColor = vec4(0.835, 0.647, 0.455, edge * vOpacity * 0.6);
+        gl_FragColor = vec4(uColor, edge * vOpacity * 0.6);
       }
     `;
 
     const material = new THREE.ShaderMaterial({
+      uniforms: {
+        uColor: { value: new THREE.Color(0xd5a574) },
+      },
       vertexShader,
       fragmentShader,
       transparent: true,
@@ -98,5 +111,11 @@ export class SandParticles {
     }
 
     positions.needsUpdate = true;
+  }
+
+  setMilestoneLevel(level: number): void {
+    const idx = Math.min(level, SandParticles.SAND_COLORS.length - 1);
+    const mat = this.particles.material as THREE.ShaderMaterial;
+    (mat.uniforms.uColor.value as THREE.Color).copy(SandParticles.SAND_COLORS[idx]);
   }
 }

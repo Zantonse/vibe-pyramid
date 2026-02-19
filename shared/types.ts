@@ -28,9 +28,42 @@ export const MILESTONES: Milestone[] = [
   { name: 'Placing the Capstone', xpThreshold: 7500, icon: '\u{1F3DB}' },
 ];
 
+export interface EraVisual {
+  hue: number;
+  hueRange: number;
+  saturation: number;
+  saturationRange: number;
+  lightness: number;
+  lightnessRange: number;
+  roughness: number;
+  metalness: number;
+  emissiveIntensity: number;
+}
+
+export const ERA_VISUALS: EraVisual[] = [
+  // Level 0: Surveying the Sands — pale rough sandstone
+  { hue: 0.08, hueRange: 0.04, saturation: 0.25, saturationRange: 0.15, lightness: 0.7, lightnessRange: 0.1, roughness: 0.9, metalness: 0, emissiveIntensity: 0 },
+  // Level 1: Laying Foundations — warm mudbrick
+  { hue: 0.05, hueRange: 0.03, saturation: 0.4, saturationRange: 0.15, lightness: 0.55, lightnessRange: 0.1, roughness: 0.85, metalness: 0, emissiveIntensity: 0 },
+  // Level 2: Rising Walls — cut limestone
+  { hue: 0.10, hueRange: 0.03, saturation: 0.3, saturationRange: 0.1, lightness: 0.72, lightnessRange: 0.08, roughness: 0.7, metalness: 0.05, emissiveIntensity: 0 },
+  // Level 3: Inner Chambers — polished granite
+  { hue: 0.58, hueRange: 0.04, saturation: 0.15, saturationRange: 0.08, lightness: 0.4, lightnessRange: 0.08, roughness: 0.4, metalness: 0.15, emissiveIntensity: 0 },
+  // Level 4: Gilding the Facade — gilded limestone
+  { hue: 0.12, hueRange: 0.03, saturation: 0.65, saturationRange: 0.1, lightness: 0.6, lightnessRange: 0.08, roughness: 0.35, metalness: 0.3, emissiveIntensity: 0.08 },
+  // Level 5: Placing the Capstone — electrum/royal gold
+  { hue: 0.13, hueRange: 0.02, saturation: 0.75, saturationRange: 0.1, lightness: 0.65, lightnessRange: 0.08, roughness: 0.25, metalness: 0.5, emissiveIntensity: 0.15 },
+];
+
 export interface MilestoneUnlock {
   milestoneIndex: number;
   unlockedAt: string; // ISO 8601
+}
+
+export interface MilestoneBlockRange {
+  milestoneIndex: number;
+  startBlock: number;
+  endBlock: number;
 }
 
 // Inbound: Claude Code hook events POSTed to the server
@@ -57,6 +90,7 @@ export interface ToolActivityMessage {
   xp_earned: number;
   total_xp: number;
   blocks_placed: number;
+  current_milestone_index: number;
   metadata: { file?: string; command?: string };
 }
 
@@ -88,6 +122,7 @@ export interface PyramidState {
   pyramid_layer: number;
   sessions: Record<string, SessionState>;
   milestone_unlocks: MilestoneUnlock[];
+  milestone_block_ranges: MilestoneBlockRange[];
 }
 
 export interface SessionState {

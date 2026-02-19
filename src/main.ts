@@ -18,11 +18,15 @@ const sidebar = new Sidebar();
 const audio = new BlockAudio();
 document.addEventListener('click', () => audio.warmup(), { once: true });
 pyramid.onBlockLand(() => audio.playBlockLand());
-hud.onLevelUp((_name, index) => audio.playLevelUp(index));
+hud.onLevelUp((_name, index) => {
+  audio.playLevelUp(index);
+  sceneManager.setMilestoneLevel(index);
+  sand.setMilestoneLevel(index);
+});
 
 // Networking
 const ws = new WSClient();
-const router = new EventRouter(characters, pyramid, hud, sidebar, sceneManager);
+const router = new EventRouter(characters, pyramid, hud, sidebar, sceneManager, sand);
 ws.onMessage((msg) => router.handle(msg));
 
 // Render loop

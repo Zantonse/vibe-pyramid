@@ -11,6 +11,7 @@ const DEFAULT_STATE: PyramidState = {
   pyramid_layer: 0,
   sessions: {},
   milestone_unlocks: [],
+  milestone_block_ranges: [],
 };
 
 let state: PyramidState = DEFAULT_STATE;
@@ -35,6 +36,23 @@ export function loadState(): PyramidState {
     console.warn('Failed to load state, using defaults');
     state = { ...DEFAULT_STATE };
   }
+
+  // Migrate: if blocks exist but no ranges tracked, assign all to current milestone
+  if (state.blocks_placed > 0 && (!state.milestone_block_ranges || state.milestone_block_ranges.length === 0)) {
+    let currentMilestone = 0;
+    for (let i = MILESTONES.length - 1; i >= 0; i--) {
+      if (state.total_xp >= MILESTONES[i].xpThreshold) {
+        currentMilestone = i;
+        break;
+      }
+    }
+    state.milestone_block_ranges = [{
+      milestoneIndex: currentMilestone,
+      startBlock: 0,
+      endBlock: state.blocks_placed,
+    }];
+  }
+
   return state;
 }
 
@@ -75,7 +93,7 @@ export function processToolEvent(
   sessionId: string,
   toolName: string,
   metadata: { file?: string; command?: string }
-): { xp_earned: number; total_xp: number; blocks_placed: number; new_milestone_index: number | null } {
+): { xp_earned: number; total_xp: number; blocks_placed: number; new_milestone_index: number | null; current_milestone_index: number } {
   const xp = XP_TABLE[toolName] ?? 1;
   const prevXp = state.total_xp;
 
@@ -83,10 +101,38 @@ export function processToolEvent(
   if (!state.milestone_unlocks) {
     state.milestone_unlocks = [];
   }
+  if (!state.milestone_block_ranges) {
+    state.milestone_block_ranges = [];
+  }
 
   state.total_xp += xp;
   state.blocks_placed = Math.floor(state.total_xp / XP_PER_BLOCK);
   state.pyramid_layer = calculateLayer(state.blocks_placed);
+
+  // Determine current milestone index
+  let currentMilestoneIndex = 0;
+  for (let i = MILESTONES.length - 1; i >= 0; i--) {
+    if (state.total_xp >= MILESTONES[i].xpThreshold) {
+      currentMilestoneIndex = i;
+      break;
+    }
+  }
+
+  // Update or create block range for current milestone
+  const prevBlocks = Math.floor(prevXp / XP_PER_BLOCK);
+  const newBlocks = state.blocks_placed;
+  if (newBlocks > prevBlocks) {
+    const lastRange = state.milestone_block_ranges[state.milestone_block_ranges.length - 1];
+    if (lastRange && lastRange.milestoneIndex === currentMilestoneIndex) {
+      lastRange.endBlock = newBlocks;
+    } else {
+      state.milestone_block_ranges.push({
+        milestoneIndex: currentMilestoneIndex,
+        startBlock: prevBlocks,
+        endBlock: newBlocks,
+      });
+    }
+  }
 
   if (!state.sessions[sessionId]) {
     state.sessions[sessionId] = {
@@ -124,6 +170,7 @@ export function processToolEvent(
     total_xp: state.total_xp,
     blocks_placed: state.blocks_placed,
     new_milestone_index,
+    current_milestone_index: currentMilestoneIndex,
   };
 }
 
