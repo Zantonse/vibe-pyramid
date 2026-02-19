@@ -38,6 +38,24 @@ export const MILESTONES: Milestone[] = [
   { name: 'Mortuary Temple', xpThreshold: 140000, icon: '\u{26E9}' },
   { name: 'Mastaba Tomb', xpThreshold: 175000, icon: '\u{1F3DA}' },
   { name: 'Pylon Gate', xpThreshold: 215000, icon: '\u{1F3EF}' },
+  { name: 'Hypostyle Hall', xpThreshold: 260000, icon: '\u{1F3DB}' },
+  { name: 'Sacred Lake', xpThreshold: 310000, icon: '\u{1F30A}' },
+  { name: 'Worker\'s Village', xpThreshold: 365000, icon: '\u{1F3D8}' },
+  { name: 'Granary of Plenty', xpThreshold: 425000, icon: '\u{1F33E}' },
+  { name: 'Altar of Offerings', xpThreshold: 490000, icon: '\u{1F525}' },
+  { name: 'Valley Temple', xpThreshold: 560000, icon: '\u{26E9}' },
+  { name: 'Royal Treasury', xpThreshold: 640000, icon: '\u{1F48E}' },
+  { name: 'Avenue of Sphinxes', xpThreshold: 725000, icon: '\u{1F981}' },
+  { name: 'Shrine of Anubis', xpThreshold: 815000, icon: '\u{1F43A}' },
+  { name: 'The Great Quarry', xpThreshold: 910000, icon: '\u{26CF}' },
+  { name: 'Colossi of Memnon', xpThreshold: 1010000, icon: '\u{1F5FF}' },
+  { name: 'Canopic Shrine', xpThreshold: 1120000, icon: '\u{1F3FA}' },
+  { name: 'Irrigation Canal', xpThreshold: 1240000, icon: '\u{1F6BF}' },
+  { name: 'Cliff Temple', xpThreshold: 1370000, icon: '\u{1F3D4}' },
+  { name: 'Marketplace', xpThreshold: 1510000, icon: '\u{1F3EA}' },
+  { name: 'Sarcophagus Chamber', xpThreshold: 1660000, icon: '\u{26B0}' },
+  { name: 'Lighthouse of Pharos', xpThreshold: 1820000, icon: '\u{1F5FC}' },
+  { name: 'Eternal City', xpThreshold: 2000000, icon: '\u{1F451}' },
 ];
 
 export interface EraVisual {
@@ -89,6 +107,42 @@ export const ERA_VISUALS: EraVisual[] = [
   { hue: 0.05, hueRange: 0.02, saturation: 0.5, saturationRange: 0.1, lightness: 0.5, lightnessRange: 0.08, roughness: 0.7, metalness: 0, emissiveIntensity: 0 },
   // Level 17: Pylon Gate — turquoise faience
   { hue: 0.48, hueRange: 0.03, saturation: 0.7, saturationRange: 0.1, lightness: 0.55, lightnessRange: 0.08, roughness: 0.3, metalness: 0.2, emissiveIntensity: 0.12 },
+  // Level 18: Hypostyle Hall — warm amber sandstone
+  { hue: 0.09, hueRange: 0.02, saturation: 0.5, saturationRange: 0.1, lightness: 0.6, lightnessRange: 0.08, roughness: 0.45, metalness: 0.1, emissiveIntensity: 0.05 },
+  // Level 19: Sacred Lake — deep aquamarine
+  { hue: 0.52, hueRange: 0.03, saturation: 0.55, saturationRange: 0.1, lightness: 0.45, lightnessRange: 0.08, roughness: 0.35, metalness: 0.15, emissiveIntensity: 0.08 },
+  // Level 20: Worker's Village — sun-baked terracotta
+  { hue: 0.04, hueRange: 0.02, saturation: 0.55, saturationRange: 0.1, lightness: 0.5, lightnessRange: 0.08, roughness: 0.75, metalness: 0, emissiveIntensity: 0 },
+  // Level 21: Granary of Plenty — golden wheat
+  { hue: 0.11, hueRange: 0.02, saturation: 0.6, saturationRange: 0.1, lightness: 0.6, lightnessRange: 0.08, roughness: 0.6, metalness: 0.05, emissiveIntensity: 0.03 },
+  // Level 22: Altar of Offerings — smoked obsidian
+  { hue: 0.0, hueRange: 0.02, saturation: 0.1, saturationRange: 0.05, lightness: 0.25, lightnessRange: 0.06, roughness: 0.2, metalness: 0.4, emissiveIntensity: 0.1 },
+  // Level 23: Valley Temple — cool grey granite
+  { hue: 0.58, hueRange: 0.03, saturation: 0.12, saturationRange: 0.06, lightness: 0.5, lightnessRange: 0.08, roughness: 0.4, metalness: 0.2, emissiveIntensity: 0.03 },
+  // Level 24: Royal Treasury — rich copper
+  { hue: 0.06, hueRange: 0.02, saturation: 0.7, saturationRange: 0.1, lightness: 0.5, lightnessRange: 0.08, roughness: 0.25, metalness: 0.55, emissiveIntensity: 0.12 },
+  // Level 25: Avenue of Sphinxes — rose sandstone
+  { hue: 0.03, hueRange: 0.02, saturation: 0.4, saturationRange: 0.1, lightness: 0.6, lightnessRange: 0.08, roughness: 0.5, metalness: 0.1, emissiveIntensity: 0.05 },
+  // Level 26: Shrine of Anubis — midnight blue-black
+  { hue: 0.65, hueRange: 0.03, saturation: 0.4, saturationRange: 0.1, lightness: 0.2, lightnessRange: 0.06, roughness: 0.2, metalness: 0.35, emissiveIntensity: 0.15 },
+  // Level 27: The Great Quarry — raw limestone
+  { hue: 0.1, hueRange: 0.03, saturation: 0.2, saturationRange: 0.08, lightness: 0.65, lightnessRange: 0.1, roughness: 0.85, metalness: 0, emissiveIntensity: 0 },
+  // Level 28: Colossi of Memnon — desert rose quartz
+  { hue: 0.97, hueRange: 0.02, saturation: 0.3, saturationRange: 0.08, lightness: 0.55, lightnessRange: 0.08, roughness: 0.35, metalness: 0.2, emissiveIntensity: 0.08 },
+  // Level 29: Canopic Shrine — jade green
+  { hue: 0.38, hueRange: 0.03, saturation: 0.45, saturationRange: 0.1, lightness: 0.4, lightnessRange: 0.08, roughness: 0.3, metalness: 0.25, emissiveIntensity: 0.1 },
+  // Level 30: Irrigation Canal — Nile blue-green
+  { hue: 0.5, hueRange: 0.03, saturation: 0.5, saturationRange: 0.1, lightness: 0.5, lightnessRange: 0.08, roughness: 0.4, metalness: 0.15, emissiveIntensity: 0.06 },
+  // Level 31: Cliff Temple — warm red sandstone
+  { hue: 0.03, hueRange: 0.02, saturation: 0.5, saturationRange: 0.1, lightness: 0.45, lightnessRange: 0.08, roughness: 0.5, metalness: 0.15, emissiveIntensity: 0.05 },
+  // Level 32: Marketplace — sun-bleached linen
+  { hue: 0.1, hueRange: 0.02, saturation: 0.15, saturationRange: 0.06, lightness: 0.8, lightnessRange: 0.06, roughness: 0.65, metalness: 0, emissiveIntensity: 0 },
+  // Level 33: Sarcophagus Chamber — dark basalt with gold veins
+  { hue: 0.12, hueRange: 0.02, saturation: 0.3, saturationRange: 0.08, lightness: 0.25, lightnessRange: 0.06, roughness: 0.15, metalness: 0.5, emissiveIntensity: 0.18 },
+  // Level 34: Lighthouse of Pharos — white marble
+  { hue: 0.55, hueRange: 0.02, saturation: 0.08, saturationRange: 0.04, lightness: 0.9, lightnessRange: 0.04, roughness: 0.15, metalness: 0.1, emissiveIntensity: 0.05 },
+  // Level 35: Eternal City — radiant white-gold
+  { hue: 0.13, hueRange: 0.015, saturation: 0.85, saturationRange: 0.05, lightness: 0.8, lightnessRange: 0.04, roughness: 0.1, metalness: 0.7, emissiveIntensity: 0.3 },
 ];
 
 export interface MilestoneUnlock {
