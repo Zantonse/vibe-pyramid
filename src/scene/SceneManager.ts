@@ -89,6 +89,10 @@ export class SceneManager {
     this.createTerrain();
     this.createLighting();
     this.createQuarry();
+    this.createPalmTrees();
+    this.createOasis();
+    this.createDistantDunes();
+    this.createDesertScrub();
 
     // Handle resize
     window.addEventListener('resize', () => this.onResize());
@@ -206,6 +210,159 @@ export class SceneManager {
       rock.rotation.set(Math.random(), Math.random(), Math.random());
       rock.castShadow = true;
       this.scene.add(rock);
+    }
+  }
+
+  private createPalmTrees(): void {
+    const trunkMat = new THREE.MeshLambertMaterial({ color: 0x8b6914 });
+    const frondMat = new THREE.MeshLambertMaterial({ color: 0x2d5a1e });
+    const frondDarkMat = new THREE.MeshLambertMaterial({ color: 0x1e4a12 });
+
+    const palmPositions = [
+      { x: 25, z: -18, h: 6, s: 0.9 },
+      { x: 28, z: -15, h: 7, s: 1.0 },
+      { x: 23, z: -20, h: 5, s: 0.7 },
+      { x: -15, z: -22, h: 6.5, s: 0.85 },
+      { x: -17, z: -25, h: 7.5, s: 1.1 },
+      { x: 35, z: 5, h: 5.5, s: 0.8 },
+      { x: -30, z: -15, h: 6, s: 0.9 },
+    ];
+
+    for (const p of palmPositions) {
+      const group = new THREE.Group();
+
+      // Trunk — slightly tapered cylinder with lean
+      const trunkGeo = new THREE.CylinderGeometry(0.15 * p.s, 0.25 * p.s, p.h, 6);
+      const trunk = new THREE.Mesh(trunkGeo, trunkMat);
+      trunk.position.y = p.h / 2;
+      trunk.rotation.z = (Math.random() - 0.5) * 0.15;
+      trunk.rotation.x = (Math.random() - 0.5) * 0.1;
+      trunk.castShadow = true;
+      group.add(trunk);
+
+      // Frond canopy — several drooping cones
+      const frondCount = 5 + Math.floor(Math.random() * 3);
+      for (let i = 0; i < frondCount; i++) {
+        const angle = (i / frondCount) * Math.PI * 2 + Math.random() * 0.3;
+        const frondGeo = new THREE.ConeGeometry(1.2 * p.s, 2.5 * p.s, 4);
+        const mat = Math.random() > 0.4 ? frondMat : frondDarkMat;
+        const frond = new THREE.Mesh(frondGeo, mat);
+        frond.position.set(
+          Math.cos(angle) * 0.8 * p.s,
+          p.h - 0.3,
+          Math.sin(angle) * 0.8 * p.s
+        );
+        frond.rotation.x = Math.cos(angle) * 0.7;
+        frond.rotation.z = -Math.sin(angle) * 0.7;
+        frond.castShadow = true;
+        group.add(frond);
+      }
+
+      group.position.set(p.x, 0, p.z);
+      this.scene.add(group);
+    }
+  }
+
+  private createOasis(): void {
+    // Small water disc
+    const waterGeo = new THREE.CircleGeometry(4, 24);
+    waterGeo.rotateX(-Math.PI / 2);
+    const waterMat = new THREE.MeshStandardMaterial({
+      color: 0x1a6b8a,
+      roughness: 0.1,
+      metalness: 0.4,
+      transparent: true,
+      opacity: 0.75,
+    });
+    const water = new THREE.Mesh(waterGeo, waterMat);
+    water.position.set(26, 0.05, -17);
+    water.receiveShadow = true;
+    this.scene.add(water);
+
+    // Sandy bank ring around the water
+    const bankGeo = new THREE.RingGeometry(3.8, 5.5, 24);
+    bankGeo.rotateX(-Math.PI / 2);
+    const bankMat = new THREE.MeshLambertMaterial({ color: 0xc4a060 });
+    const bank = new THREE.Mesh(bankGeo, bankMat);
+    bank.position.set(26, 0.03, -17);
+    this.scene.add(bank);
+
+    // Reeds — thin cylinders around the water edge
+    const reedMat = new THREE.MeshLambertMaterial({ color: 0x4a7a2e });
+    for (let i = 0; i < 12; i++) {
+      const angle = (i / 12) * Math.PI * 2 + Math.random() * 0.5;
+      const r = 3.2 + Math.random() * 1.2;
+      const height = 1.5 + Math.random() * 1.5;
+      const reedGeo = new THREE.CylinderGeometry(0.03, 0.05, height, 4);
+      const reed = new THREE.Mesh(reedGeo, reedMat);
+      reed.position.set(
+        26 + Math.cos(angle) * r,
+        height / 2,
+        -17 + Math.sin(angle) * r
+      );
+      reed.rotation.z = (Math.random() - 0.5) * 0.2;
+      this.scene.add(reed);
+    }
+  }
+
+  private createDistantDunes(): void {
+    const duneMat = new THREE.MeshLambertMaterial({ color: 0xc9a06a });
+
+    const dunes = [
+      { x: -80, z: -60, sx: 40, sy: 6, sz: 15 },
+      { x: 70, z: -80, sx: 50, sy: 8, sz: 18 },
+      { x: -50, z: 80, sx: 45, sy: 5, sz: 20 },
+      { x: 90, z: 50, sx: 35, sy: 7, sz: 14 },
+      { x: 0, z: -100, sx: 60, sy: 9, sz: 16 },
+      { x: -100, z: 20, sx: 30, sy: 5, sz: 12 },
+    ];
+
+    for (const d of dunes) {
+      const duneGeo = new THREE.SphereGeometry(1, 12, 6, 0, Math.PI * 2, 0, Math.PI / 2);
+      duneGeo.scale(d.sx, d.sy, d.sz);
+      const dune = new THREE.Mesh(duneGeo, duneMat);
+      dune.position.set(d.x, -0.5, d.z);
+      dune.rotation.y = Math.random() * Math.PI;
+      dune.receiveShadow = true;
+      this.scene.add(dune);
+    }
+  }
+
+  private createDesertScrub(): void {
+    const scrubMat = new THREE.MeshLambertMaterial({ color: 0x8a7a3a });
+    const dryGreenMat = new THREE.MeshLambertMaterial({ color: 0x6b7a32 });
+
+    const scrubPositions = [
+      { x: 18, z: 20, s: 0.6 },
+      { x: -25, z: 5, s: 0.5 },
+      { x: 30, z: 15, s: 0.7 },
+      { x: -12, z: 25, s: 0.4 },
+      { x: 15, z: -30, s: 0.55 },
+      { x: -35, z: -8, s: 0.5 },
+      { x: 40, z: -12, s: 0.45 },
+      { x: -8, z: -35, s: 0.6 },
+      { x: 22, z: 28, s: 0.35 },
+      { x: -28, z: 20, s: 0.5 },
+      { x: 35, z: -25, s: 0.4 },
+      { x: -40, z: -20, s: 0.55 },
+    ];
+
+    for (const p of scrubPositions) {
+      const mat = Math.random() > 0.5 ? scrubMat : dryGreenMat;
+      // Small irregular bush — icosahedron with random vertex noise
+      const bushGeo = new THREE.IcosahedronGeometry(p.s, 1);
+      const verts = bushGeo.getAttribute('position');
+      for (let i = 0; i < verts.count; i++) {
+        verts.setX(i, verts.getX(i) + (Math.random() - 0.5) * 0.2 * p.s);
+        verts.setY(i, Math.max(0, verts.getY(i) + (Math.random() - 0.5) * 0.15 * p.s));
+        verts.setZ(i, verts.getZ(i) + (Math.random() - 0.5) * 0.2 * p.s);
+      }
+      bushGeo.computeVertexNormals();
+
+      const bush = new THREE.Mesh(bushGeo, mat);
+      bush.position.set(p.x, p.s * 0.3, p.z);
+      bush.castShadow = true;
+      this.scene.add(bush);
     }
   }
 
