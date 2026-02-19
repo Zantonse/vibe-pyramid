@@ -228,6 +228,189 @@ function generateBoatSlots(offset: THREE.Vector3): BlockSlot[] {
   return slots;
 }
 
+function generateStepPyramidSlots(offset: THREE.Vector3): BlockSlot[] {
+  const slots: BlockSlot[] = [];
+  // Djoser-style step pyramid: 6 tiers, each stepping in by 1 on each side
+  // Base: 14x14, then 12x12, 10x10, 8x8, 6x6, 4x4
+  for (let tier = 0; tier < 6; tier++) {
+    const size = 14 - tier * 2;
+    const tierHeight = 2; // Each tier is 2 blocks tall
+    const half = (size * BLOCK_UNIT) / 2;
+
+    for (let dy = 0; dy < tierHeight; dy++) {
+      const y = tier * tierHeight * BLOCK_UNIT + dy * BLOCK_UNIT;
+      for (let row = 0; row < size; row++) {
+        for (let col = 0; col < size; col++) {
+          slots.push({
+            position: new THREE.Vector3(
+              offset.x - half + col * BLOCK_UNIT + BLOCK_UNIT / 2,
+              y + BLOCK_SIZE / 2,
+              offset.z - half + row * BLOCK_UNIT + BLOCK_UNIT / 2
+            ),
+            placed: false,
+          });
+        }
+      }
+    }
+  }
+  return slots;
+}
+
+function generateTempleSlots(offset: THREE.Vector3): BlockSlot[] {
+  const slots: BlockSlot[] = [];
+
+  // Mortuary temple: raised platform + walled courtyard + inner sanctum
+
+  // Platform base: 12x8, 1 block tall
+  for (let z = 0; z < 8; z++) {
+    for (let x = 0; x < 12; x++) {
+      slots.push({
+        position: new THREE.Vector3(
+          offset.x - 6 * BLOCK_UNIT + x * BLOCK_UNIT + BLOCK_UNIT / 2,
+          BLOCK_SIZE / 2,
+          offset.z - 4 * BLOCK_UNIT + z * BLOCK_UNIT + BLOCK_UNIT / 2
+        ),
+        placed: false,
+      });
+    }
+  }
+
+  // Perimeter walls: 4 blocks tall on the edges of the platform
+  for (let y = 1; y < 5; y++) {
+    for (let x = 0; x < 12; x++) {
+      // Front wall (z=0) and back wall (z=7)
+      for (const z of [0, 7]) {
+        slots.push({
+          position: new THREE.Vector3(
+            offset.x - 6 * BLOCK_UNIT + x * BLOCK_UNIT + BLOCK_UNIT / 2,
+            y * BLOCK_UNIT + BLOCK_SIZE / 2,
+            offset.z - 4 * BLOCK_UNIT + z * BLOCK_UNIT + BLOCK_UNIT / 2
+          ),
+          placed: false,
+        });
+      }
+    }
+    // Side walls (x=0 and x=11), excluding corners already placed
+    for (let z = 1; z < 7; z++) {
+      for (const x of [0, 11]) {
+        slots.push({
+          position: new THREE.Vector3(
+            offset.x - 6 * BLOCK_UNIT + x * BLOCK_UNIT + BLOCK_UNIT / 2,
+            y * BLOCK_UNIT + BLOCK_SIZE / 2,
+            offset.z - 4 * BLOCK_UNIT + z * BLOCK_UNIT + BLOCK_UNIT / 2
+          ),
+          placed: false,
+        });
+      }
+    }
+  }
+
+  // Inner sanctum: 4x3 raised block, 2 high, centered
+  for (let y = 1; y < 3; y++) {
+    for (let z = 3; z < 6; z++) {
+      for (let x = 4; x < 8; x++) {
+        slots.push({
+          position: new THREE.Vector3(
+            offset.x - 6 * BLOCK_UNIT + x * BLOCK_UNIT + BLOCK_UNIT / 2,
+            y * BLOCK_UNIT + BLOCK_SIZE / 2,
+            offset.z - 4 * BLOCK_UNIT + z * BLOCK_UNIT + BLOCK_UNIT / 2
+          ),
+          placed: false,
+        });
+      }
+    }
+  }
+
+  return slots;
+}
+
+function generateMastabaSlots(offset: THREE.Vector3): BlockSlot[] {
+  const slots: BlockSlot[] = [];
+  // Mastaba: flat-topped rectangular tomb with sloped sides
+  // 3 layers, each stepping in by 1 on each side
+  // Base: 8x6, then 6x4, then 4x2 (top platform)
+  const layers = [
+    { w: 8, d: 6 },
+    { w: 6, d: 4 },
+    { w: 4, d: 2 },
+  ];
+
+  for (let layer = 0; layer < layers.length; layer++) {
+    const { w, d } = layers[layer];
+    const y = layer * BLOCK_UNIT;
+    const halfW = (w * BLOCK_UNIT) / 2;
+    const halfD = (d * BLOCK_UNIT) / 2;
+
+    for (let row = 0; row < d; row++) {
+      for (let col = 0; col < w; col++) {
+        slots.push({
+          position: new THREE.Vector3(
+            offset.x - halfW + col * BLOCK_UNIT + BLOCK_UNIT / 2,
+            y + BLOCK_SIZE / 2,
+            offset.z - halfD + row * BLOCK_UNIT + BLOCK_UNIT / 2
+          ),
+          placed: false,
+        });
+      }
+    }
+  }
+
+  return slots;
+}
+
+function generatePylonGateSlots(offset: THREE.Vector3): BlockSlot[] {
+  const slots: BlockSlot[] = [];
+  // Two massive trapezoidal towers flanking a gate
+  // Each tower: 4 wide at base, tapering to 2 wide, 8 blocks tall
+  // Gate opening: 3 blocks wide between towers
+
+  const gateHalf = 1.5 * BLOCK_UNIT; // 1.5 blocks each side of center
+
+  for (const side of [-1, 1]) {
+    // Tower center X: offset.x + side * (gateHalf + 2 * BLOCK_UNIT)
+    const towerCx = offset.x + side * (gateHalf + 2 * BLOCK_UNIT);
+
+    for (let y = 0; y < 8; y++) {
+      // Width tapers: 4 at bottom, 3 middle, 2 at top
+      let width: number;
+      if (y < 3) width = 4;
+      else if (y < 6) width = 3;
+      else width = 2;
+
+      const halfW = (width * BLOCK_UNIT) / 2;
+      for (let x = 0; x < width; x++) {
+        // Depth: 2 blocks deep
+        for (let z = 0; z < 2; z++) {
+          slots.push({
+            position: new THREE.Vector3(
+              towerCx - halfW + x * BLOCK_UNIT + BLOCK_UNIT / 2,
+              y * BLOCK_UNIT + BLOCK_SIZE / 2,
+              offset.z + (z - 1) * BLOCK_UNIT + BLOCK_UNIT / 2
+            ),
+            placed: false,
+          });
+        }
+      }
+    }
+  }
+
+  // Lintel beam across the top of the gate (connecting the two towers)
+  for (let x = -2; x <= 2; x++) {
+    for (let z = 0; z < 2; z++) {
+      slots.push({
+        position: new THREE.Vector3(
+          offset.x + x * BLOCK_UNIT,
+          7 * BLOCK_UNIT + BLOCK_SIZE / 2,
+          offset.z + (z - 1) * BLOCK_UNIT + BLOCK_UNIT / 2
+        ),
+        placed: false,
+      });
+    }
+  }
+
+  return slots;
+}
+
 /** Ordered registry of all buildable structures after the main pyramid */
 export function getStructureRegistry(): Structure[] {
   return [
@@ -265,6 +448,34 @@ export function getStructureRegistry(): Structure[] {
       icon: '\u{26F5}',
       worldOffset: new THREE.Vector3(22, 0, -8),
       slots: generateBoatSlots(new THREE.Vector3(22, 0, -8)),
+    },
+    {
+      id: 'step-pyramid',
+      name: 'Step Pyramid of Djoser',
+      icon: '\u{1F3DB}',
+      worldOffset: new THREE.Vector3(-35, 0, -25),
+      slots: generateStepPyramidSlots(new THREE.Vector3(-35, 0, -25)),
+    },
+    {
+      id: 'temple',
+      name: 'Mortuary Temple',
+      icon: '\u{26E9}',
+      worldOffset: new THREE.Vector3(15, 0, -25),
+      slots: generateTempleSlots(new THREE.Vector3(15, 0, -25)),
+    },
+    {
+      id: 'mastaba',
+      name: 'Mastaba Tomb',
+      icon: '\u{1F3DA}',
+      worldOffset: new THREE.Vector3(-15, 0, -20),
+      slots: generateMastabaSlots(new THREE.Vector3(-15, 0, -20)),
+    },
+    {
+      id: 'pylon-gate',
+      name: 'Pylon Gate',
+      icon: '\u{1F3EF}',
+      worldOffset: new THREE.Vector3(0, 0, -18),
+      slots: generatePylonGateSlots(new THREE.Vector3(0, 0, -18)),
     },
   ];
 }

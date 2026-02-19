@@ -158,13 +158,24 @@ export class SceneManager {
     const geo = new THREE.PlaneGeometry(500, 500, 64, 64);
     geo.rotateX(-Math.PI / 2);
 
-    // Subtle dune displacement
+    // Subtle dune displacement with oasis depression
+    const oasisCx = 40, oasisCz = 35, oasisR = 10;
     const positions = geo.getAttribute('position');
     for (let i = 0; i < positions.count; i++) {
       const x = positions.getX(i);
       const z = positions.getZ(i);
-      const y = Math.sin(x * 0.02) * Math.cos(z * 0.03) * 0.5
-              + Math.sin(x * 0.05 + z * 0.04) * 0.3;
+      let y = Math.sin(x * 0.02) * Math.cos(z * 0.03) * 0.5
+            + Math.sin(x * 0.05 + z * 0.04) * 0.3;
+
+      // Depress terrain around oasis to create a natural basin
+      const dx = x - oasisCx;
+      const dz = z - oasisCz;
+      const dist = Math.sqrt(dx * dx + dz * dz);
+      if (dist < oasisR) {
+        const t = 1 - dist / oasisR; // 1 at center, 0 at edge
+        y -= t * t * 1.2; // Smooth parabolic depression, ~1.2 deep at center
+      }
+
       positions.setY(i, y);
     }
     geo.computeVertexNormals();
@@ -235,6 +246,9 @@ export class SceneManager {
       { x: -30, z: -15, h: 6, s: 0.9 },
     ];
 
+    // Oasis basin params for palm Y placement
+    const oasisCx = 40, oasisCz = 35, oasisBasinR = 10, oasisBasinDepth = 1.2;
+
     for (const p of palmPositions) {
       const group = new THREE.Group();
 
@@ -265,7 +279,16 @@ export class SceneManager {
         group.add(frond);
       }
 
-      group.position.set(p.x, 0, p.z);
+      // Lower palms near oasis into the basin
+      let groundY = 0;
+      const dx = p.x - oasisCx, dz = p.z - oasisCz;
+      const dist = Math.sqrt(dx * dx + dz * dz);
+      if (dist < oasisBasinR) {
+        const t = 1 - dist / oasisBasinR;
+        groundY = -(t * t * oasisBasinDepth);
+      }
+
+      group.position.set(p.x, groundY, p.z);
       this.scene.add(group);
     }
   }
@@ -273,15 +296,24 @@ export class SceneManager {
   private createOasis(): void {
     const cx = 40;
     const cz = 35;
+    const basinDepth = 1.2; // Must match terrain depression
+    const basinR = 10;
 
-    // Water surface is now handled by WaterShader in main.ts — no duplicate here
+    // Helper: get basin Y offset at a given radius from center
+    const basinY = (r: number): number => {
+      if (r >= basinR) return 0;
+      const t = 1 - r / basinR;
+      return -(t * t * basinDepth);
+    };
+
+    // Water surface is handled by WaterShader in main.ts
 
     // Sandy bank ring around the water (sized for radius-6 pool)
     const bankGeo = new THREE.RingGeometry(5.5, 8.0, 24);
     bankGeo.rotateX(-Math.PI / 2);
     const bankMat = new THREE.MeshLambertMaterial({ color: 0xc4a060 });
     const bank = new THREE.Mesh(bankGeo, bankMat);
-    bank.position.set(cx, 0.03, cz);
+    bank.position.set(cx, basinY(6.5) + 0.03, cz);
     this.scene.add(bank);
 
     // Darker wet sand ring at water's edge
@@ -289,7 +321,7 @@ export class SceneManager {
     wetBankGeo.rotateX(-Math.PI / 2);
     const wetBankMat = new THREE.MeshLambertMaterial({ color: 0x8a7a50 });
     const wetBank = new THREE.Mesh(wetBankGeo, wetBankMat);
-    wetBank.position.set(cx, 0.04, cz);
+    wetBank.position.set(cx, basinY(5.7) + 0.04, cz);
     this.scene.add(wetBank);
 
     // Reeds — thin cylinders clustered around the water edge
@@ -304,7 +336,7 @@ export class SceneManager {
       const reed = new THREE.Mesh(reedGeo, mat);
       reed.position.set(
         cx + Math.cos(angle) * r,
-        height / 2,
+        basinY(r) + height / 2,
         cz + Math.sin(angle) * r
       );
       reed.rotation.z = (Math.random() - 0.5) * 0.25;
@@ -321,7 +353,7 @@ export class SceneManager {
       const turf = new THREE.Mesh(turfGeo, grassMat);
       turf.position.set(
         cx + Math.cos(angle) * r,
-        0.2,
+        basinY(r) + 0.2,
         cz + Math.sin(angle) * r
       );
       this.scene.add(turf);
@@ -337,7 +369,7 @@ export class SceneManager {
       const rock = new THREE.Mesh(rockGeo, rockMat);
       rock.position.set(
         cx + Math.cos(angle) * r,
-        s * 0.5,
+        basinY(r) + s * 0.5,
         cz + Math.sin(angle) * r
       );
       rock.rotation.set(Math.random(), Math.random(), Math.random());

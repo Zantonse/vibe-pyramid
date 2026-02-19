@@ -34,6 +34,10 @@ export const MILESTONES: Milestone[] = [
   { name: 'Path of the Gods', xpThreshold: 50000, icon: '\u{1F6E4}' },
   { name: 'Pyramid of the Queen', xpThreshold: 65000, icon: '\u{1F53A}' },
   { name: 'Solar Barque', xpThreshold: 85000, icon: '\u{26F5}' },
+  { name: 'Step Pyramid of Djoser', xpThreshold: 110000, icon: '\u{1F3DB}' },
+  { name: 'Mortuary Temple', xpThreshold: 140000, icon: '\u{26E9}' },
+  { name: 'Mastaba Tomb', xpThreshold: 175000, icon: '\u{1F3DA}' },
+  { name: 'Pylon Gate', xpThreshold: 215000, icon: '\u{1F3EF}' },
 ];
 
 export interface EraVisual {
@@ -67,12 +71,24 @@ export const ERA_VISUALS: EraVisual[] = [
   { hue: 0.11, hueRange: 0.02, saturation: 0.25, saturationRange: 0.08, lightness: 0.75, lightnessRange: 0.06, roughness: 0.45, metalness: 0.15, emissiveIntensity: 0.05 },
   // Level 8: Crown of Gold — pure gold
   { hue: 0.13, hueRange: 0.015, saturation: 0.8, saturationRange: 0.08, lightness: 0.7, lightnessRange: 0.06, roughness: 0.2, metalness: 0.6, emissiveIntensity: 0.2 },
-  // Levels 9-13: Placeholder — reuse gold era for future structure building
-  { hue: 0.13, hueRange: 0.015, saturation: 0.8, saturationRange: 0.08, lightness: 0.7, lightnessRange: 0.06, roughness: 0.2, metalness: 0.6, emissiveIntensity: 0.2 },
-  { hue: 0.13, hueRange: 0.015, saturation: 0.8, saturationRange: 0.08, lightness: 0.7, lightnessRange: 0.06, roughness: 0.2, metalness: 0.6, emissiveIntensity: 0.2 },
-  { hue: 0.13, hueRange: 0.015, saturation: 0.8, saturationRange: 0.08, lightness: 0.7, lightnessRange: 0.06, roughness: 0.2, metalness: 0.6, emissiveIntensity: 0.2 },
-  { hue: 0.13, hueRange: 0.015, saturation: 0.8, saturationRange: 0.08, lightness: 0.7, lightnessRange: 0.06, roughness: 0.2, metalness: 0.6, emissiveIntensity: 0.2 },
-  { hue: 0.13, hueRange: 0.015, saturation: 0.8, saturationRange: 0.08, lightness: 0.7, lightnessRange: 0.06, roughness: 0.2, metalness: 0.6, emissiveIntensity: 0.2 },
+  // Level 9: Raising the Obelisk — red granite
+  { hue: 0.02, hueRange: 0.02, saturation: 0.45, saturationRange: 0.1, lightness: 0.45, lightnessRange: 0.08, roughness: 0.35, metalness: 0.2, emissiveIntensity: 0.05 },
+  // Level 10: Guardian of the Sands — desert amber
+  { hue: 0.09, hueRange: 0.02, saturation: 0.55, saturationRange: 0.1, lightness: 0.6, lightnessRange: 0.08, roughness: 0.4, metalness: 0.1, emissiveIntensity: 0.08 },
+  // Level 11: Path of the Gods — lapis lazuli blue
+  { hue: 0.62, hueRange: 0.03, saturation: 0.6, saturationRange: 0.1, lightness: 0.4, lightnessRange: 0.08, roughness: 0.3, metalness: 0.25, emissiveIntensity: 0.1 },
+  // Level 12: Pyramid of the Queen — rose quartz
+  { hue: 0.95, hueRange: 0.02, saturation: 0.35, saturationRange: 0.08, lightness: 0.7, lightnessRange: 0.06, roughness: 0.3, metalness: 0.15, emissiveIntensity: 0.08 },
+  // Level 13: Solar Barque — cedar wood brown
+  { hue: 0.06, hueRange: 0.02, saturation: 0.5, saturationRange: 0.1, lightness: 0.4, lightnessRange: 0.08, roughness: 0.6, metalness: 0.05, emissiveIntensity: 0 },
+  // Level 14: Step Pyramid of Djoser — ancient weathered stone
+  { hue: 0.08, hueRange: 0.03, saturation: 0.2, saturationRange: 0.08, lightness: 0.6, lightnessRange: 0.1, roughness: 0.8, metalness: 0.05, emissiveIntensity: 0 },
+  // Level 15: Mortuary Temple — polished basalt
+  { hue: 0.55, hueRange: 0.04, saturation: 0.1, saturationRange: 0.05, lightness: 0.3, lightnessRange: 0.06, roughness: 0.25, metalness: 0.35, emissiveIntensity: 0.05 },
+  // Level 16: Mastaba Tomb — warm adobe clay
+  { hue: 0.05, hueRange: 0.02, saturation: 0.5, saturationRange: 0.1, lightness: 0.5, lightnessRange: 0.08, roughness: 0.7, metalness: 0, emissiveIntensity: 0 },
+  // Level 17: Pylon Gate — turquoise faience
+  { hue: 0.48, hueRange: 0.03, saturation: 0.7, saturationRange: 0.1, lightness: 0.55, lightnessRange: 0.08, roughness: 0.3, metalness: 0.2, emissiveIntensity: 0.12 },
 ];
 
 export interface MilestoneUnlock {
