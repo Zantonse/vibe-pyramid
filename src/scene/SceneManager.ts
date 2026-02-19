@@ -217,13 +217,45 @@ export class SceneManager {
     }
   }
 
+  private createPalmFrondGeo(length: number, width: number): THREE.BufferGeometry {
+    // Curved palm frond: a tapered plane that droops along its length
+    const segments = 6;
+    const verts: number[] = [];
+    const indices: number[] = [];
+
+    for (let i = 0; i <= segments; i++) {
+      const t = i / segments;
+      // Frond tapers from full width to a point
+      const w = width * (1 - t * 0.85);
+      // Droop curve: starts going up slightly, then arcs down
+      const y = Math.sin(t * 0.4) * length * 0.15 - t * t * length * 0.35;
+      const z = t * length;
+
+      verts.push(-w / 2, y, z); // left edge
+      verts.push(w / 2, y, z);  // right edge
+    }
+
+    for (let i = 0; i < segments; i++) {
+      const a = i * 2, b = i * 2 + 1, c = (i + 1) * 2, d = (i + 1) * 2 + 1;
+      indices.push(a, c, b);
+      indices.push(b, c, d);
+    }
+
+    const geo = new THREE.BufferGeometry();
+    geo.setAttribute('position', new THREE.Float32BufferAttribute(verts, 3));
+    geo.setIndex(indices);
+    geo.computeVertexNormals();
+    return geo;
+  }
+
   private createPalmTrees(): void {
     const trunkMat = new THREE.MeshLambertMaterial({ color: 0x8b6914 });
-    const frondMat = new THREE.MeshLambertMaterial({ color: 0x2d5a1e });
-    const frondDarkMat = new THREE.MeshLambertMaterial({ color: 0x1e4a12 });
+    const trunkRingMat = new THREE.MeshLambertMaterial({ color: 0x6b5010 });
+    const frondMat = new THREE.MeshLambertMaterial({ color: 0x2d7a1e, side: THREE.DoubleSide });
+    const frondDarkMat = new THREE.MeshLambertMaterial({ color: 0x1e6a12, side: THREE.DoubleSide });
 
     const palmPositions = [
-      // Ring around oasis lake (40, 35) — spread at ~11-13 units from center
+      // Ring around oasis lake (40, 35)
       { x: 30, z: 32, h: 7, s: 1.0 },
       { x: 33, z: 25, h: 6.5, s: 0.95 },
       { x: 42, z: 23, h: 6, s: 0.85 },
@@ -246,29 +278,58 @@ export class SceneManager {
     for (const p of palmPositions) {
       const group = new THREE.Group();
 
-      // Trunk — slightly tapered cylinder with lean
-      const trunkGeo = new THREE.CylinderGeometry(0.15 * p.s, 0.25 * p.s, p.h, 6);
+      // Trunk — tapered cylinder with slight curve (lean)
+      const trunkGeo = new THREE.CylinderGeometry(0.12 * p.s, 0.22 * p.s, p.h, 6);
       const trunk = new THREE.Mesh(trunkGeo, trunkMat);
       trunk.position.y = p.h / 2;
-      trunk.rotation.z = (Math.random() - 0.5) * 0.15;
-      trunk.rotation.x = (Math.random() - 0.5) * 0.1;
+      const leanX = (Math.random() - 0.5) * 0.2;
+      const leanZ = (Math.random() - 0.5) * 0.15;
+      trunk.rotation.z = leanX;
+      trunk.rotation.x = leanZ;
       trunk.castShadow = true;
       group.add(trunk);
 
-      // Frond canopy — several drooping cones
-      const frondCount = 5 + Math.floor(Math.random() * 3);
+      // Trunk rings — horizontal bands for texture
+      for (let ring = 0; ring < 4; ring++) {
+        const ry = p.h * 0.2 + ring * (p.h * 0.18);
+        const ringGeo = new THREE.TorusGeometry(0.17 * p.s, 0.03 * p.s, 4, 6);
+        const ringMesh = new THREE.Mesh(ringGeo, trunkRingMat);
+        ringMesh.position.y = ry;
+        ringMesh.rotation.x = Math.PI / 2;
+        group.add(ringMesh);
+      }
+
+      // Crown — small coconut cluster at top
+      const coconutMat = new THREE.MeshLambertMaterial({ color: 0x5a3a0a });
+      for (let c = 0; c < 3; c++) {
+        const ca = (c / 3) * Math.PI * 2;
+        const coconut = new THREE.Mesh(
+          new THREE.SphereGeometry(0.12 * p.s, 5, 5),
+          coconutMat
+        );
+        coconut.position.set(
+          Math.cos(ca) * 0.15 * p.s,
+          p.h - 0.15,
+          Math.sin(ca) * 0.15 * p.s
+        );
+        group.add(coconut);
+      }
+
+      // Palm fronds — long curved blades radiating outward and drooping
+      const frondCount = 7 + Math.floor(Math.random() * 3);
       for (let i = 0; i < frondCount; i++) {
         const angle = (i / frondCount) * Math.PI * 2 + Math.random() * 0.3;
-        const frondGeo = new THREE.ConeGeometry(1.2 * p.s, 2.5 * p.s, 4);
+        const frondLen = (2.5 + Math.random() * 1.0) * p.s;
+        const frondW = (0.4 + Math.random() * 0.15) * p.s;
+        const frondGeo = this.createPalmFrondGeo(frondLen, frondW);
         const mat = Math.random() > 0.4 ? frondMat : frondDarkMat;
         const frond = new THREE.Mesh(frondGeo, mat);
-        frond.position.set(
-          Math.cos(angle) * 0.8 * p.s,
-          p.h - 0.3,
-          Math.sin(angle) * 0.8 * p.s
-        );
-        frond.rotation.x = Math.cos(angle) * 0.7;
-        frond.rotation.z = -Math.sin(angle) * 0.7;
+
+        frond.position.set(0, p.h + 0.1, 0);
+        // Rotate to radiate outward from trunk top
+        frond.rotation.y = angle;
+        // Slight upward tilt variation
+        frond.rotation.x = -(0.1 + Math.random() * 0.2);
         frond.castShadow = true;
         group.add(frond);
       }
