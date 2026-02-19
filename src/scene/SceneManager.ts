@@ -24,6 +24,32 @@ const ATMOSPHERE_CONFIGS: AtmosphereConfig[] = [
   { midColorBoost: 0.7, ambientBoost: 0.35, sunIntensityBoost: 0.4, innerGlow: true, capstoneBeacon: true },
   { midColorBoost: 0.7, ambientBoost: 0.35, sunIntensityBoost: 0.4, innerGlow: true, capstoneBeacon: true },
   { midColorBoost: 0.7, ambientBoost: 0.35, sunIntensityBoost: 0.4, innerGlow: true, capstoneBeacon: true },
+  // Levels 14-17 (fill to match original 18 milestones)
+  { midColorBoost: 0.7, ambientBoost: 0.35, sunIntensityBoost: 0.4, innerGlow: true, capstoneBeacon: true },
+  { midColorBoost: 0.7, ambientBoost: 0.35, sunIntensityBoost: 0.4, innerGlow: true, capstoneBeacon: true },
+  { midColorBoost: 0.7, ambientBoost: 0.35, sunIntensityBoost: 0.4, innerGlow: true, capstoneBeacon: true },
+  { midColorBoost: 0.7, ambientBoost: 0.35, sunIntensityBoost: 0.4, innerGlow: true, capstoneBeacon: true },
+  // Levels 18-23 (gradual ramp)
+  { midColorBoost: 0.72, ambientBoost: 0.36, sunIntensityBoost: 0.42, innerGlow: true, capstoneBeacon: true },
+  { midColorBoost: 0.74, ambientBoost: 0.37, sunIntensityBoost: 0.44, innerGlow: true, capstoneBeacon: true },
+  { midColorBoost: 0.76, ambientBoost: 0.38, sunIntensityBoost: 0.46, innerGlow: true, capstoneBeacon: true },
+  { midColorBoost: 0.78, ambientBoost: 0.39, sunIntensityBoost: 0.48, innerGlow: true, capstoneBeacon: true },
+  { midColorBoost: 0.8, ambientBoost: 0.4, sunIntensityBoost: 0.5, innerGlow: true, capstoneBeacon: true },
+  { midColorBoost: 0.82, ambientBoost: 0.41, sunIntensityBoost: 0.52, innerGlow: true, capstoneBeacon: true },
+  // Levels 24-29
+  { midColorBoost: 0.84, ambientBoost: 0.42, sunIntensityBoost: 0.54, innerGlow: true, capstoneBeacon: true },
+  { midColorBoost: 0.86, ambientBoost: 0.43, sunIntensityBoost: 0.56, innerGlow: true, capstoneBeacon: true },
+  { midColorBoost: 0.88, ambientBoost: 0.44, sunIntensityBoost: 0.58, innerGlow: true, capstoneBeacon: true },
+  { midColorBoost: 0.9, ambientBoost: 0.45, sunIntensityBoost: 0.6, innerGlow: true, capstoneBeacon: true },
+  { midColorBoost: 0.92, ambientBoost: 0.46, sunIntensityBoost: 0.62, innerGlow: true, capstoneBeacon: true },
+  { midColorBoost: 0.94, ambientBoost: 0.47, sunIntensityBoost: 0.64, innerGlow: true, capstoneBeacon: true },
+  // Levels 30-35 (peak atmosphere)
+  { midColorBoost: 0.96, ambientBoost: 0.48, sunIntensityBoost: 0.66, innerGlow: true, capstoneBeacon: true },
+  { midColorBoost: 0.98, ambientBoost: 0.49, sunIntensityBoost: 0.68, innerGlow: true, capstoneBeacon: true },
+  { midColorBoost: 1.0, ambientBoost: 0.5, sunIntensityBoost: 0.7, innerGlow: true, capstoneBeacon: true },
+  { midColorBoost: 1.0, ambientBoost: 0.5, sunIntensityBoost: 0.7, innerGlow: true, capstoneBeacon: true },
+  { midColorBoost: 1.0, ambientBoost: 0.5, sunIntensityBoost: 0.7, innerGlow: true, capstoneBeacon: true },
+  { midColorBoost: 1.0, ambientBoost: 0.5, sunIntensityBoost: 0.7, innerGlow: true, capstoneBeacon: true },
 ];
 
 const _tempGold = new THREE.Color();
@@ -169,7 +195,27 @@ export class SceneManager {
     }
     geo.computeVertexNormals();
 
-    const mat = new THREE.MeshLambertMaterial({ color: 0xd4a574 }); // Sand color
+    // Add per-vertex color variation for natural sand look
+    const colors = new Float32Array(positions.count * 3);
+    const baseColor = new THREE.Color(0xd4a574);
+    const warmColor = new THREE.Color(0xdbb080);
+    const coolColor = new THREE.Color(0xc09060);
+    for (let i = 0; i < positions.count; i++) {
+      const blend = Math.random();
+      const c = blend < 0.5
+        ? baseColor.clone().lerp(warmColor, blend * 2)
+        : baseColor.clone().lerp(coolColor, (blend - 0.5) * 2);
+      colors[i * 3] = c.r;
+      colors[i * 3 + 1] = c.g;
+      colors[i * 3 + 2] = c.b;
+    }
+    geo.setAttribute('color', new THREE.BufferAttribute(colors, 3));
+
+    const mat = new THREE.MeshStandardMaterial({
+      vertexColors: true,
+      roughness: 0.92,
+      metalness: 0.0,
+    });
     const terrain = new THREE.Mesh(geo, mat);
     terrain.receiveShadow = true;
     this.scene.add(terrain);
@@ -198,22 +244,71 @@ export class SceneManager {
   }
 
   private createQuarry(): void {
-    // Cluster of dark rocks off to the side
-    const rockMat = new THREE.MeshLambertMaterial({ color: 0x5d4037 });
+    // Quarry boulders — modest-sized rocks with subtle surface roughness
+    const rockColors = [0x5d4037, 0x6d5040, 0x4d3530, 0x7a6050];
     const positions = [
-      { x: -20, z: 10, s: 2.5 },
-      { x: -22, z: 12, s: 1.8 },
-      { x: -18, z: 11, s: 2.0 },
-      { x: -21, z: 8, s: 1.5 },
-      { x: -19, z: 13, s: 1.2 },
+      { x: -20, z: 10, s: 1.4 },
+      { x: -22, z: 12, s: 1.0 },
+      { x: -18, z: 11, s: 1.2 },
+      { x: -21, z: 8, s: 0.9 },
+      { x: -19, z: 13, s: 0.8 },
     ];
     for (const pos of positions) {
       const geo = new THREE.DodecahedronGeometry(pos.s, 0);
+      // Gentle additive displacement for natural roughness
+      const verts = geo.getAttribute('position');
+      for (let i = 0; i < verts.count; i++) {
+        const jitter = (Math.random() - 0.5) * 0.15 * pos.s;
+        verts.setX(i, verts.getX(i) + jitter);
+        verts.setY(i, verts.getY(i) + (Math.random() - 0.5) * 0.1 * pos.s);
+        verts.setZ(i, verts.getZ(i) + jitter);
+      }
+      geo.computeVertexNormals();
+
+      const rockMat = new THREE.MeshStandardMaterial({
+        color: rockColors[Math.floor(Math.random() * rockColors.length)],
+        roughness: 0.85 + Math.random() * 0.15,
+        metalness: 0.02,
+      });
       const rock = new THREE.Mesh(geo, rockMat);
-      rock.position.set(pos.x, pos.s * 0.6, pos.z);
+      rock.position.set(pos.x, pos.s * 0.5, pos.z);
       rock.rotation.set(Math.random(), Math.random(), Math.random());
       rock.castShadow = true;
+      rock.receiveShadow = true;
       this.scene.add(rock);
+    }
+
+    // Scattered rubble — small broken pieces
+    const rubbleMat = new THREE.MeshStandardMaterial({ color: 0x6a5040, roughness: 0.95, metalness: 0.0 });
+    for (let i = 0; i < 8; i++) {
+      const s = 0.12 + Math.random() * 0.2;
+      const geo = new THREE.DodecahedronGeometry(s, 0);
+      const rubble = new THREE.Mesh(geo, rubbleMat);
+      rubble.position.set(
+        -20 + (Math.random() - 0.5) * 8,
+        s * 0.3,
+        10 + (Math.random() - 0.5) * 6
+      );
+      rubble.rotation.set(Math.random() * Math.PI, Math.random() * Math.PI, 0);
+      rubble.castShadow = true;
+      this.scene.add(rubble);
+    }
+
+    // Cut stone blocks — suggests quarry work in progress
+    const cutBlockMat = new THREE.MeshStandardMaterial({ color: 0xc4a56a, roughness: 0.7, metalness: 0.02 });
+    const cutBlocks = [
+      { x: -16, z: 14, sx: 1.2, sy: 0.8, sz: 0.9, ry: 0.3 },
+      { x: -24, z: 9, sx: 1.0, sy: 0.7, sz: 1.0, ry: -0.5 },
+      { x: -18, z: 7, sx: 0.8, sy: 0.6, sz: 0.7, ry: 1.1 },
+    ];
+    for (const cb of cutBlocks) {
+      const geo = new THREE.BoxGeometry(cb.sx, cb.sy, cb.sz);
+      const block = new THREE.Mesh(geo, cutBlockMat);
+      block.position.set(cb.x, cb.sy / 2, cb.z);
+      block.rotation.y = cb.ry;
+      block.castShadow = true;
+      block.receiveShadow = true;
+      this.scene.add(block);
     }
   }
 
@@ -249,10 +344,10 @@ export class SceneManager {
   }
 
   private createPalmTrees(): void {
-    const trunkMat = new THREE.MeshLambertMaterial({ color: 0x8b6914 });
-    const trunkRingMat = new THREE.MeshLambertMaterial({ color: 0x6b5010 });
-    const frondMat = new THREE.MeshLambertMaterial({ color: 0x2d7a1e, side: THREE.DoubleSide });
-    const frondDarkMat = new THREE.MeshLambertMaterial({ color: 0x1e6a12, side: THREE.DoubleSide });
+    const trunkMat = new THREE.MeshStandardMaterial({ color: 0x8b6914, roughness: 0.9, metalness: 0.0 });
+    const trunkRingMat = new THREE.MeshStandardMaterial({ color: 0x6b5010, roughness: 0.95, metalness: 0.0 });
+    const frondMat = new THREE.MeshStandardMaterial({ color: 0x2d7a1e, roughness: 0.75, metalness: 0.0, side: THREE.DoubleSide });
+    const frondDarkMat = new THREE.MeshStandardMaterial({ color: 0x1e6a12, roughness: 0.8, metalness: 0.0, side: THREE.DoubleSide });
 
     const palmPositions = [
       // Ring around oasis lake (40, 35)
@@ -300,7 +395,7 @@ export class SceneManager {
       }
 
       // Crown — small coconut cluster at top
-      const coconutMat = new THREE.MeshLambertMaterial({ color: 0x5a3a0a });
+      const coconutMat = new THREE.MeshStandardMaterial({ color: 0x5a3a0a, roughness: 0.7, metalness: 0.0 });
       for (let c = 0; c < 3; c++) {
         const ca = (c / 3) * Math.PI * 2;
         const coconut = new THREE.Mesh(
@@ -370,7 +465,7 @@ export class SceneManager {
       basinPos.setY(i, y);
     }
     basinGeo.computeVertexNormals();
-    const basinMat = new THREE.MeshLambertMaterial({ color: 0xc4a060 });
+    const basinMat = new THREE.MeshStandardMaterial({ color: 0xc4a060, roughness: 0.88, metalness: 0.0 });
     const basin = new THREE.Mesh(basinGeo, basinMat);
     basin.position.set(cx, 0, cz);
     basin.receiveShadow = true;
@@ -379,7 +474,7 @@ export class SceneManager {
     // Darker wet sand ring at water's edge
     const wetBankGeo = new THREE.RingGeometry(9.5, 11.5, 32);
     wetBankGeo.rotateX(-Math.PI / 2);
-    const wetBankMat = new THREE.MeshLambertMaterial({ color: 0x8a7a50 });
+    const wetBankMat = new THREE.MeshStandardMaterial({ color: 0x8a7a50, roughness: 0.6, metalness: 0.05 });
     const wetBank = new THREE.Mesh(wetBankGeo, wetBankMat);
     wetBank.position.set(cx, waterY + 0.02, cz);
     this.scene.add(wetBank);
@@ -391,8 +486,8 @@ export class SceneManager {
     };
 
     // Reeds — thin cylinders clustered around the water edge
-    const reedMat = new THREE.MeshLambertMaterial({ color: 0x4a7a2e });
-    const darkReedMat = new THREE.MeshLambertMaterial({ color: 0x3a6a20 });
+    const reedMat = new THREE.MeshStandardMaterial({ color: 0x4a7a2e, roughness: 0.8, metalness: 0.0 });
+    const darkReedMat = new THREE.MeshStandardMaterial({ color: 0x3a6a20, roughness: 0.85, metalness: 0.0 });
     for (let i = 0; i < 28; i++) {
       const angle = (i / 28) * Math.PI * 2 + Math.random() * 0.3;
       const r = 9.5 + Math.random() * 2.5;
@@ -407,11 +502,12 @@ export class SceneManager {
       );
       reed.rotation.z = (Math.random() - 0.5) * 0.25;
       reed.rotation.x = (Math.random() - 0.5) * 0.1;
+      reed.castShadow = true;
       this.scene.add(reed);
     }
 
     // Grass tufts on the basin slope
-    const grassMat = new THREE.MeshLambertMaterial({ color: 0x5a8a32 });
+    const grassMat = new THREE.MeshStandardMaterial({ color: 0x5a8a32, roughness: 0.85, metalness: 0.0 });
     for (let i = 0; i < 18; i++) {
       const angle = Math.random() * Math.PI * 2;
       const r = 11.0 + Math.random() * 3.0;
@@ -422,11 +518,12 @@ export class SceneManager {
         groundY(r) + 0.2,
         cz + Math.sin(angle) * r
       );
+      turf.castShadow = true;
       this.scene.add(turf);
     }
 
     // Rocks at water edge
-    const rockMat = new THREE.MeshLambertMaterial({ color: 0x7a7060 });
+    const rockMat = new THREE.MeshStandardMaterial({ color: 0x7a7060, roughness: 0.8, metalness: 0.03 });
     for (let i = 0; i < 8; i++) {
       const angle = Math.random() * Math.PI * 2;
       const r = 9.8 + Math.random() * 2.0;
@@ -439,12 +536,13 @@ export class SceneManager {
         cz + Math.sin(angle) * r
       );
       rock.rotation.set(Math.random(), Math.random(), Math.random());
+      rock.castShadow = true;
       this.scene.add(rock);
     }
   }
 
   private createDistantDunes(): void {
-    const duneMat = new THREE.MeshLambertMaterial({ color: 0xc9a06a });
+    const duneMat = new THREE.MeshStandardMaterial({ color: 0xc9a06a, roughness: 0.9, metalness: 0.0 });
 
     const dunes = [
       { x: -80, z: -60, sx: 40, sy: 6, sz: 15 },
@@ -467,8 +565,13 @@ export class SceneManager {
   }
 
   private createDesertScrub(): void {
-    const scrubMat = new THREE.MeshLambertMaterial({ color: 0x8a7a3a });
-    const dryGreenMat = new THREE.MeshLambertMaterial({ color: 0x6b7a32 });
+    const scrubColors = [
+      { color: 0x8a7a3a, roughness: 0.9 },
+      { color: 0x6b7a32, roughness: 0.85 },
+      { color: 0x7a8a2a, roughness: 0.88 },
+      { color: 0x5a6a28, roughness: 0.92 },
+    ];
+    const branchMat = new THREE.MeshStandardMaterial({ color: 0x6a5a30, roughness: 0.95, metalness: 0.0 });
 
     const scrubPositions = [
       { x: 18, z: 20, s: 0.6 },
@@ -486,21 +589,47 @@ export class SceneManager {
     ];
 
     for (const p of scrubPositions) {
-      const mat = Math.random() > 0.5 ? scrubMat : dryGreenMat;
-      // Small irregular bush — icosahedron with random vertex noise
+      const group = new THREE.Group();
+      const colorConfig = scrubColors[Math.floor(Math.random() * scrubColors.length)];
+      const mat = new THREE.MeshStandardMaterial({
+        color: colorConfig.color,
+        roughness: colorConfig.roughness,
+        metalness: 0.0,
+      });
+
+      // Main bush body — irregular icosahedron
       const bushGeo = new THREE.IcosahedronGeometry(p.s, 1);
       const verts = bushGeo.getAttribute('position');
       for (let i = 0; i < verts.count; i++) {
-        verts.setX(i, verts.getX(i) + (Math.random() - 0.5) * 0.2 * p.s);
-        verts.setY(i, Math.max(0, verts.getY(i) + (Math.random() - 0.5) * 0.15 * p.s));
-        verts.setZ(i, verts.getZ(i) + (Math.random() - 0.5) * 0.2 * p.s);
+        verts.setX(i, verts.getX(i) + (Math.random() - 0.5) * 0.25 * p.s);
+        verts.setY(i, Math.max(0, verts.getY(i) + (Math.random() - 0.5) * 0.2 * p.s));
+        verts.setZ(i, verts.getZ(i) + (Math.random() - 0.5) * 0.25 * p.s);
       }
       bushGeo.computeVertexNormals();
-
       const bush = new THREE.Mesh(bushGeo, mat);
-      bush.position.set(p.x, p.s * 0.3, p.z);
       bush.castShadow = true;
-      this.scene.add(bush);
+      group.add(bush);
+
+      // Twigs/branches poking out — 3-5 per bush
+      const branchCount = 3 + Math.floor(Math.random() * 3);
+      for (let b = 0; b < branchCount; b++) {
+        const angle = Math.random() * Math.PI * 2;
+        const elevAngle = (Math.random() - 0.3) * Math.PI * 0.4;
+        const branchLen = p.s * (0.5 + Math.random() * 0.8);
+        const branchGeo = new THREE.CylinderGeometry(0.01 * p.s, 0.025 * p.s, branchLen, 3);
+        const branch = new THREE.Mesh(branchGeo, branchMat);
+
+        // Position branch to poke outward from bush center
+        const dx = Math.cos(angle) * Math.cos(elevAngle) * p.s * 0.4;
+        const dy = Math.sin(elevAngle) * p.s * 0.3 + branchLen * 0.3;
+        const dz = Math.sin(angle) * Math.cos(elevAngle) * p.s * 0.4;
+        branch.position.set(dx, dy, dz);
+        branch.rotation.set(elevAngle, angle, Math.random() * 0.4 - 0.2);
+        group.add(branch);
+      }
+
+      group.position.set(p.x, p.s * 0.3, p.z);
+      this.scene.add(group);
     }
   }
 
