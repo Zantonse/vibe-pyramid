@@ -268,44 +268,77 @@ export class SceneManager {
   }
 
   private createOasis(): void {
-    // Small water disc
-    const waterGeo = new THREE.CircleGeometry(4, 24);
-    waterGeo.rotateX(-Math.PI / 2);
-    const waterMat = new THREE.MeshStandardMaterial({
-      color: 0x1a6b8a,
-      roughness: 0.1,
-      metalness: 0.4,
-      transparent: true,
-      opacity: 0.75,
-    });
-    const water = new THREE.Mesh(waterGeo, waterMat);
-    water.position.set(26, 0.05, -17);
-    water.receiveShadow = true;
-    this.scene.add(water);
+    const cx = 26;
+    const cz = -17;
+
+    // Water surface is now handled by WaterShader in main.ts — no duplicate here
 
     // Sandy bank ring around the water
-    const bankGeo = new THREE.RingGeometry(3.8, 5.5, 24);
+    const bankGeo = new THREE.RingGeometry(3.8, 6.0, 24);
     bankGeo.rotateX(-Math.PI / 2);
     const bankMat = new THREE.MeshLambertMaterial({ color: 0xc4a060 });
     const bank = new THREE.Mesh(bankGeo, bankMat);
-    bank.position.set(26, 0.03, -17);
+    bank.position.set(cx, 0.03, cz);
     this.scene.add(bank);
 
-    // Reeds — thin cylinders around the water edge
+    // Darker wet sand ring at water's edge
+    const wetBankGeo = new THREE.RingGeometry(3.5, 4.2, 24);
+    wetBankGeo.rotateX(-Math.PI / 2);
+    const wetBankMat = new THREE.MeshLambertMaterial({ color: 0x8a7a50 });
+    const wetBank = new THREE.Mesh(wetBankGeo, wetBankMat);
+    wetBank.position.set(cx, 0.04, cz);
+    this.scene.add(wetBank);
+
+    // Reeds — thin cylinders clustered around the water edge
     const reedMat = new THREE.MeshLambertMaterial({ color: 0x4a7a2e });
-    for (let i = 0; i < 12; i++) {
-      const angle = (i / 12) * Math.PI * 2 + Math.random() * 0.5;
-      const r = 3.2 + Math.random() * 1.2;
-      const height = 1.5 + Math.random() * 1.5;
+    const darkReedMat = new THREE.MeshLambertMaterial({ color: 0x3a6a20 });
+    for (let i = 0; i < 18; i++) {
+      const angle = (i / 18) * Math.PI * 2 + Math.random() * 0.4;
+      const r = 3.2 + Math.random() * 1.5;
+      const height = 1.2 + Math.random() * 2.0;
       const reedGeo = new THREE.CylinderGeometry(0.03, 0.05, height, 4);
-      const reed = new THREE.Mesh(reedGeo, reedMat);
+      const mat = Math.random() > 0.4 ? reedMat : darkReedMat;
+      const reed = new THREE.Mesh(reedGeo, mat);
       reed.position.set(
-        26 + Math.cos(angle) * r,
+        cx + Math.cos(angle) * r,
         height / 2,
-        -17 + Math.sin(angle) * r
+        cz + Math.sin(angle) * r
       );
-      reed.rotation.z = (Math.random() - 0.5) * 0.2;
+      reed.rotation.z = (Math.random() - 0.5) * 0.25;
+      reed.rotation.x = (Math.random() - 0.5) * 0.1;
       this.scene.add(reed);
+    }
+
+    // Small grass tufts near the bank
+    const grassMat = new THREE.MeshLambertMaterial({ color: 0x5a8a32 });
+    for (let i = 0; i < 10; i++) {
+      const angle = Math.random() * Math.PI * 2;
+      const r = 4.5 + Math.random() * 2.0;
+      const turfGeo = new THREE.ConeGeometry(0.2 + Math.random() * 0.15, 0.6 + Math.random() * 0.4, 5);
+      const turf = new THREE.Mesh(turfGeo, grassMat);
+      turf.position.set(
+        cx + Math.cos(angle) * r,
+        0.2,
+        cz + Math.sin(angle) * r
+      );
+      this.scene.add(turf);
+    }
+
+    // Small rocks at water edge
+    const rockMat = new THREE.MeshLambertMaterial({ color: 0x7a7060 });
+    for (let i = 0; i < 5; i++) {
+      const angle = Math.random() * Math.PI * 2;
+      const r = 3.8 + Math.random() * 1.0;
+      const s = 0.15 + Math.random() * 0.25;
+      const rockGeo = new THREE.DodecahedronGeometry(s, 0);
+      const rock = new THREE.Mesh(rockGeo, rockMat);
+      rock.position.set(
+        cx + Math.cos(angle) * r,
+        s * 0.5,
+        cz + Math.sin(angle) * r
+      );
+      rock.rotation.set(Math.random(), Math.random(), Math.random());
+      this.scene.add(rock);
     }
   }
 
