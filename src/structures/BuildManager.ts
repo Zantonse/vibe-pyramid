@@ -111,8 +111,40 @@ function getBlockGeometry(type: BlockGeometry = 'cube'): THREE.BufferGeometry {
       geo = new THREE.BoxGeometry(1.0, 1.0, 1.0);
       break;
   }
+  applyVertexAO(geo);
   GEOMETRY_CACHE.set(type, geo);
   return geo;
+}
+
+function applyVertexAO(geo: THREE.BufferGeometry): void {
+  const pos = geo.attributes.position;
+  const colors = new Float32Array(pos.count * 3);
+
+  for (let i = 0; i < pos.count; i++) {
+    const y = pos.getY(i);
+    const normal = geo.attributes.normal;
+    const ny = normal ? normal.getY(i) : 0;
+
+    // Base brightness: slightly darker at bottom of block
+    const yNorm = (y + 0.5); // 0 at bottom, 1 at top
+    let brightness = 0.85 + yNorm * 0.15; // 0.85 at bottom, 1.0 at top
+
+    // Darken downward-facing normals (undersides)
+    if (ny < -0.5) {
+      brightness *= 0.7;
+    }
+
+    // Slight darkening on side faces near the bottom
+    if (Math.abs(ny) < 0.5 && yNorm < 0.3) {
+      brightness *= 0.9;
+    }
+
+    colors[i * 3] = brightness;
+    colors[i * 3 + 1] = brightness;
+    colors[i * 3 + 2] = brightness;
+  }
+
+  geo.setAttribute('color', new THREE.BufferAttribute(colors, 3));
 }
 
 interface AnimatingBlock {
@@ -166,6 +198,7 @@ export class BuildManager {
         map: TextureFactory.getTexture(stoneType),
         normalMap: TextureFactory.getNormalMap(stoneType),
         normalScale: new THREE.Vector2(0.3, 0.3),
+        vertexColors: true,
       }));
     }
 
