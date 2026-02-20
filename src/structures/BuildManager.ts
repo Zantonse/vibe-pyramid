@@ -196,7 +196,7 @@ export class BuildManager {
       const era = ERA_VISUALS[ei];
       const stoneType: StoneType = ei < 9 ? 'sandstone' : ei < 18 ? 'limestone' : 'granite';
       this.eraMaterials.push(new THREE.MeshStandardMaterial({
-        roughness: era.roughness,
+        roughness: ei < 6 ? Math.max(era.roughness, 0.75) : era.roughness,
         metalness: era.metalness,
         emissive: new THREE.Color().setHSL(era.hue, era.saturation, era.lightness * 0.3),
         emissiveIntensity: era.emissiveIntensity,
@@ -365,7 +365,7 @@ export class BuildManager {
 
     _tempMatrix.makeTranslation(slot.position.x, slot.position.y, slot.position.z);
     mesh.setMatrixAt(instanceIdx, _tempMatrix);
-    mesh.setColorAt(instanceIdx, this.randomBlockColor(era));
+    mesh.setColorAt(instanceIdx, this.randomBlockColor(era, geoType));
 
     this.structureInstanceCounts.set(key, instanceIdx + 1);
     mesh.count = instanceIdx + 1;
@@ -494,7 +494,7 @@ export class BuildManager {
     const key = `${structureIndex}-${geoType}-${era}`;
     const instanceIdx = this.structureInstanceCounts.get(key)!;
     const startY = slot.position.y + 15;
-    const color = this.randomBlockColor(era);
+    const color = this.randomBlockColor(era, geoType);
 
     _tempMatrix.makeTranslation(slot.position.x, startY, slot.position.z);
     mesh.setMatrixAt(instanceIdx, _tempMatrix);
@@ -528,11 +528,24 @@ export class BuildManager {
     });
   }
 
-  private randomBlockColor(eraIndex: number): THREE.Color {
+  private randomBlockColor(eraIndex: number, geoType: BlockGeometry = 'cube'): THREE.Color {
     const era = ERA_VISUALS[eraIndex];
-    const hue = era.hue + (Math.random() - 0.5) * era.hueRange;
-    const sat = era.saturation + (Math.random() - 0.5) * era.saturationRange;
-    const light = era.lightness + (Math.random() - 0.5) * era.lightnessRange;
+    let hue = era.hue + (Math.random() - 0.5) * era.hueRange;
+    let sat = era.saturation + (Math.random() - 0.5) * era.saturationRange;
+    let light = era.lightness + (Math.random() - 0.5) * era.lightnessRange;
+
+    // Sand accumulation: horizontal surfaces on early eras get warmer, lighter
+    if (eraIndex < 12 && (geoType === 'slab' || geoType === 'half')) {
+      hue = hue * 0.7 + 0.08 * 0.3;
+      sat *= 0.6;
+      light = light * 0.8 + 0.75 * 0.2;
+    }
+
+    // Edge wear on beveled cubes: slightly lighter overall
+    if (geoType === 'beveled-cube') {
+      light += 0.03;
+    }
+
     return _tempColor.setHSL(hue, sat, light);
   }
 
