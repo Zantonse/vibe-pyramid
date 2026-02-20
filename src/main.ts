@@ -14,6 +14,7 @@ import { NightSky } from './effects/NightSky.js';
 import { Clouds } from './effects/Clouds.js';
 import { TorchFire } from './effects/TorchFire.js';
 import { WaterShader } from './effects/WaterShader.js';
+import { StructureLights } from './effects/StructureLights.js';
 import { BirdFlock } from './characters/BirdFlock.js';
 import { CamelModel } from './characters/CamelModel.js';
 import { DustBurst } from './effects/DustBurst.js';
@@ -40,6 +41,7 @@ const clouds = new Clouds(sceneManager.scene);
 const torchFire = new TorchFire(sceneManager.scene);
 const waterShader = new WaterShader(sceneManager.scene);
 const dustBurst = new DustBurst(sceneManager.scene);
+const structureLights = new StructureLights(sceneManager.scene);
 
 // Living world
 const birdFlock = new BirdFlock(sceneManager.scene);
@@ -64,6 +66,10 @@ buildManager.onBlockLand(() => {
   audio.playBlockLand();
   const pos = buildManager.getNextBlockPosition();
   if (pos) dustBurst.emit(pos);
+});
+
+buildManager.onStructureStart((id, offset) => {
+  structureLights.notifyStructureBuilt(id, offset);
 });
 
 // Level-up callbacks
@@ -132,6 +138,7 @@ function animate(): void {
   nightSky.update(delta, dayTime);
   clouds.update(delta, dayTime);
   torchFire.update(delta);
+  structureLights.update(delta, dayTime);
   waterShader.update(delta, dayTime);
   dustBurst.update(delta);
 

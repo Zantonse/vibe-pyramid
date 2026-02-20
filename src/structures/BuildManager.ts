@@ -180,6 +180,11 @@ export class BuildManager {
   private pendingPlacements: { structureIndex: number; slotIndex: number }[] = [];
   private animatingBlocks: AnimatingBlock[] = [];
   private onBlockLandCallback: (() => void) | null = null;
+  private onStructureStartCallbacks: ((id: string, offset: THREE.Vector3) => void)[] = [];
+
+  onStructureStart(cb: (id: string, offset: THREE.Vector3) => void): void {
+    this.onStructureStartCallbacks.push(cb);
+  }
 
   constructor(scene: THREE.Scene) {
     this.scene = scene;
@@ -368,6 +373,12 @@ export class BuildManager {
     if (mesh.instanceColor) mesh.instanceColor.needsUpdate = true;
 
     this.structurePlacedCounts.set(structureIndex, (this.structurePlacedCounts.get(structureIndex) || 0) + 1);
+    if ((this.structurePlacedCounts.get(structureIndex) || 0) === 1) {
+      const structure = this.structures[structureIndex];
+      for (const cb of this.onStructureStartCallbacks) {
+        cb(structure.id, structure.worldOffset);
+      }
+    }
   }
 
   queueBlocks(targetTotal: number, milestoneIndex?: number): void {
@@ -495,6 +506,12 @@ export class BuildManager {
     if (mesh.instanceColor) mesh.instanceColor.needsUpdate = true;
 
     this.structurePlacedCounts.set(structureIndex, (this.structurePlacedCounts.get(structureIndex) || 0) + 1);
+    if ((this.structurePlacedCounts.get(structureIndex) || 0) === 1) {
+      const structure = this.structures[structureIndex];
+      for (const cb of this.onStructureStartCallbacks) {
+        cb(structure.id, structure.worldOffset);
+      }
+    }
 
     // Cache the mesh key to avoid string allocation in update loop
     const meshKey = key;
