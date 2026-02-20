@@ -49,6 +49,8 @@ export class SessionController {
   private pendingActivity: AnimationName = 'idle';
   private workTimer = 0;
   private workDuration = 3; // seconds to "work" at destination before going idle
+  private idleRoamTimer = 0;
+  private idleRoamInterval = 4; // seconds between autonomous roams
 
   constructor(worker: CharacterModel, pharaoh: CharacterModel, sessionIndex: number) {
     this.worker = worker;
@@ -102,7 +104,7 @@ export class SessionController {
         this.updateWorking(delta);
         break;
       case 'idle':
-        // Characters animate in place
+        this.updateIdleRoam(delta);
         break;
     }
 
@@ -143,6 +145,34 @@ export class SessionController {
       this.currentActivity = 'idle';
       this.worker.playAnimation('idle');
       this.pharaoh.playAnimation('idle');
+    }
+  }
+
+  private updateIdleRoam(delta: number): void {
+    this.idleRoamTimer += delta;
+    if (this.idleRoamTimer >= this.idleRoamInterval) {
+      this.idleRoamTimer = 0;
+      // Randomize next roam interval (3-7 seconds)
+      this.idleRoamInterval = 3 + Math.random() * 4;
+
+      // Pick a random point near the current position (within 8-15 units)
+      const workerPos = this.worker.mesh.position;
+      const angle = Math.random() * Math.PI * 2;
+      const dist = 8 + Math.random() * 7;
+      this.workerTarget = new THREE.Vector3(
+        workerPos.x + Math.cos(angle) * dist,
+        0,
+        workerPos.z + Math.sin(angle) * dist,
+      );
+
+      // Clamp to a reasonable area around the build site
+      this.workerTarget.x = Math.max(-30, Math.min(30, this.workerTarget.x));
+      this.workerTarget.z = Math.max(-20, Math.min(25, this.workerTarget.z));
+
+      this.workerPhase = 'moving_to_target';
+      this.pendingActivity = 'idle';
+      this.worker.playAnimation('walk');
+      this.pharaoh.playAnimation('walk');
     }
   }
 
