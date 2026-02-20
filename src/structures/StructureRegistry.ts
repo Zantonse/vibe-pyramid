@@ -158,7 +158,7 @@ function generateColonnadeSlots(offset: THREE.Vector3): BlockSlot[] {
         slots.push({
           position: new THREE.Vector3(x, y * BLOCK_UNIT + BLOCK_SIZE / 2, z),
           placed: false,
-          geometry: 'cylinder',
+          geometry: 'fluted-cylinder',
         });
       }
 
@@ -166,7 +166,7 @@ function generateColonnadeSlots(offset: THREE.Vector3): BlockSlot[] {
       slots.push({
         position: new THREE.Vector3(x, 5 * BLOCK_UNIT + 0.2, z),
         placed: false,
-        geometry: 'capital',
+        geometry: 'lotus-capital',
       });
     }
   }
@@ -324,6 +324,7 @@ function generateTempleSlots(offset: THREE.Vector3): BlockSlot[] {
             offset.z - 4 * BLOCK_UNIT + z * BLOCK_UNIT + BLOCK_UNIT / 2
           ),
           placed: false,
+          geometry: 'beveled-cube',
         });
       }
     }
@@ -337,6 +338,7 @@ function generateTempleSlots(offset: THREE.Vector3): BlockSlot[] {
             offset.z - 4 * BLOCK_UNIT + z * BLOCK_UNIT + BLOCK_UNIT / 2
           ),
           placed: false,
+          geometry: 'beveled-cube',
         });
       }
     }
@@ -372,7 +374,7 @@ function generateTempleSlots(offset: THREE.Vector3): BlockSlot[] {
           offset.z - 4 * BLOCK_UNIT + cp.z * BLOCK_UNIT + BLOCK_UNIT / 2
         ),
         placed: false,
-        geometry: 'cylinder',
+        geometry: 'fluted-cylinder',
       });
     }
     // Capital on each column
@@ -383,7 +385,7 @@ function generateTempleSlots(offset: THREE.Vector3): BlockSlot[] {
         offset.z - 4 * BLOCK_UNIT + cp.z * BLOCK_UNIT + BLOCK_UNIT / 2
       ),
       placed: false,
-      geometry: 'capital',
+      geometry: 'lotus-capital',
     });
   }
 
@@ -454,6 +456,7 @@ function generatePylonGateSlots(offset: THREE.Vector3): BlockSlot[] {
               offset.z + (z - 1) * BLOCK_UNIT + BLOCK_UNIT / 2
             ),
             placed: false,
+            ...(y >= 3 ? { geometry: 'beveled-cube' as BlockGeometry } : {}),
           });
         }
       }
@@ -520,7 +523,7 @@ function generateHypostyleHallSlots(offset: THREE.Vector3): BlockSlot[] {
         slots.push({
           position: new THREE.Vector3(x, y * BLOCK_UNIT + BLOCK_SIZE / 2, z),
           placed: false,
-          geometry: 'cylinder',
+          geometry: 'fluted-cylinder',
         });
       }
 
@@ -528,7 +531,7 @@ function generateHypostyleHallSlots(offset: THREE.Vector3): BlockSlot[] {
       slots.push({
         position: new THREE.Vector3(x, 4 * BLOCK_UNIT + 0.2, z),
         placed: false,
-        geometry: 'capital',
+        geometry: 'lotus-capital',
       });
     }
   }
@@ -831,6 +834,7 @@ function generateValleyTempleSlots(offset: THREE.Vector3): BlockSlot[] {
             offset.z - halfD + z * BLOCK_UNIT + BLOCK_UNIT / 2
           ),
           placed: false,
+          ...(y >= 1 ? { geometry: 'beveled-cube' as BlockGeometry } : {}),
         });
       }
     }
@@ -844,6 +848,7 @@ function generateValleyTempleSlots(offset: THREE.Vector3): BlockSlot[] {
             offset.z - halfD + z * BLOCK_UNIT + BLOCK_UNIT / 2
           ),
           placed: false,
+          ...(y >= 1 ? { geometry: 'beveled-cube' as BlockGeometry } : {}),
         });
       }
     }
@@ -868,7 +873,7 @@ function generateValleyTempleSlots(offset: THREE.Vector3): BlockSlot[] {
           offset.z - halfD + cp.z * BLOCK_UNIT + BLOCK_UNIT / 2
         ),
         placed: false,
-        geometry: 'cylinder',
+        geometry: 'fluted-cylinder',
       });
     }
     // Capital on top of each column
@@ -879,7 +884,7 @@ function generateValleyTempleSlots(offset: THREE.Vector3): BlockSlot[] {
         offset.z - halfD + cp.z * BLOCK_UNIT + BLOCK_UNIT / 2
       ),
       placed: false,
-      geometry: 'capital',
+      geometry: 'lotus-capital',
     });
   }
 
@@ -927,6 +932,7 @@ function generateTreasurySlots(offset: THREE.Vector3): BlockSlot[] {
             offset.z - halfD + z * BLOCK_UNIT + BLOCK_UNIT / 2
           ),
           placed: false,
+          ...(y >= 1 ? { geometry: 'beveled-cube' as BlockGeometry } : {}),
         });
       }
     }
@@ -940,6 +946,7 @@ function generateTreasurySlots(offset: THREE.Vector3): BlockSlot[] {
             offset.z - halfD + z * BLOCK_UNIT + BLOCK_UNIT / 2
           ),
           placed: false,
+          ...(y >= 1 ? { geometry: 'beveled-cube' as BlockGeometry } : {}),
         });
       }
     }
@@ -1064,7 +1071,7 @@ function generateShrineOfAnubisSlots(offset: THREE.Vector3): BlockSlot[] {
           offset.z - half + corner.z * BLOCK_UNIT + BLOCK_UNIT / 2
         ),
         placed: false,
-        geometry: 'cylinder',
+        geometry: 'fluted-cylinder',
       });
     }
 
@@ -1076,7 +1083,7 @@ function generateShrineOfAnubisSlots(offset: THREE.Vector3): BlockSlot[] {
         offset.z - half + corner.z * BLOCK_UNIT + BLOCK_UNIT / 2
       ),
       placed: false,
-      geometry: 'capital',
+      geometry: 'lotus-capital',
     });
   }
 
@@ -1488,6 +1495,7 @@ function generateCliffTempleSlots(offset: THREE.Vector3): BlockSlot[] {
           offset.z
         ),
         placed: false,
+        ...(y >= 4 ? { geometry: 'beveled-cube' as BlockGeometry } : {}),
       });
     }
   }
