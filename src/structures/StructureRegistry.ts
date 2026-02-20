@@ -4,7 +4,7 @@ const BLOCK_SIZE = 1.0;
 const BLOCK_GAP = 0.05;
 const BLOCK_UNIT = BLOCK_SIZE + BLOCK_GAP;
 
-export type BlockGeometry = 'cube' | 'cylinder' | 'wedge' | 'half' | 'capital' | 'slab';
+export type BlockGeometry = 'cube' | 'cylinder' | 'wedge' | 'half' | 'capital' | 'slab' | 'fluted-cylinder' | 'beveled-cube' | 'lotus-capital';
 
 export interface BlockSlot {
   position: THREE.Vector3;

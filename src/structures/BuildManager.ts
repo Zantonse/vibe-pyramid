@@ -65,6 +65,47 @@ function getBlockGeometry(type: BlockGeometry = 'cube'): THREE.BufferGeometry {
     case 'slab':
       geo = new THREE.BoxGeometry(1.0, 0.25, 1.0);
       break;
+    case 'fluted-cylinder': {
+      const points: THREE.Vector2[] = [];
+      points.push(new THREE.Vector2(0.38, -0.5));
+      points.push(new THREE.Vector2(0.45, -0.45));
+      points.push(new THREE.Vector2(0.45, 0.45));
+      points.push(new THREE.Vector2(0.38, 0.5));
+      geo = new THREE.LatheGeometry(points, 12);
+      break;
+    }
+    case 'beveled-cube': {
+      geo = new THREE.BoxGeometry(1, 1, 1, 2, 2, 2);
+      const pos = geo.attributes.position;
+      const bevel = 0.06;
+      for (let i = 0; i < pos.count; i++) {
+        const x = pos.getX(i), y = pos.getY(i), z = pos.getZ(i);
+        const ax = Math.abs(x), ay = Math.abs(y), az = Math.abs(z);
+        const cornerDist = (ax > 0.4 ? 1 : 0) + (ay > 0.4 ? 1 : 0) + (az > 0.4 ? 1 : 0);
+        if (cornerDist >= 2) {
+          pos.setXYZ(i,
+            x - Math.sign(x) * bevel * (ax > 0.4 ? 1 : 0),
+            y - Math.sign(y) * bevel * (ay > 0.4 ? 1 : 0),
+            z - Math.sign(z) * bevel * (az > 0.4 ? 1 : 0),
+          );
+        }
+      }
+      pos.needsUpdate = true;
+      geo.computeVertexNormals();
+      break;
+    }
+    case 'lotus-capital': {
+      const profile: THREE.Vector2[] = [];
+      const steps = 8;
+      for (let i = 0; i <= steps; i++) {
+        const t = i / steps;
+        const r = 0.3 + 0.35 * Math.pow(t, 0.5) - (t > 0.85 ? (t - 0.85) * 0.5 : 0);
+        const y = -0.2 + t * 0.4;
+        profile.push(new THREE.Vector2(r, y));
+      }
+      geo = new THREE.LatheGeometry(profile, 12);
+      break;
+    }
     case 'cube':
     default:
       geo = new THREE.BoxGeometry(1.0, 1.0, 1.0);
