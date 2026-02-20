@@ -110,9 +110,9 @@ export class StructureLights {
   }
 
   update(delta: number, dayTime: number): void {
-    // dayTime cycles 0→1 where ~0.25-0.75 is darker
-    const nightFactor = Math.sin(dayTime * Math.PI * 2 - Math.PI / 2) * 0.5 + 0.5;
-    const intensityMult = 0.3 + nightFactor * 0.7;
+    // dayTime cycles 0→1; dayFactor peaks at 1.0 at noon (dayTime=0.5)
+    const dayFactor = Math.sin(dayTime * Math.PI * 2 - Math.PI / 2) * 0.5 + 0.5;
+    const intensityMult = 0.3 + (1.0 - dayFactor) * 0.7; // brightest at midnight
 
     for (const sl of this.lights) {
       switch (sl.behavior) {

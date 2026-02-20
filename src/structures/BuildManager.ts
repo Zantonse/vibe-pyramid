@@ -195,14 +195,16 @@ export class BuildManager {
     for (let ei = 0; ei < ERA_VISUALS.length; ei++) {
       const era = ERA_VISUALS[ei];
       const stoneType: StoneType = ei < 9 ? 'sandstone' : ei < 18 ? 'limestone' : 'granite';
+      // Normal map only (no diffuse .map) to avoid triple multiplication darkening:
+      // instance_color × texture_rgb × vertex_ao would compound and over-darken.
+      // The normal map provides stone surface detail; instance color provides era tint.
       this.eraMaterials.push(new THREE.MeshStandardMaterial({
         roughness: ei < 6 ? Math.max(era.roughness, 0.75) : era.roughness,
         metalness: era.metalness,
         emissive: new THREE.Color().setHSL(era.hue, era.saturation, era.lightness * 0.3),
         emissiveIntensity: era.emissiveIntensity,
-        map: TextureFactory.getTexture(stoneType),
         normalMap: TextureFactory.getNormalMap(stoneType),
-        normalScale: new THREE.Vector2(0.3, 0.3),
+        normalScale: new THREE.Vector2(0.4, 0.4),
         vertexColors: true,
       }));
     }
@@ -374,7 +376,6 @@ export class BuildManager {
 
     this.structurePlacedCounts.set(structureIndex, (this.structurePlacedCounts.get(structureIndex) || 0) + 1);
     if ((this.structurePlacedCounts.get(structureIndex) || 0) === 1) {
-      const structure = this.structures[structureIndex];
       for (const cb of this.onStructureStartCallbacks) {
         cb(structure.id, structure.worldOffset);
       }
@@ -507,7 +508,6 @@ export class BuildManager {
 
     this.structurePlacedCounts.set(structureIndex, (this.structurePlacedCounts.get(structureIndex) || 0) + 1);
     if ((this.structurePlacedCounts.get(structureIndex) || 0) === 1) {
-      const structure = this.structures[structureIndex];
       for (const cb of this.onStructureStartCallbacks) {
         cb(structure.id, structure.worldOffset);
       }
