@@ -2,6 +2,7 @@ import * as THREE from 'three';
 import { PyramidBuilder } from '../pyramid/PyramidBuilder.js';
 import { getStructureRegistry, Structure, BlockSlot, BlockGeometry } from './StructureRegistry.js';
 import { ERA_VISUALS, MilestoneBlockRange } from '../../shared/types.js';
+import { TextureFactory, StoneType } from '../effects/TextureFactory.js';
 
 const _tempMatrix = new THREE.Matrix4();
 const _tempColor = new THREE.Color();
@@ -36,6 +37,22 @@ function getBlockGeometry(type: BlockGeometry = 'cube'): THREE.BufferGeometry {
         -0.5, -0.5, -0.5,   -0.5, 0.5, 0.5,   -0.5, 0.5, -0.5,
       ]);
       geo.setAttribute('position', new THREE.BufferAttribute(verts, 3));
+      const uvs = new Float32Array([
+        // Front face triangle
+        0, 0,  1, 0,  0, 1,
+        // Back face triangle
+        1, 0,  0, 0,  0, 1,
+        // Bottom face (2 tris)
+        0, 0,  1, 0,  1, 1,
+        0, 0,  1, 1,  0, 1,
+        // Slope face (2 tris)
+        0, 1,  0, 0,  1, 0,
+        0, 1,  1, 0,  1, 1,
+        // Left face (2 tris)
+        0, 0,  1, 0,  1, 1,
+        0, 0,  1, 1,  0, 1,
+      ]);
+      geo.setAttribute('uv', new THREE.BufferAttribute(uvs, 2));
       geo.computeVertexNormals();
       break;
     }
@@ -99,11 +116,15 @@ export class BuildManager {
     // Create shared material pool (36 materials instead of ~2800)
     for (let ei = 0; ei < ERA_VISUALS.length; ei++) {
       const era = ERA_VISUALS[ei];
+      const stoneType: StoneType = ei < 9 ? 'sandstone' : ei < 18 ? 'limestone' : 'granite';
       this.eraMaterials.push(new THREE.MeshStandardMaterial({
         roughness: era.roughness,
         metalness: era.metalness,
         emissive: new THREE.Color().setHSL(era.hue, era.saturation, era.lightness * 0.3),
         emissiveIntensity: era.emissiveIntensity,
+        map: TextureFactory.getTexture(stoneType),
+        normalMap: TextureFactory.getNormalMap(stoneType),
+        normalScale: new THREE.Vector2(0.3, 0.3),
       }));
     }
 
