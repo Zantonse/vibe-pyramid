@@ -133,7 +133,7 @@ export class SceneManager {
     this.createDesertScrub();
     this.createRockyOutcrops();
     this.createNileRiver();
-    this.createDistantMountains();
+
     this.createDesertRocks();
     this.createDistanceFog();
 
@@ -863,52 +863,6 @@ export class SceneManager {
     }
   }
 
-  private createDistantMountains(): void {
-    // Low mountain range along the far south edge — purple-hazed for distance
-    const mountainMat = new THREE.MeshStandardMaterial({
-      color: 0x6a5a7a,
-      roughness: 0.95,
-      metalness: 0.0,
-    });
-    const farMountainMat = new THREE.MeshStandardMaterial({
-      color: 0x8a7a9a,
-      roughness: 0.95,
-      metalness: 0.0,
-    });
-
-    const mountains = [
-      { x: -120, z: -130, sx: 60, sy: 25, sz: 30 },
-      { x: -40,  z: -140, sx: 80, sy: 35, sz: 35 },
-      { x: 50,   z: -135, sx: 70, sy: 30, sz: 28 },
-      { x: 130,  z: -125, sx: 55, sy: 22, sz: 25 },
-      { x: -90,  z: -150, sx: 50, sy: 18, sz: 22 },
-      { x: 100,  z: -145, sx: 65, sy: 28, sz: 30 },
-    ];
-
-    const peakGeo = new THREE.ConeGeometry(1, 1, 8);
-    for (const m of mountains) {
-      const mat = m.z < -140 ? farMountainMat : mountainMat;
-      const peak = new THREE.Mesh(peakGeo, mat);
-      peak.position.set(m.x, getTerrainHeight(m.x, m.z) + m.sy * 0.4, m.z);
-      peak.scale.set(m.sx, m.sy, m.sz);
-      this.scene.add(peak);
-    }
-
-    // Closer foothills — smaller, warmer tones
-    const foothillMat = new THREE.MeshStandardMaterial({ color: 0x9a8a6a, roughness: 0.9, metalness: 0.0 });
-    const foothills = [
-      { x: -80, z: -90, sx: 25, sy: 8, sz: 15 },
-      { x: -20, z: -95, sx: 30, sy: 10, sz: 18 },
-      { x: 40,  z: -88, sx: 20, sy: 7, sz: 12 },
-      { x: 90,  z: -85, sx: 28, sy: 9, sz: 16 },
-    ];
-    for (const f of foothills) {
-      const hill = new THREE.Mesh(peakGeo, foothillMat);
-      hill.position.set(f.x, getTerrainHeight(f.x, f.z) + f.sy * 0.3, f.z);
-      hill.scale.set(f.sx, f.sy, f.sz);
-      this.scene.add(hill);
-    }
-  }
 
   private createDesertRocks(): void {
     // Scattered desert rocks of varying sizes across the landscape
