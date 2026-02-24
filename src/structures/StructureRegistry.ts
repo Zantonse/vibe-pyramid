@@ -1,4 +1,5 @@
 import * as THREE from 'three';
+import { getTerrainHeight } from '../scene/terrainHeight.js';
 
 const BLOCK_SIZE = 1.0;
 const BLOCK_GAP = 0.05;
@@ -2440,7 +2441,7 @@ function generateGovernmentHallSlots(offset: THREE.Vector3): BlockSlot[] {
 
 /** Ordered registry of all buildable structures after the main pyramid */
 export function getStructureRegistry(): Structure[] {
-  return [
+  const registry: Structure[] = [
     {
       id: 'obelisk',
       name: 'Obelisk',
@@ -2624,4 +2625,15 @@ export function getStructureRegistry(): Structure[] {
       slots: generateGovernmentHallSlots(new THREE.Vector3(80, 0, 100)),
     },
   ];
+
+  // Lift every structure so it sits on the terrain surface
+  for (const structure of registry) {
+    const terrainY = getTerrainHeight(structure.worldOffset.x, structure.worldOffset.z);
+    structure.worldOffset.y = terrainY;
+    for (const slot of structure.slots) {
+      slot.position.y += terrainY;
+    }
+  }
+
+  return registry;
 }

@@ -1,4 +1,5 @@
 import * as THREE from 'three';
+import { getTerrainHeight } from '../scene/terrainHeight.js';
 
 interface CamelConfig {
   position: THREE.Vector3;
@@ -196,9 +197,9 @@ export class CamelModel {
 
     // Place camels near the oasis, away from rocks
     const configs: CamelConfig[] = [
-      { position: new THREE.Vector3(28, 0, 22), phase: 0, facing: 1.2 },
-      { position: new THREE.Vector3(25, 0, 18), phase: 2.1, facing: 0.8 },
-      { position: new THREE.Vector3(32, 0, 20), phase: 4.2, facing: 1.5 },
+      { position: new THREE.Vector3(28, getTerrainHeight(28, 22), 22), phase: 0, facing: 1.2 },
+      { position: new THREE.Vector3(25, getTerrainHeight(25, 18), 18), phase: 2.1, facing: 0.8 },
+      { position: new THREE.Vector3(32, getTerrainHeight(32, 20), 20), phase: 4.2, facing: 1.5 },
     ];
 
     for (const config of configs) {

@@ -1,5 +1,6 @@
 import * as THREE from 'three';
 import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+import { getTerrainHeight } from './terrainHeight.js';
 
 interface AtmosphereConfig {
   midColorBoost: number;
@@ -130,6 +131,11 @@ export class SceneManager {
     this.createOasis();
     this.createDistantDunes();
     this.createDesertScrub();
+    this.createRockyOutcrops();
+    this.createNileRiver();
+    this.createDistantMountains();
+    this.createDesertRocks();
+    this.createDistanceFog();
 
     // Handle resize
     window.addEventListener('resize', () => this.onResize());
@@ -190,18 +196,15 @@ export class SceneManager {
   }
 
   private createTerrain(): void {
-    // Desert floor with subtle vertex displacement
-    const geo = new THREE.PlaneGeometry(500, 500, 64, 64);
+    // Desert floor with multi-octave dune displacement
+    const geo = new THREE.PlaneGeometry(500, 500, 128, 128);
     geo.rotateX(-Math.PI / 2);
 
-    // Subtle dune displacement
     const positions = geo.getAttribute('position');
     for (let i = 0; i < positions.count; i++) {
       const x = positions.getX(i);
       const z = positions.getZ(i);
-      const y = Math.sin(x * 0.02) * Math.cos(z * 0.03) * 0.5
-              + Math.sin(x * 0.05 + z * 0.04) * 0.3;
-      positions.setY(i, y);
+      positions.setY(i, getTerrainHeight(x, z));
     }
     geo.computeVertexNormals();
 
@@ -549,6 +552,72 @@ export class SceneManager {
       rock.castShadow = true;
       this.scene.add(rock);
     }
+
+    // Lotus flowers floating on the water surface
+    const lotusColors = [0xff69b4, 0xff85c8, 0xffb6d9, 0xffffff];
+    for (let i = 0; i < 14; i++) {
+      const angle = Math.random() * Math.PI * 2;
+      const r = 2.0 + Math.random() * 7.0;
+      const lotusGeo = new THREE.CircleGeometry(0.15 + Math.random() * 0.1, 8);
+      lotusGeo.rotateX(-Math.PI / 2);
+      const lotusMat = new THREE.MeshStandardMaterial({
+        color: lotusColors[Math.floor(Math.random() * lotusColors.length)],
+        roughness: 0.4,
+        metalness: 0.05,
+      });
+      const lotus = new THREE.Mesh(lotusGeo, lotusMat);
+      lotus.position.set(cx + Math.cos(angle) * r, waterY + 0.05, cz + Math.sin(angle) * r);
+      this.scene.add(lotus);
+    }
+    // Lotus pads (green discs, larger)
+    const padMat = new THREE.MeshStandardMaterial({ color: 0x2e7d32, roughness: 0.7, metalness: 0.0 });
+    for (let i = 0; i < 20; i++) {
+      const angle = Math.random() * Math.PI * 2;
+      const r = 1.5 + Math.random() * 8.0;
+      const padGeo = new THREE.CircleGeometry(0.25 + Math.random() * 0.2, 8);
+      padGeo.rotateX(-Math.PI / 2);
+      const pad = new THREE.Mesh(padGeo, padMat);
+      pad.position.set(cx + Math.cos(angle) * r, waterY + 0.03, cz + Math.sin(angle) * r);
+      pad.rotation.y = Math.random() * Math.PI * 2;
+      this.scene.add(pad);
+    }
+
+    // Papyrus reed clusters — taller, denser than normal reeds
+    const papyrusStemMat = new THREE.MeshStandardMaterial({ color: 0x3a8a28, roughness: 0.75, metalness: 0.0 });
+    const papyrusHeadMat = new THREE.MeshStandardMaterial({ color: 0x6aaa42, roughness: 0.8, metalness: 0.0 });
+    for (let cluster = 0; cluster < 6; cluster++) {
+      const cAngle = (cluster / 6) * Math.PI * 2 + Math.random() * 0.5;
+      const cR = 10.5 + Math.random() * 2.0;
+      const count = 4 + Math.floor(Math.random() * 4);
+      for (let j = 0; j < count; j++) {
+        const spread = 0.6;
+        const px = cx + Math.cos(cAngle) * cR + (Math.random() - 0.5) * spread;
+        const pz = cz + Math.sin(cAngle) * cR + (Math.random() - 0.5) * spread;
+        const height = 2.5 + Math.random() * 1.5;
+        const stemGeo = new THREE.CylinderGeometry(0.02, 0.04, height, 4);
+        const stem = new THREE.Mesh(stemGeo, papyrusStemMat);
+        stem.position.set(px, groundY(cR) + height / 2, pz);
+        stem.rotation.z = (Math.random() - 0.5) * 0.15;
+        stem.castShadow = true;
+        this.scene.add(stem);
+        // Feathery top
+        const headGeo = new THREE.SphereGeometry(0.2 + Math.random() * 0.1, 6, 4);
+        const head = new THREE.Mesh(headGeo, papyrusHeadMat);
+        head.position.set(px, groundY(cR) + height, pz);
+        head.scale.set(1, 0.6, 1);
+        this.scene.add(head);
+      }
+    }
+
+    // Extended ground cover — grass radiating outward beyond the basin
+    for (let i = 0; i < 30; i++) {
+      const angle = Math.random() * Math.PI * 2;
+      const r = 14.0 + Math.random() * 6.0;
+      const turfGeo = new THREE.ConeGeometry(0.15 + Math.random() * 0.1, 0.4 + Math.random() * 0.3, 4);
+      const turf = new THREE.Mesh(turfGeo, grassMat);
+      turf.position.set(cx + Math.cos(angle) * r, 0.15, cz + Math.sin(angle) * r);
+      this.scene.add(turf);
+    }
   }
 
   private createDistantDunes(): void {
@@ -651,6 +720,259 @@ export class SceneManager {
       group.position.set(p.x, p.s * 0.3, p.z);
       this.scene.add(group);
     }
+  }
+
+  private createRockyOutcrops(): void {
+    const rockMat = new THREE.MeshStandardMaterial({ color: 0x6a5a4a, roughness: 0.9, metalness: 0.02 });
+    const darkRockMat = new THREE.MeshStandardMaterial({ color: 0x4a3a30, roughness: 0.85, metalness: 0.03 });
+
+    const outcrops = [
+      { x: -60, z: 15, count: 5, baseScale: 2.5 },
+      { x: 50, z: -60, count: 4, baseScale: 2.0 },
+      { x: -35, z: -55, count: 6, baseScale: 1.8 },
+      { x: 65, z: 40, count: 3, baseScale: 2.2 },
+    ];
+
+    for (const outcrop of outcrops) {
+      for (let i = 0; i < outcrop.count; i++) {
+        const s = outcrop.baseScale * (0.5 + Math.random() * 0.8);
+        const geo = new THREE.DodecahedronGeometry(s, 1);
+        // Distort vertices for natural look
+        const verts = geo.getAttribute('position');
+        for (let v = 0; v < verts.count; v++) {
+          verts.setX(v, verts.getX(v) + (Math.random() - 0.5) * s * 0.3);
+          verts.setY(v, verts.getY(v) * (0.5 + Math.random() * 0.5));
+          verts.setZ(v, verts.getZ(v) + (Math.random() - 0.5) * s * 0.3);
+        }
+        geo.computeVertexNormals();
+        const mat = Math.random() > 0.4 ? rockMat : darkRockMat;
+        const rock = new THREE.Mesh(geo, mat);
+        const rx = outcrop.x + (Math.random() - 0.5) * 6;
+        const rz = outcrop.z + (Math.random() - 0.5) * 6;
+        rock.position.set(rx, getTerrainHeight(rx, rz) + s * 0.3, rz);
+        rock.rotation.set(Math.random() * 0.3, Math.random() * Math.PI, Math.random() * 0.2);
+        rock.castShadow = true;
+        rock.receiveShadow = true;
+        this.scene.add(rock);
+      }
+    }
+  }
+
+  private createNileRiver(): void {
+    // Curved river ribbon along the north-east, connecting near the oasis
+    const riverMat = new THREE.MeshStandardMaterial({
+      color: 0x1a6b8a,
+      roughness: 0.2,
+      metalness: 0.1,
+      transparent: true,
+      opacity: 0.7,
+    });
+    const bankMat = new THREE.MeshStandardMaterial({ color: 0x8a7a50, roughness: 0.8, metalness: 0.0 });
+    const mudMat = new THREE.MeshStandardMaterial({ color: 0x6a5a3a, roughness: 0.9, metalness: 0.0 });
+
+    // River path as a series of connected quads forming a curve
+    const riverPoints: { x: number; z: number }[] = [];
+    for (let t = 0; t <= 1; t += 0.02) {
+      const x = -100 + t * 260; // -100 to 160
+      const z = 85 + Math.sin(t * Math.PI * 1.5) * 20 + Math.cos(t * Math.PI * 3) * 5;
+      riverPoints.push({ x, z });
+    }
+
+    const riverWidth = 6;
+    const positions: number[] = [];
+    const indices: number[] = [];
+
+    for (let i = 0; i < riverPoints.length; i++) {
+      const p = riverPoints[i];
+      // Perpendicular direction
+      const next = riverPoints[Math.min(i + 1, riverPoints.length - 1)];
+      const prev = riverPoints[Math.max(i - 1, 0)];
+      const dx = next.x - prev.x;
+      const dz = next.z - prev.z;
+      const len = Math.sqrt(dx * dx + dz * dz) || 1;
+      const nx = -dz / len;
+      const nz = dx / len;
+
+      const lx = p.x + nx * riverWidth / 2, lz = p.z + nz * riverWidth / 2;
+      const rx = p.x - nx * riverWidth / 2, rz = p.z - nz * riverWidth / 2;
+      positions.push(lx, getTerrainHeight(lx, lz) + 0.3, lz);
+      positions.push(rx, getTerrainHeight(rx, rz) + 0.3, rz);
+
+      if (i < riverPoints.length - 1) {
+        const base = i * 2;
+        indices.push(base, base + 1, base + 2);
+        indices.push(base + 1, base + 3, base + 2);
+      }
+    }
+
+    const riverGeo = new THREE.BufferGeometry();
+    riverGeo.setAttribute('position', new THREE.Float32BufferAttribute(positions, 3));
+    riverGeo.setIndex(indices);
+    riverGeo.computeVertexNormals();
+    const river = new THREE.Mesh(riverGeo, riverMat);
+    this.scene.add(river);
+
+    // Mud banks along river edges
+    for (let i = 0; i < riverPoints.length; i += 5) {
+      const p = riverPoints[i];
+      for (const side of [-1, 1]) {
+        const next = riverPoints[Math.min(i + 1, riverPoints.length - 1)];
+        const prev = riverPoints[Math.max(i - 1, 0)];
+        const dx = next.x - prev.x;
+        const dz = next.z - prev.z;
+        const len = Math.sqrt(dx * dx + dz * dz) || 1;
+        const nx = -dz / len * side;
+        const nz = dx / len * side;
+
+        const bankGeo = new THREE.PlaneGeometry(3 + Math.random() * 2, 1.5 + Math.random());
+        bankGeo.rotateX(-Math.PI / 2);
+        const bank = new THREE.Mesh(bankGeo, Math.random() > 0.5 ? bankMat : mudMat);
+        const bx = p.x + nx * (riverWidth / 2 + 1);
+        const bz = p.z + nz * (riverWidth / 2 + 1);
+        bank.position.set(bx, getTerrainHeight(bx, bz) + 0.05, bz);
+        bank.rotation.y = Math.random() * Math.PI;
+        bank.receiveShadow = true;
+        this.scene.add(bank);
+      }
+    }
+
+    // Reeds along river banks
+    const riverReedMat = new THREE.MeshStandardMaterial({ color: 0x4a7a2e, roughness: 0.8, metalness: 0.0 });
+    for (let i = 0; i < riverPoints.length; i += 3) {
+      const p = riverPoints[i];
+      for (let j = 0; j < 2; j++) {
+        const side = Math.random() > 0.5 ? 1 : -1;
+        const next = riverPoints[Math.min(i + 1, riverPoints.length - 1)];
+        const prev = riverPoints[Math.max(i - 1, 0)];
+        const dx = next.x - prev.x;
+        const dz = next.z - prev.z;
+        const len = Math.sqrt(dx * dx + dz * dz) || 1;
+        const nx = -dz / len * side;
+        const nz = dx / len * side;
+
+        const height = 1.0 + Math.random() * 1.5;
+        const reedGeo = new THREE.CylinderGeometry(0.02, 0.04, height, 4);
+        const reed = new THREE.Mesh(reedGeo, riverReedMat);
+        const rdx = p.x + nx * (riverWidth / 2 + 0.5 + Math.random());
+        const rdz = p.z + nz * (riverWidth / 2 + 0.5 + Math.random());
+        reed.position.set(rdx, getTerrainHeight(rdx, rdz) + height / 2, rdz);
+        reed.rotation.z = (Math.random() - 0.5) * 0.2;
+        reed.castShadow = true;
+        this.scene.add(reed);
+      }
+    }
+  }
+
+  private createDistantMountains(): void {
+    // Low mountain range along the far south edge — purple-hazed for distance
+    const mountainMat = new THREE.MeshStandardMaterial({
+      color: 0x6a5a7a,
+      roughness: 0.95,
+      metalness: 0.0,
+    });
+    const farMountainMat = new THREE.MeshStandardMaterial({
+      color: 0x8a7a9a,
+      roughness: 0.95,
+      metalness: 0.0,
+    });
+
+    const mountains = [
+      { x: -120, z: -130, sx: 60, sy: 25, sz: 30 },
+      { x: -40,  z: -140, sx: 80, sy: 35, sz: 35 },
+      { x: 50,   z: -135, sx: 70, sy: 30, sz: 28 },
+      { x: 130,  z: -125, sx: 55, sy: 22, sz: 25 },
+      { x: -90,  z: -150, sx: 50, sy: 18, sz: 22 },
+      { x: 100,  z: -145, sx: 65, sy: 28, sz: 30 },
+    ];
+
+    const peakGeo = new THREE.ConeGeometry(1, 1, 8);
+    for (const m of mountains) {
+      const mat = m.z < -140 ? farMountainMat : mountainMat;
+      const peak = new THREE.Mesh(peakGeo, mat);
+      peak.position.set(m.x, getTerrainHeight(m.x, m.z) + m.sy * 0.4, m.z);
+      peak.scale.set(m.sx, m.sy, m.sz);
+      this.scene.add(peak);
+    }
+
+    // Closer foothills — smaller, warmer tones
+    const foothillMat = new THREE.MeshStandardMaterial({ color: 0x9a8a6a, roughness: 0.9, metalness: 0.0 });
+    const foothills = [
+      { x: -80, z: -90, sx: 25, sy: 8, sz: 15 },
+      { x: -20, z: -95, sx: 30, sy: 10, sz: 18 },
+      { x: 40,  z: -88, sx: 20, sy: 7, sz: 12 },
+      { x: 90,  z: -85, sx: 28, sy: 9, sz: 16 },
+    ];
+    for (const f of foothills) {
+      const hill = new THREE.Mesh(peakGeo, foothillMat);
+      hill.position.set(f.x, getTerrainHeight(f.x, f.z) + f.sy * 0.3, f.z);
+      hill.scale.set(f.sx, f.sy, f.sz);
+      this.scene.add(hill);
+    }
+  }
+
+  private createDesertRocks(): void {
+    // Scattered desert rocks of varying sizes across the landscape
+    const rockColors = [
+      new THREE.MeshStandardMaterial({ color: 0x7a6a5a, roughness: 0.9, metalness: 0.02 }),
+      new THREE.MeshStandardMaterial({ color: 0x8a7a6a, roughness: 0.85, metalness: 0.01 }),
+      new THREE.MeshStandardMaterial({ color: 0x6a5a4a, roughness: 0.92, metalness: 0.03 }),
+      new THREE.MeshStandardMaterial({ color: 0x9a8a7a, roughness: 0.88, metalness: 0.01 }),
+    ];
+
+    // Avoid oasis (40,35,r=20), pyramid (0,0,r=14), city (85,70,r=30)
+    const exclusions = [
+      { x: 40, z: 35, r: 22 },
+      { x: 0, z: 0, r: 16 },
+      { x: 85, z: 70, r: 35 },
+    ];
+
+    for (let i = 0; i < 60; i++) {
+      const x = (Math.random() - 0.5) * 200;
+      const z = (Math.random() - 0.5) * 200;
+
+      // Skip if inside exclusion zone
+      let skip = false;
+      for (const ex of exclusions) {
+        const d = Math.sqrt((x - ex.x) ** 2 + (z - ex.z) ** 2);
+        if (d < ex.r) { skip = true; break; }
+      }
+      if (skip) continue;
+
+      const s = 0.1 + Math.random() * 0.5;
+      const geo = new THREE.DodecahedronGeometry(s, 0);
+      const mat = rockColors[Math.floor(Math.random() * rockColors.length)];
+      const rock = new THREE.Mesh(geo, mat);
+      rock.position.set(x, getTerrainHeight(x, z) + s * 0.3, z);
+      rock.rotation.set(Math.random(), Math.random(), Math.random());
+      rock.castShadow = true;
+      this.scene.add(rock);
+    }
+
+    // Dried desert plants — sparse, wispy
+    const driedPlantMat = new THREE.MeshStandardMaterial({ color: 0x8a7a3a, roughness: 0.95, metalness: 0.0 });
+    for (let i = 0; i < 25; i++) {
+      const x = (Math.random() - 0.5) * 180;
+      const z = (Math.random() - 0.5) * 180;
+
+      let skip = false;
+      for (const ex of exclusions) {
+        const d = Math.sqrt((x - ex.x) ** 2 + (z - ex.z) ** 2);
+        if (d < ex.r) { skip = true; break; }
+      }
+      if (skip) continue;
+
+      const height = 0.3 + Math.random() * 0.5;
+      const plantGeo = new THREE.ConeGeometry(0.08 + Math.random() * 0.06, height, 5);
+      const plant = new THREE.Mesh(plantGeo, driedPlantMat);
+      plant.position.set(x, getTerrainHeight(x, z) + height / 2, z);
+      plant.castShadow = true;
+      this.scene.add(plant);
+    }
+  }
+
+  private createDistanceFog(): void {
+    // Subtle exponential fog that fades to sky-horizon color
+    this.scene.fog = new THREE.FogExp2(0xd4a574, 0.004);
   }
 
   private onResize(): void {

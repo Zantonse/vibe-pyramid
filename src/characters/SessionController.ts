@@ -1,6 +1,7 @@
 import * as THREE from 'three';
 import type { CharacterModel, AnimationName } from './CharacterModel.js';
 import type { WorkerActivity } from '../../shared/types.js';
+import { getTerrainHeight } from '../scene/terrainHeight.js';
 
 const WORKER_SPEED = 4.0; // units per second
 const PHARAOH_SPEED = 3.5;
@@ -18,22 +19,23 @@ function getActivityTarget(activity: WorkerActivity, sessionIndex: number): THRE
   const clampedIndex = sessionIndex % 6; // wrap after 6 sessions to keep visible
   const laneOffset = (clampedIndex - 2.5) * 5; // 5 units apart, centered
 
+  let x: number, z: number;
   switch (activity) {
     case 'carry':
-      return new THREE.Vector3(-8, 0, laneOffset);
+      x = -8; z = laneOffset; break;
     case 'chisel':
-      return new THREE.Vector3(-6, 0, -3 + laneOffset);
+      x = -6; z = -3 + laneOffset; break;
     case 'survey':
-      return new THREE.Vector3(-14, 0, 4 + laneOffset);
+      x = -14; z = 4 + laneOffset; break;
     case 'antenna':
-      return new THREE.Vector3(-5, 0, 12 + laneOffset);
+      x = -5; z = 12 + laneOffset; break;
     case 'portal':
-      return new THREE.Vector3(-18, 0, laneOffset);
+      x = -18; z = laneOffset; break;
     case 'idle':
     default:
-      // Return to quarry area
-      return new THREE.Vector3(QUARRY_CENTER.x + clampedIndex * 3, 0, QUARRY_CENTER.z + laneOffset);
+      x = QUARRY_CENTER.x + clampedIndex * 3; z = QUARRY_CENTER.z + laneOffset; break;
   }
+  return new THREE.Vector3(x, getTerrainHeight(x, z), z);
 }
 
 type MovePhase = 'idle' | 'moving_to_target' | 'working';
@@ -61,7 +63,9 @@ export class SessionController {
     const startPos = getActivityTarget('idle', sessionIndex);
     this.workerTarget = startPos.clone();
     this.worker.setPosition(startPos);
-    this.pharaoh.setPosition(startPos.clone().add(new THREE.Vector3(-PHARAOH_FOLLOW_DISTANCE, 0, 0)));
+    const pharaohPos = startPos.clone().add(new THREE.Vector3(-PHARAOH_FOLLOW_DISTANCE, 0, 0));
+    pharaohPos.y = getTerrainHeight(pharaohPos.x, pharaohPos.z);
+    this.pharaoh.setPosition(pharaohPos);
     this.pharaoh.lookAt(startPos);
   }
 
@@ -115,7 +119,7 @@ export class SessionController {
   private updateMovement(delta: number): void {
     const workerPos = this.worker.mesh.position;
     const direction = new THREE.Vector3().subVectors(this.workerTarget, workerPos);
-    direction.y = 0; // Keep on ground plane
+    direction.y = 0; // Move horizontally only
     const distance = direction.length();
 
     if (distance < ARRIVAL_THRESHOLD) {
@@ -133,6 +137,8 @@ export class SessionController {
     direction.normalize();
     const moveDistance = Math.min(WORKER_SPEED * delta, distance);
     workerPos.add(direction.multiplyScalar(moveDistance));
+    // Snap Y to terrain surface
+    workerPos.y = getTerrainHeight(workerPos.x, workerPos.z);
     this.worker.setPosition(workerPos);
     this.worker.lookAt(this.workerTarget);
   }
@@ -159,15 +165,9 @@ export class SessionController {
       const workerPos = this.worker.mesh.position;
       const angle = Math.random() * Math.PI * 2;
       const dist = 8 + Math.random() * 7;
-      this.workerTarget = new THREE.Vector3(
-        workerPos.x + Math.cos(angle) * dist,
-        0,
-        workerPos.z + Math.sin(angle) * dist,
-      );
-
-      // Clamp to a reasonable area around the build site
-      this.workerTarget.x = Math.max(-30, Math.min(30, this.workerTarget.x));
-      this.workerTarget.z = Math.max(-20, Math.min(25, this.workerTarget.z));
+      const tx = Math.max(-30, Math.min(30, workerPos.x + Math.cos(angle) * dist));
+      const tz = Math.max(-20, Math.min(25, workerPos.z + Math.sin(angle) * dist));
+      this.workerTarget = new THREE.Vector3(tx, getTerrainHeight(tx, tz), tz);
 
       this.workerPhase = 'moving_to_target';
       this.pendingActivity = 'idle';
@@ -190,6 +190,8 @@ export class SessionController {
       toWorker.normalize();
       const moveDistance = Math.min(PHARAOH_SPEED * delta, dist - PHARAOH_FOLLOW_DISTANCE);
       pharaohPos.add(toWorker.multiplyScalar(Math.max(0, moveDistance)));
+      // Snap Y to terrain surface
+      pharaohPos.y = getTerrainHeight(pharaohPos.x, pharaohPos.z);
       this.pharaoh.setPosition(pharaohPos);
     }
 
