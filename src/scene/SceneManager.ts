@@ -70,6 +70,13 @@ export class SceneManager {
   private baseTarget = new THREE.Vector3(0, 5, 0);
   private currentMilestoneLevel = 0;
 
+  // Free roam camera
+  private freeRoam = false;
+  private freeRoamYaw = 0;
+  private freeRoamPitch = -0.3; // slight downward look
+  private keysDown = new Set<string>();
+  private freeRoamToggleEl: HTMLElement | null = null;
+
   get currentDayTime(): number {
     return this.dayTime;
   }
@@ -126,6 +133,9 @@ export class SceneManager {
 
     // Handle resize
     window.addEventListener('resize', () => this.onResize());
+
+    // Free roam input
+    this.setupFreeRoam();
   }
 
   private createSky(): void {
@@ -649,6 +659,154 @@ export class SceneManager {
     this.renderer.setSize(window.innerWidth, window.innerHeight);
   }
 
+  private setupFreeRoam(): void {
+    // Keyboard
+    window.addEventListener('keydown', (e) => {
+      this.keysDown.add(e.code);
+      if (e.code === 'KeyF' && !e.ctrlKey && !e.metaKey && !e.altKey) {
+        this.toggleFreeRoam();
+      }
+      // Escape exits free roam
+      if (e.code === 'Escape' && this.freeRoam) {
+        this.toggleFreeRoam();
+      }
+    });
+    window.addEventListener('keyup', (e) => {
+      this.keysDown.delete(e.code);
+    });
+
+    // Pointer lock for mouselook
+    this.renderer.domElement.addEventListener('click', () => {
+      if (this.freeRoam && !document.pointerLockElement) {
+        this.renderer.domElement.requestPointerLock();
+      }
+    });
+    document.addEventListener('mousemove', (e) => {
+      if (this.freeRoam && document.pointerLockElement === this.renderer.domElement) {
+        this.freeRoamYaw -= e.movementX * 0.002;
+        this.freeRoamPitch -= e.movementY * 0.002;
+        this.freeRoamPitch = Math.max(-Math.PI / 2 + 0.05, Math.min(Math.PI / 2 - 0.05, this.freeRoamPitch));
+      }
+    });
+    document.addEventListener('pointerlockchange', () => {
+      // If pointer lock was lost while in free roam, keep free roam active
+      // User can click canvas to re-engage, or press F/Escape to exit
+    });
+
+    // UI toggle button
+    this.createFreeRoamToggle();
+  }
+
+  private createFreeRoamToggle(): void {
+    const btn = document.createElement('button');
+    btn.id = 'pyr-freeroam-toggle';
+    btn.textContent = '\u{1F3A5} Free Roam (F)';
+    btn.style.cssText = `
+      position: fixed;
+      top: 16px;
+      left: 16px;
+      z-index: 1001;
+      background: rgba(20, 15, 10, 0.85);
+      border: 1px solid #c9a84c55;
+      color: #e8d5a3;
+      font-family: 'Segoe UI', system-ui, sans-serif;
+      font-size: 13px;
+      padding: 8px 14px;
+      border-radius: 6px;
+      cursor: pointer;
+      transition: background 0.2s, border-color 0.2s;
+    `;
+    btn.addEventListener('mouseenter', () => { btn.style.background = 'rgba(201, 168, 76, 0.2)'; });
+    btn.addEventListener('mouseleave', () => {
+      btn.style.background = this.freeRoam ? 'rgba(201, 168, 76, 0.25)' : 'rgba(20, 15, 10, 0.85)';
+    });
+    btn.addEventListener('click', (e) => {
+      e.stopPropagation(); // don't trigger pointer lock
+      this.toggleFreeRoam();
+    });
+    document.body.appendChild(btn);
+    this.freeRoamToggleEl = btn;
+  }
+
+  private toggleFreeRoam(): void {
+    this.freeRoam = !this.freeRoam;
+
+    if (this.freeRoam) {
+      // Enter free roam: disable orbit, compute initial yaw/pitch from current view
+      this.controls.enabled = false;
+
+      // Derive yaw/pitch from current camera direction
+      const dir = new THREE.Vector3();
+      this.camera.getWorldDirection(dir);
+      this.freeRoamYaw = Math.atan2(-dir.x, -dir.z);
+      this.freeRoamPitch = Math.asin(THREE.MathUtils.clamp(dir.y, -1, 1));
+
+      // Exit pointer lock if we're toggling off
+      if (this.freeRoamToggleEl) {
+        this.freeRoamToggleEl.textContent = '\u{1F3A5} Orbit Mode (F)';
+        this.freeRoamToggleEl.style.borderColor = '#c9a84c';
+        this.freeRoamToggleEl.style.background = 'rgba(201, 168, 76, 0.25)';
+      }
+    } else {
+      // Exit free roam: re-enable orbit, release pointer lock
+      if (document.pointerLockElement) {
+        document.exitPointerLock();
+      }
+      this.controls.enabled = true;
+      // Set orbit target to where we're currently looking
+      const lookAt = new THREE.Vector3();
+      this.camera.getWorldDirection(lookAt);
+      lookAt.multiplyScalar(20).add(this.camera.position);
+      lookAt.y = Math.max(0, lookAt.y);
+      this.controls.target.copy(lookAt);
+      this.controls.update();
+
+      if (this.freeRoamToggleEl) {
+        this.freeRoamToggleEl.textContent = '\u{1F3A5} Free Roam (F)';
+        this.freeRoamToggleEl.style.borderColor = '#c9a84c55';
+        this.freeRoamToggleEl.style.background = 'rgba(20, 15, 10, 0.85)';
+      }
+    }
+  }
+
+  private updateFreeRoam(delta: number): void {
+    if (!this.freeRoam) return;
+
+    // Movement speed: hold Shift to go faster
+    const speed = this.keysDown.has('ShiftLeft') || this.keysDown.has('ShiftRight') ? 40 : 15;
+    const moveSpeed = speed * delta;
+
+    // Direction vectors
+    const forward = new THREE.Vector3(
+      -Math.sin(this.freeRoamYaw) * Math.cos(this.freeRoamPitch),
+      Math.sin(this.freeRoamPitch),
+      -Math.cos(this.freeRoamYaw) * Math.cos(this.freeRoamPitch)
+    ).normalize();
+
+    const right = new THREE.Vector3(
+      -Math.cos(this.freeRoamYaw),
+      0,
+      Math.sin(this.freeRoamYaw)
+    ).normalize();
+
+    // Horizontal forward (for WASD, ignore pitch so we don't dive into the ground)
+    const flatForward = new THREE.Vector3(-Math.sin(this.freeRoamYaw), 0, -Math.cos(this.freeRoamYaw)).normalize();
+
+    if (this.keysDown.has('KeyW')) this.camera.position.addScaledVector(flatForward, moveSpeed);
+    if (this.keysDown.has('KeyS')) this.camera.position.addScaledVector(flatForward, -moveSpeed);
+    if (this.keysDown.has('KeyA')) this.camera.position.addScaledVector(right, -moveSpeed);
+    if (this.keysDown.has('KeyD')) this.camera.position.addScaledVector(right, moveSpeed);
+    if (this.keysDown.has('Space')) this.camera.position.y += moveSpeed;
+    if (this.keysDown.has('KeyC')) this.camera.position.y -= moveSpeed;
+
+    // Keep above ground
+    this.camera.position.y = Math.max(1.5, this.camera.position.y);
+
+    // Apply look direction
+    const lookTarget = new THREE.Vector3().copy(this.camera.position).add(forward);
+    this.camera.lookAt(lookTarget);
+  }
+
   nudgeTo(worldPos: THREE.Vector3): void {
     this._nudgeTarget = new THREE.Vector3().lerpVectors(this.baseTarget, worldPos, 0.2);
     this._nudgeTarget.y = Math.max(3, this._nudgeTarget.y);
@@ -842,7 +1000,11 @@ export class SceneManager {
   }
 
   update(delta: number): void {
-    this.controls.update();
+    if (this.freeRoam) {
+      this.updateFreeRoam(delta);
+    } else {
+      this.controls.update();
+    }
 
     // Slow day/night cycle — full cycle every 5 minutes
     this.dayTime = (this.dayTime + delta / 300) % 1;
@@ -879,8 +1041,8 @@ export class SceneManager {
       this.ambientLight.intensity = (0.15 + dayFactor * 0.25) + atmosConfig.ambientBoost;
     }
 
-    // Camera nudge
-    if (this._nudgeTarget) {
+    // Camera nudge (only in orbit mode)
+    if (this._nudgeTarget && !this.freeRoam) {
       this.nudgeProgress += delta * 0.5;
       if (this.nudgeProgress < 1) {
         const t = 1 - Math.pow(1 - this.nudgeProgress, 2);

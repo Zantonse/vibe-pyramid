@@ -67,12 +67,15 @@ export class StructureLights {
         addLight(0x00bcd4, 0.8, 12, 2, 'pulse', new THREE.Vector3(0, 0.5, 0));
         break;
 
-      case 'irrigation-canal':
-        addLight(0x00bcd4, 0.6, 8, 2, 'pulse', new THREE.Vector3(0, 0.5, 0));
+      case 'pharaoh-palace':
+        // Warm glow from courtyard and entrance
+        addLight(0xffab40, 0.8, 10, 2, 'flicker', new THREE.Vector3(0, 2, -3));
+        addLight(0xffcc80, 0.5, 6, 2, 'static', new THREE.Vector3(0, 1.5, 2));
         break;
 
-      case 'lighthouse':
-        addLight(0xffd54f, 2.0, 20, 1.5, 'beacon', new THREE.Vector3(0, 13, 0));
+      case 'government-hall':
+        // Grand beacon atop the hall
+        addLight(0xffd54f, 1.5, 15, 1.5, 'beacon', new THREE.Vector3(0, 5, 0));
         break;
 
       case 'temple':
@@ -83,17 +86,28 @@ export class StructureLights {
         addLight(0xffab40, 0.4, 5, 2, 'static', new THREE.Vector3(0, 1.5, 0));
         break;
 
-      case 'worker-village': {
-        // 2x2 grid of houses with ~5.25 unit spacing
-        const houses = [
+      case 'worker-hovels': {
+        // Dim lights in each hut
+        const huts = [
           new THREE.Vector3(-2.6, 1, -2.6),
-          new THREE.Vector3(-2.6, 1,  2.6),
-          new THREE.Vector3( 2.6, 1, -2.6),
-          new THREE.Vector3( 2.6, 1,  2.6),
+          new THREE.Vector3( 2.6, 1, -2.1),
+          new THREE.Vector3(-2.1, 1,  2.6),
+          new THREE.Vector3( 3.2, 1,  3.2),
         ];
-        for (const house of houses) {
-          addLight(0xffcc80, 0.3, 4, 2, 'static', house);
+        for (const hut of huts) {
+          addLight(0xffcc80, 0.25, 3, 2, 'static', hut);
         }
+        break;
+      }
+
+      case 'noble-villa':
+        addLight(0xffab40, 0.6, 7, 2, 'flicker', new THREE.Vector3(0, 1.5, 0));
+        break;
+
+      case 'grand-bazaar': {
+        // Lanterns along the central walkway
+        addLight(0xff8c00, 0.5, 5, 2, 'flicker', new THREE.Vector3(-3, 2, 0));
+        addLight(0xff8c00, 0.5, 5, 2, 'flicker', new THREE.Vector3(3, 2, 0));
         break;
       }
 
