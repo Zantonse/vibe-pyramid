@@ -4,7 +4,7 @@
  */
 
 const OASIS_CX = 40, OASIS_CZ = 35, OASIS_R = 20;
-const CITY_CX = 85, CITY_CZ = 70, CITY_R = 30;
+const CITY_CX = 86, CITY_CZ = 68, CITY_R = 45;
 const PYRAMID_R = 14;
 
 export function getTerrainHeight(x: number, z: number): number {
@@ -27,7 +27,7 @@ export function getTerrainHeight(x: number, z: number): number {
   // Flatten city zone
   const cDist = Math.sqrt((x - CITY_CX) ** 2 + (z - CITY_CZ) ** 2);
   if (cDist < CITY_R) {
-    y *= Math.max(0, (cDist - 15) / (CITY_R - 15));
+    y *= Math.max(0, (cDist - 35) / (CITY_R - 35));
   }
 
   return y;
