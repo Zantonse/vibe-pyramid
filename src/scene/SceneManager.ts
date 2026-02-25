@@ -85,7 +85,7 @@ export class SceneManager {
   private capstoneLight: THREE.PointLight | null = null;
   private limestoneCasing: THREE.Group | null = null;
   private entrancePortal: THREE.Mesh | null = null;
-  private torchLights: THREE.PointLight[] = [];
+  private torchGlows: THREE.Mesh[] = [];
   private goldCapstone: THREE.Mesh | null = null;
   private pyramidAura: THREE.Mesh | null = null;
 
@@ -1208,12 +1208,22 @@ export class SceneManager {
     this.scene.add(portal);
     this.entrancePortal = portal;
 
-    const torchPositions = [{ x: -1.5 }, { x: 1.5 }];
-    for (const tp of torchPositions) {
-      const torch = new THREE.PointLight(0xff8800, 1.5, 8, 2);
-      torch.position.set(tp.x, 2.5, 11);
-      this.scene.add(torch);
-      this.torchLights.push(torch);
+    // Emissive glow sprites instead of PointLights for entrance torches
+    const torchGlowGeo = new THREE.PlaneGeometry(1.5, 1.5);
+    const torchGlowMat = new THREE.MeshBasicMaterial({
+      color: 0xff8800,
+      transparent: true,
+      opacity: 0.6,
+      side: THREE.DoubleSide,
+      depthWrite: false,
+      blending: THREE.AdditiveBlending,
+    });
+    for (const xPos of [-1.5, 1.5]) {
+      const glow = new THREE.Mesh(torchGlowGeo, torchGlowMat);
+      glow.position.set(xPos, 2.5, 11);
+      glow.rotation.x = -Math.PI / 2;
+      this.scene.add(glow);
+      this.torchGlows.push(glow);
     }
   }
 
@@ -1257,11 +1267,10 @@ export class SceneManager {
       this.scene.remove(this.entrancePortal);
       this.entrancePortal = null;
     }
-    for (const light of this.torchLights) {
-      this.scene.remove(light);
-      light.dispose();
+    for (const glow of this.torchGlows) {
+      this.scene.remove(glow);
     }
-    this.torchLights = [];
+    this.torchGlows = [];
   }
 
   private removeGoldCapstone(): void {
