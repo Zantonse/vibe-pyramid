@@ -16,12 +16,12 @@ export class PostProcessing {
     const renderPass = new RenderPass(scene, camera);
     this.composer.addPass(renderPass);
 
-    // Unreal bloom pass
+    // Unreal bloom pass — half resolution for performance
     const bloomPass = new UnrealBloomPass(
-      new THREE.Vector2(window.innerWidth, window.innerHeight),
+      new THREE.Vector2(window.innerWidth / 2, window.innerHeight / 2),
       0.4,   // strength
       0.5,   // radius
-      0.7    // threshold
+      0.85   // threshold (raised to limit bloom to brightest emissives)
     );
     this.bloomPass = bloomPass;
     this.composer.addPass(bloomPass);
@@ -40,6 +40,7 @@ export class PostProcessing {
 
   resize(width: number, height: number): void {
     this.composer.setSize(width, height);
+    this.bloomPass.resolution.set(width / 2, height / 2);
   }
 
   render(): void {

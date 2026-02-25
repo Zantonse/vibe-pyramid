@@ -111,7 +111,7 @@ export class SceneManager {
     this.renderer.setSize(window.innerWidth, window.innerHeight);
     this.renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
     this.renderer.shadowMap.enabled = true;
-    this.renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+    this.renderer.shadowMap.type = THREE.PCFShadowMap;
     document.body.appendChild(this.renderer.domElement);
 
     // Orbit controls
@@ -239,8 +239,8 @@ export class SceneManager {
     const sunLight = new THREE.DirectionalLight(0xfff5e6, 1.5);
     sunLight.position.set(-50, 40, -30);
     sunLight.castShadow = true;
-    sunLight.shadow.mapSize.width = 2048;
-    sunLight.shadow.mapSize.height = 2048;
+    sunLight.shadow.mapSize.width = 1024;
+    sunLight.shadow.mapSize.height = 1024;
     sunLight.shadow.camera.near = 1;
     sunLight.shadow.camera.far = 200;
     sunLight.shadow.camera.left = -50;
@@ -303,7 +303,6 @@ export class SceneManager {
         10 + (Math.random() - 0.5) * 6
       );
       rubble.rotation.set(Math.random() * Math.PI, Math.random() * Math.PI, 0);
-      rubble.castShadow = true;
       this.scene.add(rubble);
     }
 
@@ -319,7 +318,6 @@ export class SceneManager {
       const block = new THREE.Mesh(geo, cutBlockMat);
       block.position.set(cb.x, cb.sy / 2, cb.z);
       block.rotation.y = cb.ry;
-      block.castShadow = true;
       block.receiveShadow = true;
       this.scene.add(block);
     }
@@ -438,7 +436,6 @@ export class SceneManager {
         frond.rotation.y = angle;
         // Slight upward tilt variation
         frond.rotation.x = -(0.1 + Math.random() * 0.2);
-        frond.castShadow = true;
         group.add(frond);
       }
 
@@ -498,60 +495,65 @@ export class SceneManager {
       return basinFloor + t * t * (basinRim - basinFloor);
     };
 
-    // Reeds — thin cylinders clustered around the water edge
+    // Reeds — batched InstancedMesh
+    const reedGeo = new THREE.CylinderGeometry(0.03, 0.05, 1, 4);
     const reedMat = new THREE.MeshStandardMaterial({ color: 0x4a7a2e, roughness: 0.8, metalness: 0.0 });
-    const darkReedMat = new THREE.MeshStandardMaterial({ color: 0x3a6a20, roughness: 0.85, metalness: 0.0 });
+    const reedMesh = new THREE.InstancedMesh(reedGeo, reedMat, 28);
+    const _m = new THREE.Matrix4();
+    const _q = new THREE.Quaternion();
+    const _s = new THREE.Vector3();
+    const _e = new THREE.Euler();
     for (let i = 0; i < 28; i++) {
       const angle = (i / 28) * Math.PI * 2 + Math.random() * 0.3;
       const r = 9.5 + Math.random() * 2.5;
       const height = 1.2 + Math.random() * 2.0;
-      const reedGeo = new THREE.CylinderGeometry(0.03, 0.05, height, 4);
-      const mat = Math.random() > 0.4 ? reedMat : darkReedMat;
-      const reed = new THREE.Mesh(reedGeo, mat);
-      reed.position.set(
-        cx + Math.cos(angle) * r,
-        groundY(r) + height / 2,
-        cz + Math.sin(angle) * r
+      _e.set((Math.random() - 0.5) * 0.1, 0, (Math.random() - 0.5) * 0.25);
+      _q.setFromEuler(_e);
+      _s.set(1, height, 1);
+      _m.compose(
+        new THREE.Vector3(cx + Math.cos(angle) * r, groundY(r) + height / 2, cz + Math.sin(angle) * r),
+        _q, _s
       );
-      reed.rotation.z = (Math.random() - 0.5) * 0.25;
-      reed.rotation.x = (Math.random() - 0.5) * 0.1;
-      reed.castShadow = true;
-      this.scene.add(reed);
+      reedMesh.setMatrixAt(i, _m);
     }
+    this.scene.add(reedMesh);
 
-    // Grass tufts on the basin slope
+    // Grass tufts — batched InstancedMesh
+    const grassGeo = new THREE.ConeGeometry(0.25, 0.7, 5);
     const grassMat = new THREE.MeshStandardMaterial({ color: 0x5a8a32, roughness: 0.85, metalness: 0.0 });
+    const grassMesh = new THREE.InstancedMesh(grassGeo, grassMat, 18);
     for (let i = 0; i < 18; i++) {
       const angle = Math.random() * Math.PI * 2;
       const r = 11.0 + Math.random() * 3.0;
-      const turfGeo = new THREE.ConeGeometry(0.2 + Math.random() * 0.15, 0.6 + Math.random() * 0.4, 5);
-      const turf = new THREE.Mesh(turfGeo, grassMat);
-      turf.position.set(
-        cx + Math.cos(angle) * r,
-        groundY(r) + 0.2,
-        cz + Math.sin(angle) * r
+      const sx = 0.6 + Math.random() * 0.6;
+      const sy = 0.6 + Math.random() * 0.6;
+      _s.set(sx, sy, sx);
+      _m.compose(
+        new THREE.Vector3(cx + Math.cos(angle) * r, groundY(r) + 0.2, cz + Math.sin(angle) * r),
+        new THREE.Quaternion(), _s
       );
-      turf.castShadow = true;
-      this.scene.add(turf);
+      grassMesh.setMatrixAt(i, _m);
     }
+    this.scene.add(grassMesh);
 
-    // Rocks at water edge
+    // Rocks at water edge — batched InstancedMesh
+    const oasisRockGeo = new THREE.DodecahedronGeometry(1, 0);
     const rockMat = new THREE.MeshStandardMaterial({ color: 0x7a7060, roughness: 0.8, metalness: 0.03 });
+    const oasisRockMesh = new THREE.InstancedMesh(oasisRockGeo, rockMat, 8);
     for (let i = 0; i < 8; i++) {
       const angle = Math.random() * Math.PI * 2;
       const r = 9.8 + Math.random() * 2.0;
       const s = 0.2 + Math.random() * 0.3;
-      const rockGeo = new THREE.DodecahedronGeometry(s, 0);
-      const rock = new THREE.Mesh(rockGeo, rockMat);
-      rock.position.set(
-        cx + Math.cos(angle) * r,
-        groundY(r) + s * 0.5,
-        cz + Math.sin(angle) * r
+      _e.set(Math.random(), Math.random(), Math.random());
+      _q.setFromEuler(_e);
+      _s.set(s, s, s);
+      _m.compose(
+        new THREE.Vector3(cx + Math.cos(angle) * r, groundY(r) + s * 0.5, cz + Math.sin(angle) * r),
+        _q, _s
       );
-      rock.rotation.set(Math.random(), Math.random(), Math.random());
-      rock.castShadow = true;
-      this.scene.add(rock);
+      oasisRockMesh.setMatrixAt(i, _m);
     }
+    this.scene.add(oasisRockMesh);
 
     // Lotus flowers floating on the water surface
     const lotusColors = [0xff69b4, 0xff85c8, 0xffb6d9, 0xffffff];
@@ -569,18 +571,25 @@ export class SceneManager {
       lotus.position.set(cx + Math.cos(angle) * r, waterY + 0.05, cz + Math.sin(angle) * r);
       this.scene.add(lotus);
     }
-    // Lotus pads (green discs, larger)
+    // Lotus pads — batched InstancedMesh
+    const padGeo = new THREE.CircleGeometry(0.35, 8);
+    padGeo.rotateX(-Math.PI / 2);
     const padMat = new THREE.MeshStandardMaterial({ color: 0x2e7d32, roughness: 0.7, metalness: 0.0 });
+    const padMesh = new THREE.InstancedMesh(padGeo, padMat, 20);
     for (let i = 0; i < 20; i++) {
       const angle = Math.random() * Math.PI * 2;
       const r = 1.5 + Math.random() * 8.0;
-      const padGeo = new THREE.CircleGeometry(0.25 + Math.random() * 0.2, 8);
-      padGeo.rotateX(-Math.PI / 2);
-      const pad = new THREE.Mesh(padGeo, padMat);
-      pad.position.set(cx + Math.cos(angle) * r, waterY + 0.03, cz + Math.sin(angle) * r);
-      pad.rotation.y = Math.random() * Math.PI * 2;
-      this.scene.add(pad);
+      const padScale = 0.6 + Math.random() * 0.8;
+      _e.set(0, Math.random() * Math.PI * 2, 0);
+      _q.setFromEuler(_e);
+      _s.set(padScale, 1, padScale);
+      _m.compose(
+        new THREE.Vector3(cx + Math.cos(angle) * r, waterY + 0.03, cz + Math.sin(angle) * r),
+        _q, _s
+      );
+      padMesh.setMatrixAt(i, _m);
     }
+    this.scene.add(padMesh);
 
     // Papyrus reed clusters — taller, denser than normal reeds
     const papyrusStemMat = new THREE.MeshStandardMaterial({ color: 0x3a8a28, roughness: 0.75, metalness: 0.0 });
@@ -598,7 +607,6 @@ export class SceneManager {
         const stem = new THREE.Mesh(stemGeo, papyrusStemMat);
         stem.position.set(px, groundY(cR) + height / 2, pz);
         stem.rotation.z = (Math.random() - 0.5) * 0.15;
-        stem.castShadow = true;
         this.scene.add(stem);
         // Feathery top
         const headGeo = new THREE.SphereGeometry(0.2 + Math.random() * 0.1, 6, 4);
@@ -609,15 +617,21 @@ export class SceneManager {
       }
     }
 
-    // Extended ground cover — grass radiating outward beyond the basin
+    // Extended ground cover — batched InstancedMesh
+    const coverGeo = new THREE.ConeGeometry(0.2, 0.5, 4);
+    const coverMesh = new THREE.InstancedMesh(coverGeo, grassMat, 30);
     for (let i = 0; i < 30; i++) {
       const angle = Math.random() * Math.PI * 2;
       const r = 14.0 + Math.random() * 6.0;
-      const turfGeo = new THREE.ConeGeometry(0.15 + Math.random() * 0.1, 0.4 + Math.random() * 0.3, 4);
-      const turf = new THREE.Mesh(turfGeo, grassMat);
-      turf.position.set(cx + Math.cos(angle) * r, 0.15, cz + Math.sin(angle) * r);
-      this.scene.add(turf);
+      const sc = 0.5 + Math.random() * 0.8;
+      _s.set(sc, sc, sc);
+      _m.compose(
+        new THREE.Vector3(cx + Math.cos(angle) * r, 0.15, cz + Math.sin(angle) * r),
+        new THREE.Quaternion(), _s
+      );
+      coverMesh.setMatrixAt(i, _m);
     }
+    this.scene.add(coverMesh);
   }
 
   private createDistantDunes(): void {
@@ -696,7 +710,6 @@ export class SceneManager {
       }
       bushGeo.computeVertexNormals();
       const bush = new THREE.Mesh(bushGeo, mat);
-      bush.castShadow = true;
       group.add(bush);
 
       // Twigs/branches poking out — 3-5 per bush
@@ -857,7 +870,6 @@ export class SceneManager {
         const rdz = p.z + nz * (riverWidth / 2 + 0.5 + Math.random());
         reed.position.set(rdx, getTerrainHeight(rdx, rdz) + height / 2, rdz);
         reed.rotation.z = (Math.random() - 0.5) * 0.2;
-        reed.castShadow = true;
         this.scene.add(reed);
       }
     }
@@ -865,63 +877,68 @@ export class SceneManager {
 
 
   private createDesertRocks(): void {
-    // Scattered desert rocks of varying sizes across the landscape
-    const rockColors = [
-      new THREE.MeshStandardMaterial({ color: 0x7a6a5a, roughness: 0.9, metalness: 0.02 }),
-      new THREE.MeshStandardMaterial({ color: 0x8a7a6a, roughness: 0.85, metalness: 0.01 }),
-      new THREE.MeshStandardMaterial({ color: 0x6a5a4a, roughness: 0.92, metalness: 0.03 }),
-      new THREE.MeshStandardMaterial({ color: 0x9a8a7a, roughness: 0.88, metalness: 0.01 }),
-    ];
+    const rockMat = new THREE.MeshStandardMaterial({ color: 0x7a6a5a, roughness: 0.9, metalness: 0.02 });
+    const _m = new THREE.Matrix4();
+    const _q = new THREE.Quaternion();
+    const _s = new THREE.Vector3();
+    const _e = new THREE.Euler();
 
-    // Avoid oasis (40,35,r=20), pyramid (0,0,r=14), city (85,70,r=30)
+    // Avoid oasis, pyramid, city
     const exclusions = [
       { x: 40, z: 35, r: 22 },
       { x: 0, z: 0, r: 16 },
       { x: 85, z: 70, r: 35 },
     ];
 
+    const isExcluded = (x: number, z: number): boolean => {
+      for (const ex of exclusions) {
+        if (Math.sqrt((x - ex.x) ** 2 + (z - ex.z) ** 2) < ex.r) return true;
+      }
+      return false;
+    };
+
+    // Pre-generate valid positions for rocks
+    const rockPositions: { x: number; z: number; s: number }[] = [];
     for (let i = 0; i < 60; i++) {
       const x = (Math.random() - 0.5) * 200;
       const z = (Math.random() - 0.5) * 200;
-
-      // Skip if inside exclusion zone
-      let skip = false;
-      for (const ex of exclusions) {
-        const d = Math.sqrt((x - ex.x) ** 2 + (z - ex.z) ** 2);
-        if (d < ex.r) { skip = true; break; }
-      }
-      if (skip) continue;
-
-      const s = 0.1 + Math.random() * 0.5;
-      const geo = new THREE.DodecahedronGeometry(s, 0);
-      const mat = rockColors[Math.floor(Math.random() * rockColors.length)];
-      const rock = new THREE.Mesh(geo, mat);
-      rock.position.set(x, getTerrainHeight(x, z) + s * 0.3, z);
-      rock.rotation.set(Math.random(), Math.random(), Math.random());
-      rock.castShadow = true;
-      this.scene.add(rock);
+      if (isExcluded(x, z)) continue;
+      rockPositions.push({ x, z, s: 0.1 + Math.random() * 0.5 });
     }
 
-    // Dried desert plants — sparse, wispy
-    const driedPlantMat = new THREE.MeshStandardMaterial({ color: 0x8a7a3a, roughness: 0.95, metalness: 0.0 });
+    // Batched desert rocks — 1 InstancedMesh
+    const desertRockGeo = new THREE.DodecahedronGeometry(1, 0);
+    const desertRockMesh = new THREE.InstancedMesh(desertRockGeo, rockMat, rockPositions.length);
+    for (let i = 0; i < rockPositions.length; i++) {
+      const { x, z, s } = rockPositions[i];
+      _e.set(Math.random(), Math.random(), Math.random());
+      _q.setFromEuler(_e);
+      _s.set(s, s, s);
+      _m.compose(new THREE.Vector3(x, getTerrainHeight(x, z) + s * 0.3, z), _q, _s);
+      desertRockMesh.setMatrixAt(i, _m);
+    }
+    this.scene.add(desertRockMesh);
+
+    // Pre-generate valid positions for plants
+    const plantPositions: { x: number; z: number; h: number }[] = [];
     for (let i = 0; i < 25; i++) {
       const x = (Math.random() - 0.5) * 180;
       const z = (Math.random() - 0.5) * 180;
-
-      let skip = false;
-      for (const ex of exclusions) {
-        const d = Math.sqrt((x - ex.x) ** 2 + (z - ex.z) ** 2);
-        if (d < ex.r) { skip = true; break; }
-      }
-      if (skip) continue;
-
-      const height = 0.3 + Math.random() * 0.5;
-      const plantGeo = new THREE.ConeGeometry(0.08 + Math.random() * 0.06, height, 5);
-      const plant = new THREE.Mesh(plantGeo, driedPlantMat);
-      plant.position.set(x, getTerrainHeight(x, z) + height / 2, z);
-      plant.castShadow = true;
-      this.scene.add(plant);
+      if (isExcluded(x, z)) continue;
+      plantPositions.push({ x, z, h: 0.3 + Math.random() * 0.5 });
     }
+
+    // Batched dried plants — 1 InstancedMesh
+    const plantGeo = new THREE.ConeGeometry(0.1, 1, 5);
+    const driedPlantMat = new THREE.MeshStandardMaterial({ color: 0x8a7a3a, roughness: 0.95, metalness: 0.0 });
+    const plantMesh = new THREE.InstancedMesh(plantGeo, driedPlantMat, plantPositions.length);
+    for (let i = 0; i < plantPositions.length; i++) {
+      const { x, z, h } = plantPositions[i];
+      _s.set(0.8 + Math.random() * 0.4, h, 0.8 + Math.random() * 0.4);
+      _m.compose(new THREE.Vector3(x, getTerrainHeight(x, z) + h / 2, z), new THREE.Quaternion(), _s);
+      plantMesh.setMatrixAt(i, _m);
+    }
+    this.scene.add(plantMesh);
   }
 
   private createDistanceFog(): void {
