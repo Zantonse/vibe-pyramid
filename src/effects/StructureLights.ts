@@ -128,6 +128,38 @@ export class StructureLights {
         addGlow(0xffab40, 0.4, 1.5, 'static', new THREE.Vector3(0, 2, 0));
         break;
 
+      case 'royal-treasury':
+        addGlow(0xffd700, 0.6, 2.0, 'pulse', new THREE.Vector3(0, 2, 0));
+        break;
+
+      case 'cliff-temple':
+        addGlow(0xffab40, 0.5, 2.5, 'static', new THREE.Vector3(0, 3, 0));
+        break;
+
+      case 'sarcophagus-chamber':
+        addGlow(0xff6600, 0.4, 1.5, 'flicker', new THREE.Vector3(0, 1.5, 0));
+        break;
+
+      case 'lighthouse':
+        addGlow(0xffd54f, 0.8, 3.0, 'beacon', new THREE.Vector3(0, 15, 0));
+        break;
+
+      case 'marketplace':
+        addGlow(0xff8c00, 0.4, 1.5, 'flicker', new THREE.Vector3(-2, 2, 0));
+        addGlow(0xff8c00, 0.4, 1.5, 'flicker', new THREE.Vector3(2, 2, 0));
+        break;
+
+      case 'eternal-city':
+        addGlow(0xffd700, 0.7, 3.0, 'pulse', new THREE.Vector3(0, 4, 0));
+        addGlow(0xffab40, 0.4, 1.5, 'flicker', new THREE.Vector3(-5, 2, 0));
+        addGlow(0xffab40, 0.4, 1.5, 'flicker', new THREE.Vector3(5, 2, 0));
+        break;
+
+      case 'abu-simbel':
+        addGlow(0xffab40, 0.5, 2.5, 'pulse', new THREE.Vector3(0, 2, 0));
+        addGlow(0xffcc80, 0.3, 1.5, 'static', new THREE.Vector3(0, 2, 4));
+        break;
+
       default:
         return;
     }

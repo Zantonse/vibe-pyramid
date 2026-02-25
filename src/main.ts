@@ -18,7 +18,6 @@ import { StructureLights } from './effects/StructureLights.js';
 import { BirdFlock } from './characters/BirdFlock.js';
 import { CamelModel } from './characters/CamelModel.js';
 import { DustBurst } from './effects/DustBurst.js';
-import { AmbientAudio } from './audio/AmbientAudio.js';
 import { AchievementToast } from './ui/AchievementToast.js';
 import { StatsPanel } from './ui/StatsPanel.js';
 import { Minimap } from './ui/Minimap.js';
@@ -47,9 +46,6 @@ const structureLights = new StructureLights(sceneManager.scene);
 const birdFlock = new BirdFlock(sceneManager.scene);
 const camelModel = new CamelModel(sceneManager.scene);
 
-// Ambient audio
-const ambientAudio = new AmbientAudio();
-
 // UI overlays
 const achievementToast = new AchievementToast();
 const statsPanel = new StatsPanel();
@@ -58,7 +54,6 @@ const minimap = new Minimap();
 // Audio warmup on first click
 document.addEventListener('click', () => {
   audio.warmup();
-  ambientAudio.warmup();
 }, { once: true });
 
 // Block land callbacks — both audio and dust burst
@@ -87,7 +82,7 @@ hud.onLevelUp((_name, index) => {
     torchesAdded7 = true;
     torchFire.addTorch(new THREE.Vector3(-1.5, 2.5, 11), 1.5);
     torchFire.addTorch(new THREE.Vector3(1.5, 2.5, 11), 1.5);
-    ambientAudio.setTorchesActive(true);
+
   }
   if (index >= 9 && !torchesAdded9) {
     torchesAdded9 = true;
@@ -145,9 +140,6 @@ function animate(): void {
   // Living world
   birdFlock.update(delta);
   camelModel.update(delta);
-
-  // Ambient audio
-  ambientAudio.update(delta);
 
   // UI updates (throttled)
   if (frameCount % 30 === 0) {
