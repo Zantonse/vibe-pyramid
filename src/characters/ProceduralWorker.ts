@@ -10,6 +10,7 @@ export class ProceduralWorker implements CharacterModel {
   mesh: THREE.Group;
   private currentAnimation: AnimationName = 'idle';
   private animTime = 0;
+  private baseY = 0; // terrain height — animation offsets are added on top
 
   private body: THREE.Mesh;
   private head: THREE.Mesh;
@@ -203,7 +204,7 @@ export class ProceduralWorker implements CharacterModel {
         this.rightArm.rotation.x = -Math.sin(t * 4) * 0.5;
         this.leftLeg.rotation.x = -Math.sin(t * 4) * 0.4;
         this.rightLeg.rotation.x = Math.sin(t * 4) * 0.4;
-        this.mesh.position.y = Math.abs(Math.sin(t * 4)) * 0.05;
+        this.mesh.position.y = this.baseY + Math.abs(Math.sin(t * 4)) * 0.05;
         break;
       case 'chisel':
         this.rightArm.rotation.x = -0.5 + Math.sin(t * 6) * 0.8;
@@ -231,12 +232,13 @@ export class ProceduralWorker implements CharacterModel {
         this.rightArm.rotation.x = 0;
         this.leftLeg.rotation.x = 0;
         this.rightLeg.rotation.x = 0;
-        this.mesh.position.y = 0;
+        this.mesh.position.y = this.baseY;
         break;
     }
   }
 
   setPosition(pos: THREE.Vector3): void {
+    this.baseY = pos.y;
     this.mesh.position.copy(pos);
   }
 
