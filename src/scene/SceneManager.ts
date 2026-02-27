@@ -1,6 +1,13 @@
 import * as THREE from 'three';
 import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+import { computeBoundsTree, disposeBoundsTree, acceleratedRaycast } from 'three-mesh-bvh';
 import { getTerrainHeight } from './terrainHeight.js';
+
+// three-mesh-bvh monkey-patch
+THREE.BufferGeometry.prototype.computeBoundsTree = computeBoundsTree;
+THREE.BufferGeometry.prototype.disposeBoundsTree = disposeBoundsTree;
+THREE.Mesh.prototype.raycast = acceleratedRaycast;
+
 
 interface AtmosphereConfig {
   midColorBoost: number;
@@ -66,6 +73,7 @@ export class SceneManager {
   private sunLight: THREE.DirectionalLight | null = null;
   private ambientLight: THREE.AmbientLight | null = null;
   private dayTime = 0;
+  private _dayNightCycleDuration = 300; // seconds for a full cycle
   private _nudgeTarget: THREE.Vector3 | null = null;
   private nudgeProgress = 0;
   private baseTarget = new THREE.Vector3(0, 5, 0);
@@ -81,6 +89,15 @@ export class SceneManager {
   get currentDayTime(): number {
     return this.dayTime;
   }
+
+  get dayNightCycleDuration(): number {
+    return this._dayNightCycleDuration;
+  }
+
+  set dayNightCycleDuration(seconds: number) {
+    this._dayNightCycleDuration = Math.max(10, seconds);
+  }
+
   private innerGlowLight: THREE.PointLight | null = null;
   private capstoneLight: THREE.PointLight | null = null;
   private limestoneCasing: THREE.Group | null = null;
@@ -207,6 +224,7 @@ export class SceneManager {
       positions.setY(i, getTerrainHeight(x, z));
     }
     geo.computeVertexNormals();
+    geo.computeBoundsTree();
 
     // Add per-vertex color variation for natural sand look
     const colors = new Float32Array(positions.count * 3);
@@ -1308,8 +1326,8 @@ export class SceneManager {
       this.controls.update();
     }
 
-    // Slow day/night cycle — full cycle every 5 minutes
-    this.dayTime = (this.dayTime + delta / 300) % 1;
+    // Slow day/night cycle — full cycle every _dayNightCycleDuration seconds
+    this.dayTime = (this.dayTime + delta / this._dayNightCycleDuration) % 1;
 
     if (this.skyMaterial) {
       const nightAmount = Math.max(0, Math.sin(this.dayTime * Math.PI * 2 - Math.PI / 2)) * 0.5;

@@ -104,6 +104,13 @@ window.addEventListener('resize', () => {
   postProcessing.resize(window.innerWidth, window.innerHeight);
 });
 
+// Dev-only debug panel
+if (import.meta.env.DEV) {
+  import('./effects/DebugPanel.js').then(({ DebugPanel }) => {
+    new DebugPanel(postProcessing, sceneManager);
+  });
+}
+
 // Networking
 const ws = new WSClient();
 const router = new EventRouter(characters, buildManager, hud, sidebar, sceneManager, sand);

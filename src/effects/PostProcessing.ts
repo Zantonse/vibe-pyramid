@@ -1,49 +1,62 @@
 import * as THREE from 'three';
-import { EffectComposer } from 'three/addons/postprocessing/EffectComposer.js';
-import { RenderPass } from 'three/addons/postprocessing/RenderPass.js';
-import { UnrealBloomPass } from 'three/addons/postprocessing/UnrealBloomPass.js';
-import { OutputPass } from 'three/addons/postprocessing/OutputPass.js';
+import { BloomEffect, EffectComposer, EffectPass, RenderPass } from 'postprocessing';
 
 export class PostProcessing {
   private composer: EffectComposer;
-  private bloomPass: UnrealBloomPass;
+  private bloomEffect: BloomEffect;
+  private effectPass: EffectPass;
 
   constructor(renderer: THREE.WebGLRenderer, scene: THREE.Scene, camera: THREE.Camera) {
-    // Create composer
-    this.composer = new EffectComposer(renderer);
+    this.composer = new EffectComposer(renderer, { multisampling: 4 });
 
-    // Render pass
-    const renderPass = new RenderPass(scene, camera);
-    this.composer.addPass(renderPass);
+    this.composer.addPass(new RenderPass(scene, camera));
 
-    // Unreal bloom pass — half resolution for performance
-    const bloomPass = new UnrealBloomPass(
-      new THREE.Vector2(window.innerWidth / 2, window.innerHeight / 2),
-      0.4,   // strength
-      0.5,   // radius
-      0.85   // threshold (raised to limit bloom to brightest emissives)
-    );
-    this.bloomPass = bloomPass;
-    this.composer.addPass(bloomPass);
+    this.bloomEffect = new BloomEffect({
+      intensity: 0.4,
+      luminanceThreshold: 0.85,
+      radius: 0.5,
+    });
 
-    // Output pass
-    const outputPass = new OutputPass();
-    this.composer.addPass(outputPass);
+    this.effectPass = new EffectPass(camera, this.bloomEffect);
+    this.composer.addPass(this.effectPass);
   }
 
   setMilestoneLevel(level: number): void {
-    // Scale bloom strength from 0.2 at level 0 to ~0.6 at level 8+
     const normalizedLevel = Math.min(level, 8);
     const strength = 0.2 + (normalizedLevel / 8) * 0.4;
-    this.bloomPass.strength = strength;
+    this.bloomEffect.intensity = strength;
   }
 
   resize(width: number, height: number): void {
     this.composer.setSize(width, height);
-    this.bloomPass.resolution.set(width / 2, height / 2);
   }
 
   render(): void {
     this.composer.render();
+  }
+
+  /** Enable or disable the entire post-processing effect pass. */
+  setEnabled(enabled: boolean): void {
+    this.effectPass.enabled = enabled;
+  }
+
+  get enabled(): boolean {
+    return this.effectPass.enabled;
+  }
+
+  get bloomIntensity(): number {
+    return this.bloomEffect.intensity;
+  }
+
+  set bloomIntensity(value: number) {
+    this.bloomEffect.intensity = value;
+  }
+
+  get bloomThreshold(): number {
+    return this.bloomEffect.luminanceMaterial.threshold;
+  }
+
+  set bloomThreshold(value: number) {
+    this.bloomEffect.luminanceMaterial.threshold = value;
   }
 }
