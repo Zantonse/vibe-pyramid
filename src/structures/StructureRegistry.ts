@@ -3981,6 +3981,1066 @@ function generateAnimalNecropolisSlots(offset: THREE.Vector3): BlockSlot[] {
   return slots;
 }
 
+function generatePriestsResidencesSlots(offset: THREE.Vector3): BlockSlot[] {
+  const slots: BlockSlot[] = [];
+
+  // 6 houses in a 3x2 grid, each house is 4x3 footprint
+  const houseW = 4;
+  const houseD = 3;
+  const cols = 3;
+  const rows = 2;
+  const houseSpacingX = (houseW + 1) * BLOCK_UNIT;
+  const houseSpacingZ = (houseD + 1) * BLOCK_UNIT;
+  const gridW = cols * houseSpacingX;
+  const gridD = rows * houseSpacingZ;
+
+  for (let col = 0; col < cols; col++) {
+    for (let row = 0; row < rows; row++) {
+      const hx = offset.x - gridW / 2 + col * houseSpacingX;
+      const hz = offset.z - gridD / 2 + row * houseSpacingZ;
+
+      // Slab floor (4x3 = 12 per house, 72 total)
+      for (let x = 0; x < houseW; x++) {
+        for (let z = 0; z < houseD; z++) {
+          slots.push({
+            position: new THREE.Vector3(
+              hx + x * BLOCK_UNIT + BLOCK_UNIT / 2,
+              BLOCK_SIZE * 0.125,
+              hz + z * BLOCK_UNIT + BLOCK_UNIT / 2
+            ),
+            placed: false,
+            geometry: 'slab',
+          });
+        }
+      }
+
+      // 2-high perimeter walls (beveled-cube)
+      for (let y = 0; y < 2; y++) {
+        for (let x = 0; x < houseW; x++) {
+          for (const z of [0, houseD - 1]) {
+            slots.push({
+              position: new THREE.Vector3(
+                hx + x * BLOCK_UNIT + BLOCK_UNIT / 2,
+                y * BLOCK_UNIT + BLOCK_SIZE / 2,
+                hz + z * BLOCK_UNIT + BLOCK_UNIT / 2
+              ),
+              placed: false,
+              geometry: 'beveled-cube',
+            });
+          }
+        }
+        for (let z = 1; z < houseD - 1; z++) {
+          for (const x of [0, houseW - 1]) {
+            slots.push({
+              position: new THREE.Vector3(
+                hx + x * BLOCK_UNIT + BLOCK_UNIT / 2,
+                y * BLOCK_UNIT + BLOCK_SIZE / 2,
+                hz + z * BLOCK_UNIT + BLOCK_UNIT / 2
+              ),
+              placed: false,
+              geometry: 'beveled-cube',
+            });
+          }
+        }
+      }
+
+      // Slab roof (4x3 = 12 per house, 72 total)
+      for (let x = 0; x < houseW; x++) {
+        for (let z = 0; z < houseD; z++) {
+          slots.push({
+            position: new THREE.Vector3(
+              hx + x * BLOCK_UNIT + BLOCK_UNIT / 2,
+              2 * BLOCK_UNIT + BLOCK_SIZE * 0.125,
+              hz + z * BLOCK_UNIT + BLOCK_UNIT / 2
+            ),
+            placed: false,
+            geometry: 'slab',
+          });
+        }
+      }
+    }
+  }
+
+  // Compound perimeter wall 2-high around all houses (~80 beveled-cube)
+  const wallMinX = offset.x - gridW / 2 - BLOCK_UNIT;
+  const wallMinZ = offset.z - gridD / 2 - BLOCK_UNIT;
+  const wallMaxX = offset.x + gridW / 2 + BLOCK_UNIT;
+  const wallMaxZ = offset.z + gridD / 2 + BLOCK_UNIT;
+  const wallStepsX = Math.round((wallMaxX - wallMinX) / BLOCK_UNIT);
+  const wallStepsZ = Math.round((wallMaxZ - wallMinZ) / BLOCK_UNIT);
+
+  for (let y = 0; y < 2; y++) {
+    for (let i = 0; i < wallStepsX; i++) {
+      const wx = wallMinX + i * BLOCK_UNIT + BLOCK_UNIT / 2;
+      for (const wz of [wallMinZ + BLOCK_UNIT / 2, wallMaxZ - BLOCK_UNIT / 2]) {
+        slots.push({
+          position: new THREE.Vector3(wx, y * BLOCK_UNIT + BLOCK_SIZE / 2, wz),
+          placed: false,
+          geometry: 'beveled-cube',
+        });
+      }
+    }
+    for (let i = 1; i < wallStepsZ - 1; i++) {
+      const wz = wallMinZ + i * BLOCK_UNIT + BLOCK_UNIT / 2;
+      for (const wx of [wallMinX + BLOCK_UNIT / 2, wallMaxX - BLOCK_UNIT / 2]) {
+        slots.push({
+          position: new THREE.Vector3(wx, y * BLOCK_UNIT + BLOCK_SIZE / 2, wz),
+          placed: false,
+          geometry: 'beveled-cube',
+        });
+      }
+    }
+  }
+
+  // Central courtyard slab (3x4 strip between the two rows)
+  const courtZ = offset.z - houseSpacingZ / 2;
+  for (let x = 0; x < 3; x++) {
+    for (let z = 0; z < 4; z++) {
+      slots.push({
+        position: new THREE.Vector3(
+          offset.x - BLOCK_UNIT * 1.5 + x * BLOCK_UNIT + BLOCK_UNIT / 2,
+          BLOCK_SIZE * 0.125,
+          courtZ + z * BLOCK_UNIT
+        ),
+        placed: false,
+        geometry: 'slab',
+      });
+    }
+  }
+
+  return slots;
+}
+
+function generateStoneWharfSlots(offset: THREE.Vector3): BlockSlot[] {
+  const slots: BlockSlot[] = [];
+
+  const dockW = 20;
+  const dockD = 4;
+  const halfDockW = (dockW * BLOCK_UNIT) / 2;
+  const halfDockD = (dockD * BLOCK_UNIT) / 2;
+
+  // Dock slab floor (20x4 = 80)
+  for (let x = 0; x < dockW; x++) {
+    for (let z = 0; z < dockD; z++) {
+      slots.push({
+        position: new THREE.Vector3(
+          offset.x - halfDockW + x * BLOCK_UNIT + BLOCK_UNIT / 2,
+          BLOCK_SIZE * 0.125,
+          offset.z - halfDockD + z * BLOCK_UNIT + BLOCK_UNIT / 2
+        ),
+        placed: false,
+        geometry: 'slab',
+      });
+    }
+  }
+
+  // Edge walls 1-high (perimeter of dock, ~44 beveled-cube)
+  for (let x = 0; x < dockW; x++) {
+    for (const z of [0, dockD - 1]) {
+      slots.push({
+        position: new THREE.Vector3(
+          offset.x - halfDockW + x * BLOCK_UNIT + BLOCK_UNIT / 2,
+          BLOCK_SIZE / 2,
+          offset.z - halfDockD + z * BLOCK_UNIT + BLOCK_UNIT / 2
+        ),
+        placed: false,
+        geometry: 'beveled-cube',
+      });
+    }
+  }
+  for (let z = 1; z < dockD - 1; z++) {
+    for (const x of [0, dockW - 1]) {
+      slots.push({
+        position: new THREE.Vector3(
+          offset.x - halfDockW + x * BLOCK_UNIT + BLOCK_UNIT / 2,
+          BLOCK_SIZE / 2,
+          offset.z - halfDockD + z * BLOCK_UNIT + BLOCK_UNIT / 2
+        ),
+        placed: false,
+        geometry: 'beveled-cube',
+      });
+    }
+  }
+
+  // 6 cylinder crane posts 4-high (spaced along dock)
+  const cranePositions = [3, 6, 9, 12, 15, 18];
+  for (const cx of cranePositions) {
+    for (let y = 0; y < 4; y++) {
+      slots.push({
+        position: new THREE.Vector3(
+          offset.x - halfDockW + cx * BLOCK_UNIT + BLOCK_UNIT / 2,
+          y * BLOCK_UNIT + BLOCK_SIZE / 2,
+          offset.z
+        ),
+        placed: false,
+        geometry: 'cylinder',
+      });
+    }
+  }
+
+  // Loading ramp 4x3 wedge
+  for (let x = 0; x < 4; x++) {
+    for (let z = 0; z < 3; z++) {
+      slots.push({
+        position: new THREE.Vector3(
+          offset.x - halfDockW + x * BLOCK_UNIT + BLOCK_UNIT / 2,
+          BLOCK_SIZE / 2,
+          offset.z - halfDockD - (z + 1) * BLOCK_UNIT + BLOCK_UNIT / 2
+        ),
+        placed: false,
+        geometry: 'wedge',
+      });
+    }
+  }
+
+  // 3 mooring bollards (cylinder, 2-high)
+  const bollardPositions = [4, 10, 16];
+  for (const bx of bollardPositions) {
+    for (let y = 0; y < 2; y++) {
+      slots.push({
+        position: new THREE.Vector3(
+          offset.x - halfDockW + bx * BLOCK_UNIT + BLOCK_UNIT / 2,
+          y * BLOCK_UNIT + BLOCK_SIZE / 2,
+          offset.z + halfDockD + BLOCK_UNIT / 2
+        ),
+        placed: false,
+        geometry: 'cylinder',
+      });
+    }
+  }
+
+  // Storage shed: 6x3, walls 2-high + slab roof (~48 total)
+  const shedX = offset.x + halfDockW / 2 - 3 * BLOCK_UNIT;
+  const shedZ = offset.z + halfDockD + 2 * BLOCK_UNIT;
+  const shedW = 6;
+  const shedD = 3;
+
+  // Shed slab floor
+  for (let x = 0; x < shedW; x++) {
+    for (let z = 0; z < shedD; z++) {
+      slots.push({
+        position: new THREE.Vector3(
+          shedX + x * BLOCK_UNIT + BLOCK_UNIT / 2,
+          BLOCK_SIZE * 0.125,
+          shedZ + z * BLOCK_UNIT + BLOCK_UNIT / 2
+        ),
+        placed: false,
+        geometry: 'slab',
+      });
+    }
+  }
+
+  // Shed walls 2-high
+  for (let y = 0; y < 2; y++) {
+    for (let x = 0; x < shedW; x++) {
+      for (const z of [0, shedD - 1]) {
+        slots.push({
+          position: new THREE.Vector3(
+            shedX + x * BLOCK_UNIT + BLOCK_UNIT / 2,
+            y * BLOCK_UNIT + BLOCK_SIZE / 2,
+            shedZ + z * BLOCK_UNIT + BLOCK_UNIT / 2
+          ),
+          placed: false,
+          geometry: 'beveled-cube',
+        });
+      }
+    }
+    for (let z = 1; z < shedD - 1; z++) {
+      for (const x of [0, shedW - 1]) {
+        slots.push({
+          position: new THREE.Vector3(
+            shedX + x * BLOCK_UNIT + BLOCK_UNIT / 2,
+            y * BLOCK_UNIT + BLOCK_SIZE / 2,
+            shedZ + z * BLOCK_UNIT + BLOCK_UNIT / 2
+          ),
+          placed: false,
+          geometry: 'beveled-cube',
+        });
+      }
+    }
+  }
+
+  // Shed slab roof
+  for (let x = 0; x < shedW; x++) {
+    for (let z = 0; z < shedD; z++) {
+      slots.push({
+        position: new THREE.Vector3(
+          shedX + x * BLOCK_UNIT + BLOCK_UNIT / 2,
+          2 * BLOCK_UNIT + BLOCK_SIZE * 0.125,
+          shedZ + z * BLOCK_UNIT + BLOCK_UNIT / 2
+        ),
+        placed: false,
+        geometry: 'slab',
+      });
+    }
+  }
+
+  return slots;
+}
+
+function generateTempleOfHathorSlots(offset: THREE.Vector3): BlockSlot[] {
+  const slots: BlockSlot[] = [];
+
+  const templeW = 10;
+  const templeD = 8;
+  const halfW = (templeW * BLOCK_UNIT) / 2;
+  const halfD = (templeD * BLOCK_UNIT) / 2;
+
+  // Slab floor (10x8 = 80)
+  for (let x = 0; x < templeW; x++) {
+    for (let z = 0; z < templeD; z++) {
+      slots.push({
+        position: new THREE.Vector3(
+          offset.x - halfW + x * BLOCK_UNIT + BLOCK_UNIT / 2,
+          BLOCK_SIZE * 0.125,
+          offset.z - halfD + z * BLOCK_UNIT + BLOCK_UNIT / 2
+        ),
+        placed: false,
+        geometry: 'slab',
+      });
+    }
+  }
+
+  // 3-high perimeter walls (beveled-cube, ~96)
+  const wallH = 3;
+  for (let y = 0; y < wallH; y++) {
+    for (let x = 0; x < templeW; x++) {
+      for (const z of [0, templeD - 1]) {
+        slots.push({
+          position: new THREE.Vector3(
+            offset.x - halfW + x * BLOCK_UNIT + BLOCK_UNIT / 2,
+            y * BLOCK_UNIT + BLOCK_SIZE / 2,
+            offset.z - halfD + z * BLOCK_UNIT + BLOCK_UNIT / 2
+          ),
+          placed: false,
+          geometry: 'beveled-cube',
+        });
+      }
+    }
+    for (let z = 1; z < templeD - 1; z++) {
+      for (const x of [0, templeW - 1]) {
+        slots.push({
+          position: new THREE.Vector3(
+            offset.x - halfW + x * BLOCK_UNIT + BLOCK_UNIT / 2,
+            y * BLOCK_UNIT + BLOCK_SIZE / 2,
+            offset.z - halfD + z * BLOCK_UNIT + BLOCK_UNIT / 2
+          ),
+          placed: false,
+          geometry: 'beveled-cube',
+        });
+      }
+    }
+  }
+
+  // 6 Hathor columns on facade: fluted-cylinder 4-high + lotus capital (5 slots each = 30)
+  const facadeZ = offset.z - halfD + BLOCK_UNIT / 2;
+  const colSpacing = (templeW * BLOCK_UNIT) / 7;
+  for (let c = 1; c <= 6; c++) {
+    const colX = offset.x - halfW + c * colSpacing;
+    for (let y = 0; y < 4; y++) {
+      slots.push({
+        position: new THREE.Vector3(colX, y * BLOCK_UNIT + BLOCK_SIZE / 2, facadeZ),
+        placed: false,
+        geometry: 'fluted-cylinder',
+      });
+    }
+    // Lotus capital on top
+    slots.push({
+      position: new THREE.Vector3(colX, 4 * BLOCK_UNIT + BLOCK_SIZE / 2, facadeZ),
+      placed: false,
+      geometry: 'lotus-capital',
+    });
+  }
+
+  // Inner sanctuary 4x4 raised (2 levels of slab = 32)
+  const sanctW = 4;
+  const sanctHalf = (sanctW * BLOCK_UNIT) / 2;
+  for (let level = 0; level < 2; level++) {
+    for (let x = 0; x < sanctW; x++) {
+      for (let z = 0; z < sanctW; z++) {
+        slots.push({
+          position: new THREE.Vector3(
+            offset.x - sanctHalf + x * BLOCK_UNIT + BLOCK_UNIT / 2,
+            level * BLOCK_UNIT + BLOCK_SIZE * 0.125,
+            offset.z - sanctHalf + z * BLOCK_UNIT + BLOCK_UNIT / 2
+          ),
+          placed: false,
+          geometry: 'slab',
+        });
+      }
+    }
+  }
+
+  // Slab roof (10x8 = 80)
+  for (let x = 0; x < templeW; x++) {
+    for (let z = 0; z < templeD; z++) {
+      slots.push({
+        position: new THREE.Vector3(
+          offset.x - halfW + x * BLOCK_UNIT + BLOCK_UNIT / 2,
+          wallH * BLOCK_UNIT + BLOCK_SIZE * 0.125,
+          offset.z - halfD + z * BLOCK_UNIT + BLOCK_UNIT / 2
+        ),
+        placed: false,
+        geometry: 'slab',
+      });
+    }
+  }
+
+  // Rooftop shrine 3x3x3 (27)
+  const shrineW = 3;
+  const shrineHalf = (shrineW * BLOCK_UNIT) / 2;
+  for (let y = 0; y < 3; y++) {
+    for (let x = 0; x < shrineW; x++) {
+      for (let z = 0; z < shrineW; z++) {
+        slots.push({
+          position: new THREE.Vector3(
+            offset.x - shrineHalf + x * BLOCK_UNIT + BLOCK_UNIT / 2,
+            (wallH + 1) * BLOCK_UNIT + y * BLOCK_UNIT + BLOCK_SIZE / 2,
+            offset.z - shrineHalf + z * BLOCK_UNIT + BLOCK_UNIT / 2
+          ),
+          placed: false,
+          geometry: 'cube',
+        });
+      }
+    }
+  }
+
+  // Entrance pylon: 2 towers, each 2x2x4 (48)
+  const pylonY = offset.z + halfD;
+  const pylonOffsets = [
+    { px: offset.x - halfW + BLOCK_UNIT / 2, pz: pylonY },
+    { px: offset.x + halfW - 2 * BLOCK_UNIT + BLOCK_UNIT / 2, pz: pylonY },
+  ];
+  for (const { px, pz } of pylonOffsets) {
+    for (let y = 0; y < 4; y++) {
+      for (let tx = 0; tx < 2; tx++) {
+        for (let tz = 0; tz < 3; tz++) {
+          slots.push({
+            position: new THREE.Vector3(
+              px + tx * BLOCK_UNIT,
+              y * BLOCK_UNIT + BLOCK_SIZE / 2,
+              pz + tz * BLOCK_UNIT
+            ),
+            placed: false,
+            geometry: 'beveled-cube',
+          });
+        }
+      }
+    }
+  }
+
+  // Wedge cornice along front facade (20)
+  for (let x = 0; x < templeW; x++) {
+    slots.push({
+      position: new THREE.Vector3(
+        offset.x - halfW + x * BLOCK_UNIT + BLOCK_UNIT / 2,
+        wallH * BLOCK_UNIT + BLOCK_SIZE / 2,
+        offset.z + halfD - BLOCK_UNIT / 2
+      ),
+      placed: false,
+      geometry: 'wedge',
+    });
+    slots.push({
+      position: new THREE.Vector3(
+        offset.x - halfW + x * BLOCK_UNIT + BLOCK_UNIT / 2,
+        wallH * BLOCK_UNIT + BLOCK_SIZE / 2,
+        offset.z - halfD + BLOCK_UNIT / 2
+      ),
+      placed: false,
+      geometry: 'wedge',
+    });
+  }
+
+  return slots;
+}
+
+function generateWeavingMillSlots(offset: THREE.Vector3): BlockSlot[] {
+  const slots: BlockSlot[] = [];
+
+  const mainW = 8;
+  const mainD = 8;
+  const halfW = (mainW * BLOCK_UNIT) / 2;
+  const halfD = (mainD * BLOCK_UNIT) / 2;
+
+  // Main workshop slab floor (8x8 = 64)
+  for (let x = 0; x < mainW; x++) {
+    for (let z = 0; z < mainD; z++) {
+      slots.push({
+        position: new THREE.Vector3(
+          offset.x - halfW + x * BLOCK_UNIT + BLOCK_UNIT / 2,
+          BLOCK_SIZE * 0.125,
+          offset.z - halfD + z * BLOCK_UNIT + BLOCK_UNIT / 2
+        ),
+        placed: false,
+        geometry: 'slab',
+      });
+    }
+  }
+
+  // 2-high perimeter walls (~56 beveled-cube)
+  const wallH = 2;
+  for (let y = 0; y < wallH; y++) {
+    for (let x = 0; x < mainW; x++) {
+      for (const z of [0, mainD - 1]) {
+        slots.push({
+          position: new THREE.Vector3(
+            offset.x - halfW + x * BLOCK_UNIT + BLOCK_UNIT / 2,
+            y * BLOCK_UNIT + BLOCK_SIZE / 2,
+            offset.z - halfD + z * BLOCK_UNIT + BLOCK_UNIT / 2
+          ),
+          placed: false,
+          geometry: 'beveled-cube',
+        });
+      }
+    }
+    for (let z = 1; z < mainD - 1; z++) {
+      for (const x of [0, mainW - 1]) {
+        slots.push({
+          position: new THREE.Vector3(
+            offset.x - halfW + x * BLOCK_UNIT + BLOCK_UNIT / 2,
+            y * BLOCK_UNIT + BLOCK_SIZE / 2,
+            offset.z - halfD + z * BLOCK_UNIT + BLOCK_UNIT / 2
+          ),
+          placed: false,
+          geometry: 'beveled-cube',
+        });
+      }
+    }
+  }
+
+  // 4 loom frame sets (cylinder uprights 2-high + slab crossbar = 3+3 = 6 each, 24 total)
+  const loomPositions = [
+    { lx: 2, lz: 2 },
+    { lx: 5, lz: 2 },
+    { lx: 2, lz: 5 },
+    { lx: 5, lz: 5 },
+  ];
+  for (const { lx, lz } of loomPositions) {
+    for (let y = 0; y < 2; y++) {
+      slots.push({
+        position: new THREE.Vector3(
+          offset.x - halfW + lx * BLOCK_UNIT + BLOCK_UNIT / 2,
+          y * BLOCK_UNIT + BLOCK_SIZE / 2,
+          offset.z - halfD + lz * BLOCK_UNIT + BLOCK_UNIT / 2
+        ),
+        placed: false,
+        geometry: 'cylinder',
+      });
+      slots.push({
+        position: new THREE.Vector3(
+          offset.x - halfW + (lx + 1) * BLOCK_UNIT + BLOCK_UNIT / 2,
+          y * BLOCK_UNIT + BLOCK_SIZE / 2,
+          offset.z - halfD + lz * BLOCK_UNIT + BLOCK_UNIT / 2
+        ),
+        placed: false,
+        geometry: 'cylinder',
+      });
+    }
+    // Slab crossbar atop the two uprights
+    slots.push({
+      position: new THREE.Vector3(
+        offset.x - halfW + lx * BLOCK_UNIT + BLOCK_UNIT,
+        2 * BLOCK_UNIT + BLOCK_SIZE * 0.125,
+        offset.z - halfD + lz * BLOCK_UNIT + BLOCK_UNIT / 2
+      ),
+      placed: false,
+      geometry: 'slab',
+    });
+    slots.push({
+      position: new THREE.Vector3(
+        offset.x - halfW + (lx + 1) * BLOCK_UNIT + BLOCK_UNIT / 2,
+        2 * BLOCK_UNIT + BLOCK_SIZE * 0.125,
+        offset.z - halfD + lz * BLOCK_UNIT + BLOCK_UNIT / 2
+      ),
+      placed: false,
+      geometry: 'slab',
+    });
+  }
+
+  // 3 dye vats (cylinder, 3-high each = 9)
+  const vatPositions = [
+    { vx: 3, vz: 4 },
+    { vx: 4, vz: 4 },
+    { vx: 5, vz: 4 },
+  ];
+  for (const { vx, vz } of vatPositions) {
+    for (let y = 0; y < 3; y++) {
+      slots.push({
+        position: new THREE.Vector3(
+          offset.x - halfW + vx * BLOCK_UNIT + BLOCK_UNIT / 2,
+          y * BLOCK_UNIT + BLOCK_SIZE / 2,
+          offset.z - halfD + vz * BLOCK_UNIT + BLOCK_UNIT / 2
+        ),
+        placed: false,
+        geometry: 'cylinder',
+      });
+    }
+  }
+
+  // Slab roof for main workshop (8x8 = 64)
+  for (let x = 0; x < mainW; x++) {
+    for (let z = 0; z < mainD; z++) {
+      slots.push({
+        position: new THREE.Vector3(
+          offset.x - halfW + x * BLOCK_UNIT + BLOCK_UNIT / 2,
+          wallH * BLOCK_UNIT + BLOCK_SIZE * 0.125,
+          offset.z - halfD + z * BLOCK_UNIT + BLOCK_UNIT / 2
+        ),
+        placed: false,
+        geometry: 'slab',
+      });
+    }
+  }
+
+  // Storage wing 4x4 (attached to side of main workshop)
+  const wingW = 4;
+  const wingD = 4;
+  const wingX = offset.x + halfW;
+  const wingZ = offset.z - (wingD * BLOCK_UNIT) / 2;
+
+  // Wing slab floor (16)
+  for (let x = 0; x < wingW; x++) {
+    for (let z = 0; z < wingD; z++) {
+      slots.push({
+        position: new THREE.Vector3(
+          wingX + x * BLOCK_UNIT + BLOCK_UNIT / 2,
+          BLOCK_SIZE * 0.125,
+          wingZ + z * BLOCK_UNIT + BLOCK_UNIT / 2
+        ),
+        placed: false,
+        geometry: 'slab',
+      });
+    }
+  }
+
+  // Wing walls 2-high (~24)
+  for (let y = 0; y < 2; y++) {
+    for (let x = 0; x < wingW; x++) {
+      for (const z of [0, wingD - 1]) {
+        slots.push({
+          position: new THREE.Vector3(
+            wingX + x * BLOCK_UNIT + BLOCK_UNIT / 2,
+            y * BLOCK_UNIT + BLOCK_SIZE / 2,
+            wingZ + z * BLOCK_UNIT + BLOCK_UNIT / 2
+          ),
+          placed: false,
+          geometry: 'beveled-cube',
+        });
+      }
+    }
+    for (let z = 1; z < wingD - 1; z++) {
+      slots.push({
+        position: new THREE.Vector3(
+          wingX + (wingW - 1) * BLOCK_UNIT + BLOCK_UNIT / 2,
+          y * BLOCK_UNIT + BLOCK_SIZE / 2,
+          wingZ + z * BLOCK_UNIT + BLOCK_UNIT / 2
+        ),
+        placed: false,
+        geometry: 'beveled-cube',
+      });
+    }
+  }
+
+  // Wing slab roof (16)
+  for (let x = 0; x < wingW; x++) {
+    for (let z = 0; z < wingD; z++) {
+      slots.push({
+        position: new THREE.Vector3(
+          wingX + x * BLOCK_UNIT + BLOCK_UNIT / 2,
+          2 * BLOCK_UNIT + BLOCK_SIZE * 0.125,
+          wingZ + z * BLOCK_UNIT + BLOCK_UNIT / 2
+        ),
+        placed: false,
+        geometry: 'slab',
+      });
+    }
+  }
+
+  return slots;
+}
+
+function generateProcessionalWaySlots(offset: THREE.Vector3): BlockSlot[] {
+  const slots: BlockSlot[] = [];
+
+  const roadLen = 30;
+  const roadW = 3;
+  const halfRoadW = (roadW * BLOCK_UNIT) / 2;
+  const halfRoadLen = (roadLen * BLOCK_UNIT) / 2;
+
+  // Slab floor 30x3 = 90
+  for (let z = 0; z < roadLen; z++) {
+    for (let x = 0; x < roadW; x++) {
+      slots.push({
+        position: new THREE.Vector3(
+          offset.x - halfRoadW + x * BLOCK_UNIT + BLOCK_UNIT / 2,
+          BLOCK_SIZE * 0.125,
+          offset.z - halfRoadLen + z * BLOCK_UNIT + BLOCK_UNIT / 2
+        ),
+        placed: false,
+        geometry: 'slab',
+      });
+    }
+  }
+
+  // Flanking walls 2-high x 30-long on both sides (~120 beveled-cube)
+  for (let z = 0; z < roadLen; z++) {
+    for (let y = 0; y < 2; y++) {
+      for (const xOff of [-BLOCK_UNIT / 2, roadW * BLOCK_UNIT - BLOCK_UNIT / 2]) {
+        slots.push({
+          position: new THREE.Vector3(
+            offset.x - halfRoadW + xOff + BLOCK_UNIT / 2,
+            y * BLOCK_UNIT + BLOCK_SIZE / 2,
+            offset.z - halfRoadLen + z * BLOCK_UNIT + BLOCK_UNIT / 2
+          ),
+          placed: false,
+          geometry: 'beveled-cube',
+        });
+      }
+    }
+  }
+
+  // Slab capping on walls (60 total: 30 per side)
+  for (let z = 0; z < roadLen; z++) {
+    for (const xOff of [-BLOCK_UNIT / 2, roadW * BLOCK_UNIT - BLOCK_UNIT / 2]) {
+      slots.push({
+        position: new THREE.Vector3(
+          offset.x - halfRoadW + xOff + BLOCK_UNIT / 2,
+          2 * BLOCK_UNIT + BLOCK_SIZE * 0.125,
+          offset.z - halfRoadLen + z * BLOCK_UNIT + BLOCK_UNIT / 2
+        ),
+        placed: false,
+        geometry: 'slab',
+      });
+    }
+  }
+
+  // 6 shrine alcoves spaced along road (each 2x2x3 = 12, total 72)
+  const shrineSpacing = Math.floor(roadLen / 7);
+  for (let s = 0; s < 6; s++) {
+    const shrineZ = offset.z - halfRoadLen + (s + 1) * shrineSpacing * BLOCK_UNIT;
+    for (const shrineXOff of [-3, roadW]) {
+      for (let y = 0; y < 3; y++) {
+        for (let sx = 0; sx < 2; sx++) {
+          slots.push({
+            position: new THREE.Vector3(
+              offset.x - halfRoadW + (shrineXOff + sx) * BLOCK_UNIT + BLOCK_UNIT / 2,
+              y * BLOCK_UNIT + BLOCK_SIZE / 2,
+              shrineZ
+            ),
+            placed: false,
+            geometry: 'beveled-cube',
+          });
+        }
+      }
+    }
+  }
+
+  // Terminal gate pylon: 2 towers 4-high (32)
+  const pylonZ = offset.z + halfRoadLen;
+  const pylonOffsets = [
+    { px: offset.x - halfRoadW - 2 * BLOCK_UNIT },
+    { px: offset.x + halfRoadW },
+  ];
+  for (const { px } of pylonOffsets) {
+    for (let y = 0; y < 4; y++) {
+      for (let tx = 0; tx < 2; tx++) {
+        for (let tz = 0; tz < 2; tz++) {
+          slots.push({
+            position: new THREE.Vector3(
+              px + tx * BLOCK_UNIT + BLOCK_UNIT / 2,
+              y * BLOCK_UNIT + BLOCK_SIZE / 2,
+              pylonZ + tz * BLOCK_UNIT + BLOCK_UNIT / 2
+            ),
+            placed: false,
+            geometry: 'beveled-cube',
+          });
+        }
+      }
+    }
+  }
+
+  // 10 pairs of small sphinx pedestals (2 slab blocks each = 40)
+  const pedestalSpacing = Math.floor(roadLen / 11);
+  for (let p = 0; p < 10; p++) {
+    const pedZ = offset.z - halfRoadLen + (p + 1) * pedestalSpacing * BLOCK_UNIT + BLOCK_UNIT / 2;
+    for (const pedXOff of [-2, roadW + 1]) {
+      slots.push({
+        position: new THREE.Vector3(
+          offset.x - halfRoadW + pedXOff * BLOCK_UNIT + BLOCK_UNIT / 2,
+          BLOCK_SIZE * 0.125,
+          pedZ
+        ),
+        placed: false,
+        geometry: 'slab',
+      });
+      slots.push({
+        position: new THREE.Vector3(
+          offset.x - halfRoadW + pedXOff * BLOCK_UNIT + BLOCK_UNIT / 2,
+          BLOCK_UNIT + BLOCK_SIZE * 0.125,
+          pedZ
+        ),
+        placed: false,
+        geometry: 'slab',
+      });
+    }
+  }
+
+  return slots;
+}
+
+function generateMilitaryFortressSlots(offset: THREE.Vector3): BlockSlot[] {
+  const slots: BlockSlot[] = [];
+
+  const fortW = 14;
+  const fortD = 14;
+  const halfW = (fortW * BLOCK_UNIT) / 2;
+  const halfD = (fortD * BLOCK_UNIT) / 2;
+
+  // Slab floor (14x14 = 196)
+  for (let x = 0; x < fortW; x++) {
+    for (let z = 0; z < fortD; z++) {
+      slots.push({
+        position: new THREE.Vector3(
+          offset.x - halfW + x * BLOCK_UNIT + BLOCK_UNIT / 2,
+          BLOCK_SIZE * 0.125,
+          offset.z - halfD + z * BLOCK_UNIT + BLOCK_UNIT / 2
+        ),
+        placed: false,
+        geometry: 'slab',
+      });
+    }
+  }
+
+  // Perimeter walls 4-high (~200 beveled-cube)
+  const wallH = 4;
+  for (let y = 0; y < wallH; y++) {
+    for (let x = 0; x < fortW; x++) {
+      for (const z of [0, fortD - 1]) {
+        slots.push({
+          position: new THREE.Vector3(
+            offset.x - halfW + x * BLOCK_UNIT + BLOCK_UNIT / 2,
+            y * BLOCK_UNIT + BLOCK_SIZE / 2,
+            offset.z - halfD + z * BLOCK_UNIT + BLOCK_UNIT / 2
+          ),
+          placed: false,
+          geometry: 'beveled-cube',
+        });
+      }
+    }
+    for (let z = 1; z < fortD - 1; z++) {
+      for (const x of [0, fortW - 1]) {
+        slots.push({
+          position: new THREE.Vector3(
+            offset.x - halfW + x * BLOCK_UNIT + BLOCK_UNIT / 2,
+            y * BLOCK_UNIT + BLOCK_SIZE / 2,
+            offset.z - halfD + z * BLOCK_UNIT + BLOCK_UNIT / 2
+          ),
+          placed: false,
+          geometry: 'beveled-cube',
+        });
+      }
+    }
+  }
+
+  // 4 corner towers 6-high (2x2 cross-section, extra 2 levels above wall = 4 towers * 2x2*2 = 64)
+  const cornerTowerDefs = [
+    { tx: -halfW, tz: -halfD },
+    { tx: halfW - 2 * BLOCK_UNIT, tz: -halfD },
+    { tx: -halfW, tz: halfD - 2 * BLOCK_UNIT },
+    { tx: halfW - 2 * BLOCK_UNIT, tz: halfD - 2 * BLOCK_UNIT },
+  ];
+  for (const { tx, tz } of cornerTowerDefs) {
+    // Extra 2 levels above the main wall height
+    for (let y = wallH; y < wallH + 2; y++) {
+      for (let cx = 0; cx < 2; cx++) {
+        for (let cz = 0; cz < 2; cz++) {
+          slots.push({
+            position: new THREE.Vector3(
+              offset.x + tx + cx * BLOCK_UNIT + BLOCK_UNIT / 2,
+              y * BLOCK_UNIT + BLOCK_SIZE / 2,
+              offset.z + tz + cz * BLOCK_UNIT + BLOCK_UNIT / 2
+            ),
+            placed: false,
+            geometry: 'beveled-cube',
+          });
+        }
+      }
+    }
+  }
+
+  // Gatehouse 4x3x5 (36 blocks)
+  const gateX = offset.x - 2 * BLOCK_UNIT;
+  const gateZ = offset.z + halfD;
+  for (let y = 0; y < 5; y++) {
+    for (let gx = 0; gx < 4; gx++) {
+      for (let gz = 0; gz < 3; gz++) {
+        // Leave center gap open at ground level for entrance
+        if (y < 2 && gx >= 1 && gx <= 2 && gz === 1) continue;
+        slots.push({
+          position: new THREE.Vector3(
+            gateX + gx * BLOCK_UNIT + BLOCK_UNIT / 2,
+            y * BLOCK_UNIT + BLOCK_SIZE / 2,
+            gateZ + gz * BLOCK_UNIT + BLOCK_UNIT / 2
+          ),
+          placed: false,
+          geometry: 'beveled-cube',
+        });
+      }
+    }
+  }
+
+  // Inner barracks 8x4: floor + 2-high walls + roof (~80)
+  const barracksW = 8;
+  const barracksD = 4;
+  const barracksX = offset.x - halfW + 2 * BLOCK_UNIT;
+  const barracksZ = offset.z - halfD + 2 * BLOCK_UNIT;
+
+  // Barracks slab floor
+  for (let x = 0; x < barracksW; x++) {
+    for (let z = 0; z < barracksD; z++) {
+      slots.push({
+        position: new THREE.Vector3(
+          barracksX + x * BLOCK_UNIT + BLOCK_UNIT / 2,
+          BLOCK_SIZE * 0.125,
+          barracksZ + z * BLOCK_UNIT + BLOCK_UNIT / 2
+        ),
+        placed: false,
+        geometry: 'slab',
+      });
+    }
+  }
+
+  // Barracks walls 2-high
+  for (let y = 0; y < 2; y++) {
+    for (let x = 0; x < barracksW; x++) {
+      for (const z of [0, barracksD - 1]) {
+        slots.push({
+          position: new THREE.Vector3(
+            barracksX + x * BLOCK_UNIT + BLOCK_UNIT / 2,
+            y * BLOCK_UNIT + BLOCK_SIZE / 2,
+            barracksZ + z * BLOCK_UNIT + BLOCK_UNIT / 2
+          ),
+          placed: false,
+          geometry: 'beveled-cube',
+        });
+      }
+    }
+    for (let z = 1; z < barracksD - 1; z++) {
+      for (const x of [0, barracksW - 1]) {
+        slots.push({
+          position: new THREE.Vector3(
+            barracksX + x * BLOCK_UNIT + BLOCK_UNIT / 2,
+            y * BLOCK_UNIT + BLOCK_SIZE / 2,
+            barracksZ + z * BLOCK_UNIT + BLOCK_UNIT / 2
+          ),
+          placed: false,
+          geometry: 'beveled-cube',
+        });
+      }
+    }
+  }
+
+  // Barracks slab roof
+  for (let x = 0; x < barracksW; x++) {
+    for (let z = 0; z < barracksD; z++) {
+      slots.push({
+        position: new THREE.Vector3(
+          barracksX + x * BLOCK_UNIT + BLOCK_UNIT / 2,
+          2 * BLOCK_UNIT + BLOCK_SIZE * 0.125,
+          barracksZ + z * BLOCK_UNIT + BLOCK_UNIT / 2
+        ),
+        placed: false,
+        geometry: 'slab',
+      });
+    }
+  }
+
+  // Parade ground slab (8x6 open area = 48)
+  const paradeX = offset.x - halfW + 2 * BLOCK_UNIT;
+  const paradeZ = offset.z + 1 * BLOCK_UNIT;
+  for (let x = 0; x < 8; x++) {
+    for (let z = 0; z < 6; z++) {
+      slots.push({
+        position: new THREE.Vector3(
+          paradeX + x * BLOCK_UNIT + BLOCK_UNIT / 2,
+          BLOCK_SIZE * 0.125,
+          paradeZ + z * BLOCK_UNIT + BLOCK_UNIT / 2
+        ),
+        placed: false,
+        geometry: 'slab',
+      });
+    }
+  }
+
+  // Armory 4x4: floor + walls + roof (~56)
+  const armoryW = 4;
+  const armoryD = 4;
+  const armoryX = offset.x + 3 * BLOCK_UNIT;
+  const armoryZ = offset.z - halfD + 2 * BLOCK_UNIT;
+
+  // Armory slab floor (16)
+  for (let x = 0; x < armoryW; x++) {
+    for (let z = 0; z < armoryD; z++) {
+      slots.push({
+        position: new THREE.Vector3(
+          armoryX + x * BLOCK_UNIT + BLOCK_UNIT / 2,
+          BLOCK_SIZE * 0.125,
+          armoryZ + z * BLOCK_UNIT + BLOCK_UNIT / 2
+        ),
+        placed: false,
+        geometry: 'slab',
+      });
+    }
+  }
+
+  // Armory walls 2-high (~24)
+  for (let y = 0; y < 2; y++) {
+    for (let x = 0; x < armoryW; x++) {
+      for (const z of [0, armoryD - 1]) {
+        slots.push({
+          position: new THREE.Vector3(
+            armoryX + x * BLOCK_UNIT + BLOCK_UNIT / 2,
+            y * BLOCK_UNIT + BLOCK_SIZE / 2,
+            armoryZ + z * BLOCK_UNIT + BLOCK_UNIT / 2
+          ),
+          placed: false,
+          geometry: 'beveled-cube',
+        });
+      }
+    }
+    for (let z = 1; z < armoryD - 1; z++) {
+      for (const x of [0, armoryW - 1]) {
+        slots.push({
+          position: new THREE.Vector3(
+            armoryX + x * BLOCK_UNIT + BLOCK_UNIT / 2,
+            y * BLOCK_UNIT + BLOCK_SIZE / 2,
+            armoryZ + z * BLOCK_UNIT + BLOCK_UNIT / 2
+          ),
+          placed: false,
+          geometry: 'beveled-cube',
+        });
+      }
+    }
+  }
+
+  // Armory slab roof (16)
+  for (let x = 0; x < armoryW; x++) {
+    for (let z = 0; z < armoryD; z++) {
+      slots.push({
+        position: new THREE.Vector3(
+          armoryX + x * BLOCK_UNIT + BLOCK_UNIT / 2,
+          2 * BLOCK_UNIT + BLOCK_SIZE * 0.125,
+          armoryZ + z * BLOCK_UNIT + BLOCK_UNIT / 2
+        ),
+        placed: false,
+        geometry: 'slab',
+      });
+    }
+  }
+
+  return slots;
+}
+
 /** Ordered registry of all buildable structures after the main pyramid */
 export function getStructureRegistry(): Structure[] {
   const registry: Structure[] = [
@@ -4298,6 +5358,48 @@ export function getStructureRegistry(): Structure[] {
       icon: '\u{1F40F}',
       worldOffset: new THREE.Vector3(50, 0, -65),
       slots: generateAnimalNecropolisSlots(new THREE.Vector3(50, 0, -65)),
+    },
+    {
+      id: 'priests-residences',
+      name: "Priests' Residences",
+      icon: '\u{1F6D5}',
+      worldOffset: new THREE.Vector3(-75, 0, 55),
+      slots: generatePriestsResidencesSlots(new THREE.Vector3(-75, 0, 55)),
+    },
+    {
+      id: 'stone-wharf',
+      name: 'Stone Wharf',
+      icon: '\u{2693}',
+      worldOffset: new THREE.Vector3(80, 0, 40),
+      slots: generateStoneWharfSlots(new THREE.Vector3(80, 0, 40)),
+    },
+    {
+      id: 'temple-of-hathor',
+      name: 'Temple of Hathor',
+      icon: '\u{1F4AB}',
+      worldOffset: new THREE.Vector3(-80, 0, -40),
+      slots: generateTempleOfHathorSlots(new THREE.Vector3(-80, 0, -40)),
+    },
+    {
+      id: 'weaving-mill',
+      name: 'Weaving Mill',
+      icon: '\u{1F9F5}',
+      worldOffset: new THREE.Vector3(75, 0, -50),
+      slots: generateWeavingMillSlots(new THREE.Vector3(75, 0, -50)),
+    },
+    {
+      id: 'processional-way',
+      name: 'Processional Way',
+      icon: '\u{1F6E3}',
+      worldOffset: new THREE.Vector3(0, 0, -80),
+      slots: generateProcessionalWaySlots(new THREE.Vector3(0, 0, -80)),
+    },
+    {
+      id: 'military-fortress',
+      name: 'Military Fortress',
+      icon: '\u{1F3F0}',
+      worldOffset: new THREE.Vector3(-90, 0, -65),
+      slots: generateMilitaryFortressSlots(new THREE.Vector3(-90, 0, -65)),
     },
   ];
 
