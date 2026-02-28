@@ -7010,6 +7010,838 @@ function generateTempleOfAmunRaSlots(offset: THREE.Vector3): BlockSlot[] {
   return slots;
 }
 
+function generateRoyalPalaceComplexSlots(offset: THREE.Vector3): BlockSlot[] {
+  const slots: BlockSlot[] = [];
+
+  // --- Compound slab floor: 20x18 ---
+  const cW = 20;
+  const cD = 18;
+  const cX = -10;
+  const cZ = -9;
+  for (let x = 0; x < cW; x++) {
+    for (let z = 0; z < cD; z++) {
+      slots.push({
+        position: new THREE.Vector3(
+          offset.x + (cX + x) * BLOCK_UNIT + BLOCK_UNIT / 2,
+          BLOCK_SIZE * 0.125,
+          offset.z + (cZ + z) * BLOCK_UNIT + BLOCK_UNIT / 2
+        ),
+        placed: false,
+        geometry: 'slab',
+      });
+    }
+  }
+
+  // --- Perimeter walls 4-high, 2-wide (thick): outer 20x18, inner band at 2 ---
+  const wallThick = 2;
+  for (let y = 0; y < 4; y++) {
+    for (let x = 0; x < cW; x++) {
+      for (let z = 0; z < cD; z++) {
+        if (
+          x >= wallThick && x < cW - wallThick &&
+          z >= wallThick && z < cD - wallThick
+        ) continue;
+        slots.push({
+          position: new THREE.Vector3(
+            offset.x + (cX + x) * BLOCK_UNIT + BLOCK_UNIT / 2,
+            y * BLOCK_UNIT + BLOCK_SIZE / 2,
+            offset.z + (cZ + z) * BLOCK_UNIT + BLOCK_UNIT / 2
+          ),
+          placed: false,
+          geometry: 'beveled-cube',
+        });
+      }
+    }
+  }
+
+  // --- Throne hall: 8x6 interior with 6 fluted-cylinder columns 5-high + lotus-capitals ---
+  const thX = -4;
+  const thZ = -6;
+  const thW = 8;
+  const thD = 6;
+  // Slab floor
+  for (let x = 0; x < thW; x++) {
+    for (let z = 0; z < thD; z++) {
+      slots.push({
+        position: new THREE.Vector3(
+          offset.x + (thX + x) * BLOCK_UNIT + BLOCK_UNIT / 2,
+          BLOCK_SIZE * 0.25,
+          offset.z + (thZ + z) * BLOCK_UNIT + BLOCK_UNIT / 2
+        ),
+        placed: false,
+        geometry: 'slab',
+      });
+    }
+  }
+  // 6 columns: 2 rows x 3 cols
+  const thColPositions: Array<{ cx: number; cz: number }> = [];
+  for (let col = 0; col < 3; col++) {
+    for (let row = 0; row < 2; row++) {
+      thColPositions.push({
+        cx: thX + 1 + col * 3,
+        cz: thZ + 1 + row * 4,
+      });
+    }
+  }
+  for (const { cx, cz } of thColPositions) {
+    for (let y = 0; y < 5; y++) {
+      slots.push({
+        position: new THREE.Vector3(
+          offset.x + cx * BLOCK_UNIT + BLOCK_UNIT / 2,
+          y * BLOCK_UNIT + BLOCK_SIZE / 2,
+          offset.z + cz * BLOCK_UNIT + BLOCK_UNIT / 2
+        ),
+        placed: false,
+        geometry: 'fluted-cylinder',
+      });
+    }
+    slots.push({
+      position: new THREE.Vector3(
+        offset.x + cx * BLOCK_UNIT + BLOCK_UNIT / 2,
+        5 * BLOCK_UNIT + BLOCK_SIZE / 2,
+        offset.z + cz * BLOCK_UNIT + BLOCK_UNIT / 2
+      ),
+      placed: false,
+      geometry: 'lotus-capital',
+    });
+  }
+
+  // --- Harem quarters: 3 rooms each 4x3x3 (north side) ---
+  const haremDefs = [
+    { hx: -9, hz: 4 },
+    { hx: -4, hz: 4 },
+    { hx: 1,  hz: 4 },
+  ];
+  for (const { hx, hz } of haremDefs) {
+    const rW = 4;
+    const rD = 3;
+    const rH = 3;
+    // Slab floor
+    for (let x = 0; x < rW; x++) {
+      for (let z = 0; z < rD; z++) {
+        slots.push({
+          position: new THREE.Vector3(
+            offset.x + (hx + x) * BLOCK_UNIT + BLOCK_UNIT / 2,
+            BLOCK_SIZE * 0.25,
+            offset.z + (hz + z) * BLOCK_UNIT + BLOCK_UNIT / 2
+          ),
+          placed: false,
+          geometry: 'slab',
+        });
+      }
+    }
+    // Walls 3-high
+    for (let y = 0; y < rH; y++) {
+      for (let x = 0; x < rW; x++) {
+        for (let z = 0; z < rD; z++) {
+          if (x > 0 && x < rW - 1 && z > 0 && z < rD - 1) continue;
+          slots.push({
+            position: new THREE.Vector3(
+              offset.x + (hx + x) * BLOCK_UNIT + BLOCK_UNIT / 2,
+              y * BLOCK_UNIT + BLOCK_SIZE / 2,
+              offset.z + (hz + z) * BLOCK_UNIT + BLOCK_UNIT / 2
+            ),
+            placed: false,
+            geometry: 'beveled-cube',
+          });
+        }
+      }
+    }
+    // Slab roof
+    for (let x = 0; x < rW; x++) {
+      for (let z = 0; z < rD; z++) {
+        slots.push({
+          position: new THREE.Vector3(
+            offset.x + (hx + x) * BLOCK_UNIT + BLOCK_UNIT / 2,
+            rH * BLOCK_UNIT + BLOCK_SIZE * 0.125,
+            offset.z + (hz + z) * BLOCK_UNIT + BLOCK_UNIT / 2
+          ),
+          placed: false,
+          geometry: 'slab',
+        });
+      }
+    }
+  }
+
+  // --- Admin wing: 6x4x3 (east side) ---
+  const awX = 3;
+  const awZ = -6;
+  const awW = 6;
+  const awD = 4;
+  const awH = 3;
+  for (let x = 0; x < awW; x++) {
+    for (let z = 0; z < awD; z++) {
+      slots.push({
+        position: new THREE.Vector3(
+          offset.x + (awX + x) * BLOCK_UNIT + BLOCK_UNIT / 2,
+          BLOCK_SIZE * 0.25,
+          offset.z + (awZ + z) * BLOCK_UNIT + BLOCK_UNIT / 2
+        ),
+        placed: false,
+        geometry: 'slab',
+      });
+    }
+  }
+  for (let y = 0; y < awH; y++) {
+    for (let x = 0; x < awW; x++) {
+      for (let z = 0; z < awD; z++) {
+        if (x > 0 && x < awW - 1 && z > 0 && z < awD - 1) continue;
+        slots.push({
+          position: new THREE.Vector3(
+            offset.x + (awX + x) * BLOCK_UNIT + BLOCK_UNIT / 2,
+            y * BLOCK_UNIT + BLOCK_SIZE / 2,
+            offset.z + (awZ + z) * BLOCK_UNIT + BLOCK_UNIT / 2
+          ),
+          placed: false,
+          geometry: 'beveled-cube',
+        });
+      }
+    }
+  }
+  // Slab roof over admin wing
+  for (let x = 0; x < awW; x++) {
+    for (let z = 0; z < awD; z++) {
+      slots.push({
+        position: new THREE.Vector3(
+          offset.x + (awX + x) * BLOCK_UNIT + BLOCK_UNIT / 2,
+          awH * BLOCK_UNIT + BLOCK_SIZE * 0.125,
+          offset.z + (awZ + z) * BLOCK_UNIT + BLOCK_UNIT / 2
+        ),
+        placed: false,
+        geometry: 'slab',
+      });
+    }
+  }
+
+  // --- Garden courtyard: 6x6 slab floor + 4 cylinder planters ---
+  const gcX = -4;
+  const gcZ = 0;
+  const gcW = 6;
+  const gcD = 6;
+  for (let x = 0; x < gcW; x++) {
+    for (let z = 0; z < gcD; z++) {
+      slots.push({
+        position: new THREE.Vector3(
+          offset.x + (gcX + x) * BLOCK_UNIT + BLOCK_UNIT / 2,
+          BLOCK_SIZE * 0.125,
+          offset.z + (gcZ + z) * BLOCK_UNIT + BLOCK_UNIT / 2
+        ),
+        placed: false,
+        geometry: 'slab',
+      });
+    }
+  }
+  const planterDefs = [
+    { px: gcX + 1, pz: gcZ + 1 },
+    { px: gcX + 4, pz: gcZ + 1 },
+    { px: gcX + 1, pz: gcZ + 4 },
+    { px: gcX + 4, pz: gcZ + 4 },
+  ];
+  for (const { px, pz } of planterDefs) {
+    for (let y = 0; y < 2; y++) {
+      slots.push({
+        position: new THREE.Vector3(
+          offset.x + px * BLOCK_UNIT + BLOCK_UNIT / 2,
+          y * BLOCK_UNIT + BLOCK_SIZE / 2,
+          offset.z + pz * BLOCK_UNIT + BLOCK_UNIT / 2
+        ),
+        placed: false,
+        geometry: 'cylinder',
+      });
+    }
+  }
+
+  // --- Entrance colonnade: 8 fluted-cylinder columns at front (south side) ---
+  const ecColDefs = [
+    { ex: -8, ez: -10 },
+    { ex: -6, ez: -10 },
+    { ex: -4, ez: -10 },
+    { ex: -2, ez: -10 },
+    { ex:  0, ez: -10 },
+    { ex:  2, ez: -10 },
+    { ex:  4, ez: -10 },
+    { ex:  6, ez: -10 },
+  ];
+  for (const { ex, ez } of ecColDefs) {
+    for (let y = 0; y < 5; y++) {
+      slots.push({
+        position: new THREE.Vector3(
+          offset.x + ex * BLOCK_UNIT + BLOCK_UNIT / 2,
+          y * BLOCK_UNIT + BLOCK_SIZE / 2,
+          offset.z + ez * BLOCK_UNIT + BLOCK_UNIT / 2
+        ),
+        placed: false,
+        geometry: 'fluted-cylinder',
+      });
+    }
+    slots.push({
+      position: new THREE.Vector3(
+        offset.x + ex * BLOCK_UNIT + BLOCK_UNIT / 2,
+        5 * BLOCK_UNIT + BLOCK_SIZE / 2,
+        offset.z + ez * BLOCK_UNIT + BLOCK_UNIT / 2
+      ),
+      placed: false,
+      geometry: 'lotus-capital',
+    });
+  }
+
+  // --- Slab roofs over throne hall ---
+  for (let x = 0; x < thW; x++) {
+    for (let z = 0; z < thD; z++) {
+      slots.push({
+        position: new THREE.Vector3(
+          offset.x + (thX + x) * BLOCK_UNIT + BLOCK_UNIT / 2,
+          5 * BLOCK_UNIT + BLOCK_SIZE * 0.125,
+          offset.z + (thZ + z) * BLOCK_UNIT + BLOCK_UNIT / 2
+        ),
+        placed: false,
+        geometry: 'slab',
+      });
+    }
+  }
+
+  return slots;
+}
+
+function generateSacredHarborOfAmunSlots(offset: THREE.Vector3): BlockSlot[] {
+  const slots: BlockSlot[] = [];
+
+  // --- Main body T-lake: 20x8 slab floor ---
+  const mbX = -10;
+  const mbZ = -4;
+  const mbW = 20;
+  const mbD = 8;
+  for (let x = 0; x < mbW; x++) {
+    for (let z = 0; z < mbD; z++) {
+      slots.push({
+        position: new THREE.Vector3(
+          offset.x + (mbX + x) * BLOCK_UNIT + BLOCK_UNIT / 2,
+          BLOCK_SIZE * 0.125,
+          offset.z + (mbZ + z) * BLOCK_UNIT + BLOCK_UNIT / 2
+        ),
+        placed: false,
+        geometry: 'slab',
+      });
+    }
+  }
+
+  // --- Stone quay walls 2-high around main body perimeter ---
+  for (let y = 0; y < 2; y++) {
+    for (let x = 0; x < mbW; x++) {
+      for (let z = 0; z < mbD; z++) {
+        if (x > 0 && x < mbW - 1 && z > 0 && z < mbD - 1) continue;
+        slots.push({
+          position: new THREE.Vector3(
+            offset.x + (mbX + x) * BLOCK_UNIT + BLOCK_UNIT / 2,
+            y * BLOCK_UNIT + BLOCK_SIZE / 2,
+            offset.z + (mbZ + z) * BLOCK_UNIT + BLOCK_UNIT / 2
+          ),
+          placed: false,
+          geometry: 'beveled-cube',
+        });
+      }
+    }
+  }
+
+  // --- Cross arm: 12x8 slab floor (extending off north side of main body) ---
+  const caX = -6;
+  const caZ = 4;
+  const caW = 12;
+  const caD = 8;
+  for (let x = 0; x < caW; x++) {
+    for (let z = 0; z < caD; z++) {
+      slots.push({
+        position: new THREE.Vector3(
+          offset.x + (caX + x) * BLOCK_UNIT + BLOCK_UNIT / 2,
+          BLOCK_SIZE * 0.125,
+          offset.z + (caZ + z) * BLOCK_UNIT + BLOCK_UNIT / 2
+        ),
+        placed: false,
+        geometry: 'slab',
+      });
+    }
+  }
+
+  // --- Cross arm quay walls 2-high (skip the shared edge with main body) ---
+  for (let y = 0; y < 2; y++) {
+    for (let x = 0; x < caW; x++) {
+      for (let z = 0; z < caD; z++) {
+        if (x > 0 && x < caW - 1 && z > 0 && z < caD - 1) continue;
+        // Skip south edge shared with main body
+        if (z === 0) continue;
+        slots.push({
+          position: new THREE.Vector3(
+            offset.x + (caX + x) * BLOCK_UNIT + BLOCK_UNIT / 2,
+            y * BLOCK_UNIT + BLOCK_SIZE / 2,
+            offset.z + (caZ + z) * BLOCK_UNIT + BLOCK_UNIT / 2
+          ),
+          placed: false,
+          geometry: 'beveled-cube',
+        });
+      }
+    }
+  }
+
+  // --- Island barque shrine: 6x4 in center of main body ---
+  const isX = -3;
+  const isZ = -2;
+  const isW = 6;
+  const isD = 4;
+  // Raised platform (slab)
+  for (let x = 0; x < isW; x++) {
+    for (let z = 0; z < isD; z++) {
+      slots.push({
+        position: new THREE.Vector3(
+          offset.x + (isX + x) * BLOCK_UNIT + BLOCK_UNIT / 2,
+          BLOCK_SIZE * 0.375,
+          offset.z + (isZ + z) * BLOCK_UNIT + BLOCK_UNIT / 2
+        ),
+        placed: false,
+        geometry: 'slab',
+      });
+    }
+  }
+  // 4 fluted-cylinder columns on platform
+  const isColDefs = [
+    { cx: isX + 1, cz: isZ + 1 },
+    { cx: isX + 4, cz: isZ + 1 },
+    { cx: isX + 1, cz: isZ + 2 },
+    { cx: isX + 4, cz: isZ + 2 },
+  ];
+  for (const { cx, cz } of isColDefs) {
+    for (let y = 0; y < 4; y++) {
+      slots.push({
+        position: new THREE.Vector3(
+          offset.x + cx * BLOCK_UNIT + BLOCK_UNIT / 2,
+          BLOCK_SIZE * 0.5 + y * BLOCK_UNIT,
+          offset.z + cz * BLOCK_UNIT + BLOCK_UNIT / 2
+        ),
+        placed: false,
+        geometry: 'fluted-cylinder',
+      });
+    }
+  }
+  // Shrine 2x2x3 in center
+  const shrX = isX + 2;
+  const shrZ = isZ + 1;
+  for (let y = 0; y < 3; y++) {
+    for (let x = 0; x < 2; x++) {
+      for (let z = 0; z < 2; z++) {
+        slots.push({
+          position: new THREE.Vector3(
+            offset.x + (shrX + x) * BLOCK_UNIT + BLOCK_UNIT / 2,
+            BLOCK_SIZE * 0.5 + y * BLOCK_UNIT,
+            offset.z + (shrZ + z) * BLOCK_UNIT + BLOCK_UNIT / 2
+          ),
+          placed: false,
+          geometry: 'beveled-cube',
+        });
+      }
+    }
+  }
+  // Shrine slab roof
+  for (let x = 0; x < 2; x++) {
+    for (let z = 0; z < 2; z++) {
+      slots.push({
+        position: new THREE.Vector3(
+          offset.x + (shrX + x) * BLOCK_UNIT + BLOCK_UNIT / 2,
+          BLOCK_SIZE * 0.5 + 3 * BLOCK_UNIT + BLOCK_SIZE * 0.125,
+          offset.z + (shrZ + z) * BLOCK_UNIT + BLOCK_UNIT / 2
+        ),
+        placed: false,
+        geometry: 'slab',
+      });
+    }
+  }
+
+  // --- Approach ramp slab: 4x5 leading to island ---
+  const rampX = -2;
+  const rampZ = -7;
+  for (let x = 0; x < 4; x++) {
+    for (let z = 0; z < 5; z++) {
+      slots.push({
+        position: new THREE.Vector3(
+          offset.x + (rampX + x) * BLOCK_UNIT + BLOCK_UNIT / 2,
+          BLOCK_SIZE * 0.125,
+          offset.z + (rampZ + z) * BLOCK_UNIT + BLOCK_UNIT / 2
+        ),
+        placed: false,
+        geometry: 'slab',
+      });
+    }
+  }
+
+  // --- 4 mooring post cylinders ---
+  const mooringDefs = [
+    { mx: mbX + 1, mz: mbZ + 1 },
+    { mx: mbX + 18, mz: mbZ + 1 },
+    { mx: mbX + 1, mz: mbZ + 6 },
+    { mx: mbX + 18, mz: mbZ + 6 },
+  ];
+  for (const { mx, mz } of mooringDefs) {
+    for (let y = 0; y < 4; y++) {
+      slots.push({
+        position: new THREE.Vector3(
+          offset.x + mx * BLOCK_UNIT + BLOCK_UNIT / 2,
+          y * BLOCK_UNIT + BLOCK_SIZE / 2,
+          offset.z + mz * BLOCK_UNIT + BLOCK_UNIT / 2
+        ),
+        placed: false,
+        geometry: 'cylinder',
+      });
+    }
+  }
+
+  return slots;
+}
+
+function generateFestivalHallThutmoseSlots(offset: THREE.Vector3): BlockSlot[] {
+  const slots: BlockSlot[] = [];
+
+  // --- Hall: 18x14 slab floor ---
+  const hW = 18;
+  const hD = 14;
+  const hX = -9;
+  const hZ = -7;
+  for (let x = 0; x < hW; x++) {
+    for (let z = 0; z < hD; z++) {
+      slots.push({
+        position: new THREE.Vector3(
+          offset.x + (hX + x) * BLOCK_UNIT + BLOCK_UNIT / 2,
+          BLOCK_SIZE * 0.125,
+          offset.z + (hZ + z) * BLOCK_UNIT + BLOCK_UNIT / 2
+        ),
+        placed: false,
+        geometry: 'slab',
+      });
+    }
+  }
+
+  // --- Outer walls 5-high (perimeter, skip gaps for entrance/exit) ---
+  for (let y = 0; y < 5; y++) {
+    for (let x = 0; x < hW; x++) {
+      for (let z = 0; z < hD; z++) {
+        if (x > 0 && x < hW - 1 && z > 0 && z < hD - 1) continue;
+        // Leave entrance gap on south face (z=0) centered 3 wide
+        if (z === 0 && x >= 7 && x <= 10) continue;
+        slots.push({
+          position: new THREE.Vector3(
+            offset.x + (hX + x) * BLOCK_UNIT + BLOCK_UNIT / 2,
+            y * BLOCK_UNIT + BLOCK_SIZE / 2,
+            offset.z + (hZ + z) * BLOCK_UNIT + BLOCK_UNIT / 2
+          ),
+          placed: false,
+          geometry: 'beveled-cube',
+        });
+      }
+    }
+  }
+
+  // --- 20 tent-pole columns in 4x5 grid (5-high + lotus-capital) ---
+  const colPositions: Array<{ cx: number; cz: number }> = [];
+  for (let col = 0; col < 5; col++) {
+    for (let row = 0; row < 4; row++) {
+      colPositions.push({
+        cx: hX + 2 + col * 3,
+        cz: hZ + 2 + row * 3,
+      });
+    }
+  }
+  for (const { cx, cz } of colPositions) {
+    for (let y = 0; y < 5; y++) {
+      slots.push({
+        position: new THREE.Vector3(
+          offset.x + cx * BLOCK_UNIT + BLOCK_UNIT / 2,
+          y * BLOCK_UNIT + BLOCK_SIZE / 2,
+          offset.z + cz * BLOCK_UNIT + BLOCK_UNIT / 2
+        ),
+        placed: false,
+        geometry: 'fluted-cylinder',
+      });
+    }
+    slots.push({
+      position: new THREE.Vector3(
+        offset.x + cx * BLOCK_UNIT + BLOCK_UNIT / 2,
+        5 * BLOCK_UNIT + BLOCK_SIZE / 2,
+        offset.z + cz * BLOCK_UNIT + BLOCK_UNIT / 2
+      ),
+      placed: false,
+      geometry: 'lotus-capital',
+    });
+  }
+
+  // --- Clerestory inner raised walls 2-high above columns (partial strip along column rows) ---
+  // Two inner clerestory strips parallel to long axis
+  for (let col = 0; col < 5; col++) {
+    for (let row = 0; row < 4; row++) {
+      const cx = hX + 2 + col * 3;
+      const cz = hZ + 2 + row * 3;
+      // Place raised clerestory slab segments between column capitals
+      for (let dy = 0; dy < 2; dy++) {
+        // Along x between cols
+        if (col < 4) {
+          slots.push({
+            position: new THREE.Vector3(
+              offset.x + (cx + 1) * BLOCK_UNIT + BLOCK_UNIT / 2,
+              (5 + dy) * BLOCK_UNIT + BLOCK_SIZE / 2,
+              offset.z + cz * BLOCK_UNIT + BLOCK_UNIT / 2
+            ),
+            placed: false,
+            geometry: 'beveled-cube',
+          });
+        }
+      }
+    }
+  }
+
+  // --- Rear chapel: 6x4x4 at back of hall ---
+  const rcX = -3;
+  const rcZ = 6;
+  const rcW = 6;
+  const rcD = 4;
+  const rcH = 4;
+  for (let x = 0; x < rcW; x++) {
+    for (let z = 0; z < rcD; z++) {
+      slots.push({
+        position: new THREE.Vector3(
+          offset.x + (rcX + x) * BLOCK_UNIT + BLOCK_UNIT / 2,
+          BLOCK_SIZE * 0.25,
+          offset.z + (rcZ + z) * BLOCK_UNIT + BLOCK_UNIT / 2
+        ),
+        placed: false,
+        geometry: 'slab',
+      });
+    }
+  }
+  for (let y = 0; y < rcH; y++) {
+    for (let x = 0; x < rcW; x++) {
+      for (let z = 0; z < rcD; z++) {
+        if (x > 0 && x < rcW - 1 && z > 0 && z < rcD - 1) continue;
+        slots.push({
+          position: new THREE.Vector3(
+            offset.x + (rcX + x) * BLOCK_UNIT + BLOCK_UNIT / 2,
+            y * BLOCK_UNIT + BLOCK_SIZE / 2,
+            offset.z + (rcZ + z) * BLOCK_UNIT + BLOCK_UNIT / 2
+          ),
+          placed: false,
+          geometry: 'beveled-cube',
+        });
+      }
+    }
+  }
+
+  // --- Slab roof over main hall ---
+  for (let x = 0; x < hW; x++) {
+    for (let z = 0; z < hD; z++) {
+      slots.push({
+        position: new THREE.Vector3(
+          offset.x + (hX + x) * BLOCK_UNIT + BLOCK_UNIT / 2,
+          5 * BLOCK_UNIT + BLOCK_SIZE * 0.125,
+          offset.z + (hZ + z) * BLOCK_UNIT + BLOCK_UNIT / 2
+        ),
+        placed: false,
+        geometry: 'slab',
+      });
+    }
+  }
+
+  // --- Entrance porch: 6x3 with 4 fluted-cylinder columns ---
+  const epX = -3;
+  const epZ = -10;
+  // Slab floor
+  for (let x = 0; x < 6; x++) {
+    for (let z = 0; z < 3; z++) {
+      slots.push({
+        position: new THREE.Vector3(
+          offset.x + (epX + x) * BLOCK_UNIT + BLOCK_UNIT / 2,
+          BLOCK_SIZE * 0.125,
+          offset.z + (epZ + z) * BLOCK_UNIT + BLOCK_UNIT / 2
+        ),
+        placed: false,
+        geometry: 'slab',
+      });
+    }
+  }
+  const porchColDefs = [
+    { px: epX + 0, pz: epZ + 0 },
+    { px: epX + 2, pz: epZ + 0 },
+    { px: epX + 3, pz: epZ + 0 },
+    { px: epX + 5, pz: epZ + 0 },
+  ];
+  for (const { px, pz } of porchColDefs) {
+    for (let y = 0; y < 5; y++) {
+      slots.push({
+        position: new THREE.Vector3(
+          offset.x + px * BLOCK_UNIT + BLOCK_UNIT / 2,
+          y * BLOCK_UNIT + BLOCK_SIZE / 2,
+          offset.z + pz * BLOCK_UNIT + BLOCK_UNIT / 2
+        ),
+        placed: false,
+        geometry: 'fluted-cylinder',
+      });
+    }
+    slots.push({
+      position: new THREE.Vector3(
+        offset.x + px * BLOCK_UNIT + BLOCK_UNIT / 2,
+        5 * BLOCK_UNIT + BLOCK_SIZE / 2,
+        offset.z + pz * BLOCK_UNIT + BLOCK_UNIT / 2
+      ),
+      placed: false,
+      geometry: 'lotus-capital',
+    });
+  }
+
+  return slots;
+}
+
+function generateKarnakHypostyleSlots(offset: THREE.Vector3): BlockSlot[] {
+  const slots: BlockSlot[] = [];
+
+  // --- Hall: 20x14 slab floor ---
+  const hW = 20;
+  const hD = 14;
+  const hX = -10;
+  const hZ = -7;
+  for (let x = 0; x < hW; x++) {
+    for (let z = 0; z < hD; z++) {
+      slots.push({
+        position: new THREE.Vector3(
+          offset.x + (hX + x) * BLOCK_UNIT + BLOCK_UNIT / 2,
+          BLOCK_SIZE * 0.125,
+          offset.z + (hZ + z) * BLOCK_UNIT + BLOCK_UNIT / 2
+        ),
+        placed: false,
+        geometry: 'slab',
+      });
+    }
+  }
+
+  // --- 70 fluted-cylinder columns in 10x7 grid (6-high + lotus-capital) ---
+  // Grid spacing: BLOCK_UNIT*2 apart, starting 1 unit in from edge
+  const colGridW = 10;
+  const colGridD = 7;
+  const colPositions: Array<{ cx: number; cz: number }> = [];
+  for (let col = 0; col < colGridW; col++) {
+    for (let row = 0; row < colGridD; row++) {
+      colPositions.push({
+        cx: hX + 1 + col * 2,
+        cz: hZ + 1 + row * 2,
+      });
+    }
+  }
+  for (const { cx, cz } of colPositions) {
+    for (let y = 0; y < 6; y++) {
+      slots.push({
+        position: new THREE.Vector3(
+          offset.x + cx * BLOCK_UNIT + BLOCK_UNIT / 2,
+          y * BLOCK_UNIT + BLOCK_SIZE / 2,
+          offset.z + cz * BLOCK_UNIT + BLOCK_UNIT / 2
+        ),
+        placed: false,
+        geometry: 'fluted-cylinder',
+      });
+    }
+    slots.push({
+      position: new THREE.Vector3(
+        offset.x + cx * BLOCK_UNIT + BLOCK_UNIT / 2,
+        6 * BLOCK_UNIT + BLOCK_SIZE / 2,
+        offset.z + cz * BLOCK_UNIT + BLOCK_UNIT / 2
+      ),
+      placed: false,
+      geometry: 'lotus-capital',
+    });
+  }
+
+  // --- Slab architraves connecting column tops (between adjacent columns) ---
+  // Along X direction
+  for (let col = 0; col < colGridW - 1; col++) {
+    for (let row = 0; row < colGridD; row++) {
+      slots.push({
+        position: new THREE.Vector3(
+          offset.x + (hX + 2 + col * 2) * BLOCK_UNIT + BLOCK_UNIT / 2,
+          6 * BLOCK_UNIT + BLOCK_SIZE * 0.125,
+          offset.z + (hZ + 1 + row * 2) * BLOCK_UNIT + BLOCK_UNIT / 2
+        ),
+        placed: false,
+        geometry: 'slab',
+      });
+    }
+  }
+  // Along Z direction
+  for (let col = 0; col < colGridW; col++) {
+    for (let row = 0; row < colGridD - 1; row++) {
+      slots.push({
+        position: new THREE.Vector3(
+          offset.x + (hX + 1 + col * 2) * BLOCK_UNIT + BLOCK_UNIT / 2,
+          6 * BLOCK_UNIT + BLOCK_SIZE * 0.125,
+          offset.z + (hZ + 2 + row * 2) * BLOCK_UNIT + BLOCK_UNIT / 2
+        ),
+        placed: false,
+        geometry: 'slab',
+      });
+    }
+  }
+
+  // --- Perimeter walls 6-high (with entrance gap in front and back) ---
+  for (let y = 0; y < 6; y++) {
+    for (let x = 0; x < hW; x++) {
+      for (let z = 0; z < hD; z++) {
+        if (x > 0 && x < hW - 1 && z > 0 && z < hD - 1) continue;
+        // Front entrance gap (z=0, center 4 wide)
+        if (z === 0 && x >= 8 && x <= 11) continue;
+        // Back exit gap (z=hD-1, center 4 wide)
+        if (z === hD - 1 && x >= 8 && x <= 11) continue;
+        slots.push({
+          position: new THREE.Vector3(
+            offset.x + (hX + x) * BLOCK_UNIT + BLOCK_UNIT / 2,
+            y * BLOCK_UNIT + BLOCK_SIZE / 2,
+            offset.z + (hZ + z) * BLOCK_UNIT + BLOCK_UNIT / 2
+          ),
+          placed: false,
+          geometry: 'beveled-cube',
+        });
+      }
+    }
+  }
+
+  // --- Clerestory upper walls: 2 extra rows of high walls above outer walls ---
+  for (let y = 6; y < 8; y++) {
+    for (let x = 0; x < hW; x++) {
+      for (let z = 0; z < hD; z++) {
+        if (x > 0 && x < hW - 1 && z > 0 && z < hD - 1) continue;
+        if (z === 0 && x >= 8 && x <= 11) continue;
+        if (z === hD - 1 && x >= 8 && x <= 11) continue;
+        slots.push({
+          position: new THREE.Vector3(
+            offset.x + (hX + x) * BLOCK_UNIT + BLOCK_UNIT / 2,
+            y * BLOCK_UNIT + BLOCK_SIZE / 2,
+            offset.z + (hZ + z) * BLOCK_UNIT + BLOCK_UNIT / 2
+          ),
+          placed: false,
+          geometry: 'beveled-cube',
+        });
+      }
+    }
+  }
+
+  // --- Slab roof sections ---
+  for (let x = 0; x < hW; x++) {
+    for (let z = 0; z < hD; z++) {
+      slots.push({
+        position: new THREE.Vector3(
+          offset.x + (hX + x) * BLOCK_UNIT + BLOCK_UNIT / 2,
+          6 * BLOCK_UNIT + BLOCK_SIZE * 0.25,
+          offset.z + (hZ + z) * BLOCK_UNIT + BLOCK_UNIT / 2
+        ),
+        placed: false,
+        geometry: 'slab',
+      });
+    }
+  }
+
+  return slots;
+}
+
 /** Ordered registry of all buildable structures after the main pyramid */
 export function getStructureRegistry(): Structure[] {
   const registry: Structure[] = [
@@ -7446,6 +8278,34 @@ export function getStructureRegistry(): Structure[] {
       icon: '\u{2600}',
       worldOffset: new THREE.Vector3(130, 0, -40),
       slots: generateTempleOfAmunRaSlots(new THREE.Vector3(130, 0, -40)),
+    },
+    {
+      id: 'royal-palace-complex',
+      name: 'Royal Palace Complex',
+      icon: '\u{1F3F0}',
+      worldOffset: new THREE.Vector3(-130, 0, -80),
+      slots: generateRoyalPalaceComplexSlots(new THREE.Vector3(-130, 0, -80)),
+    },
+    {
+      id: 'sacred-harbor-of-amun',
+      name: 'Sacred Harbor of Amun',
+      icon: '\u{26F5}',
+      worldOffset: new THREE.Vector3(135, 0, 60),
+      slots: generateSacredHarborOfAmunSlots(new THREE.Vector3(135, 0, 60)),
+    },
+    {
+      id: 'festival-hall-thutmose',
+      name: 'Festival Hall of Thutmose',
+      icon: '\u{1F3DB}',
+      worldOffset: new THREE.Vector3(-135, 0, 40),
+      slots: generateFestivalHallThutmoseSlots(new THREE.Vector3(-135, 0, 40)),
+    },
+    {
+      id: 'karnak-hypostyle',
+      name: 'Karnak Hypostyle Hall',
+      icon: '\u{1F3DB}',
+      worldOffset: new THREE.Vector3(145, 0, -20),
+      slots: generateKarnakHypostyleSlots(new THREE.Vector3(145, 0, -20)),
     },
   ];
 
