@@ -14,10 +14,10 @@ import { NightSky } from './effects/NightSky.js';
 import { Clouds } from './effects/Clouds.js';
 import { TorchFire } from './effects/TorchFire.js';
 import { WaterShader } from './effects/WaterShader.js';
+import { StructureLights } from './effects/StructureLights.js';
 import { BirdFlock } from './characters/BirdFlock.js';
 import { CamelModel } from './characters/CamelModel.js';
 import { DustBurst } from './effects/DustBurst.js';
-import { AmbientAudio } from './audio/AmbientAudio.js';
 import { AchievementToast } from './ui/AchievementToast.js';
 import { StatsPanel } from './ui/StatsPanel.js';
 import { Minimap } from './ui/Minimap.js';
@@ -40,13 +40,11 @@ const clouds = new Clouds(sceneManager.scene);
 const torchFire = new TorchFire(sceneManager.scene);
 const waterShader = new WaterShader(sceneManager.scene);
 const dustBurst = new DustBurst(sceneManager.scene);
+const structureLights = new StructureLights(sceneManager.scene);
 
 // Living world
 const birdFlock = new BirdFlock(sceneManager.scene);
 const camelModel = new CamelModel(sceneManager.scene);
-
-// Ambient audio
-const ambientAudio = new AmbientAudio();
 
 // UI overlays
 const achievementToast = new AchievementToast();
@@ -56,7 +54,6 @@ const minimap = new Minimap();
 // Audio warmup on first click
 document.addEventListener('click', () => {
   audio.warmup();
-  ambientAudio.warmup();
 }, { once: true });
 
 // Block land callbacks — both audio and dust burst
@@ -64,6 +61,10 @@ buildManager.onBlockLand(() => {
   audio.playBlockLand();
   const pos = buildManager.getNextBlockPosition();
   if (pos) dustBurst.emit(pos);
+});
+
+buildManager.onStructureStart((id, offset) => {
+  structureLights.notifyStructureBuilt(id, offset);
 });
 
 // Level-up callbacks
@@ -81,7 +82,7 @@ hud.onLevelUp((_name, index) => {
     torchesAdded7 = true;
     torchFire.addTorch(new THREE.Vector3(-1.5, 2.5, 11), 1.5);
     torchFire.addTorch(new THREE.Vector3(1.5, 2.5, 11), 1.5);
-    ambientAudio.setTorchesActive(true);
+
   }
   if (index >= 9 && !torchesAdded9) {
     torchesAdded9 = true;
@@ -102,6 +103,13 @@ hud.onLevelUp((_name, index) => {
 window.addEventListener('resize', () => {
   postProcessing.resize(window.innerWidth, window.innerHeight);
 });
+
+// Dev-only debug panel
+if (import.meta.env.DEV) {
+  import('./effects/DebugPanel.js').then(({ DebugPanel }) => {
+    new DebugPanel(postProcessing, sceneManager);
+  });
+}
 
 // Networking
 const ws = new WSClient();
@@ -132,15 +140,13 @@ function animate(): void {
   nightSky.update(delta, dayTime);
   clouds.update(delta, dayTime);
   torchFire.update(delta);
+  structureLights.update(delta, dayTime);
   waterShader.update(delta, dayTime);
   dustBurst.update(delta);
 
   // Living world
   birdFlock.update(delta);
   camelModel.update(delta);
-
-  // Ambient audio
-  ambientAudio.update(delta);
 
   // UI updates (throttled)
   if (frameCount % 30 === 0) {
@@ -158,7 +164,7 @@ function animate(): void {
     minimap.update(pyramidProgress, [
       { name: 'Great Pyramid', x: 0, z: 0, placed: buildManager.pyramidBuilder.currentPlacedCount, total: buildManager.pyramidBuilder.totalSlots },
       { name: 'Obelisk', x: 18, z: 15, placed: 0, total: 0 },
-      { name: 'Sphinx', x: 0, z: 22, placed: 0, total: 0 },
+      { name: 'Sphinx', x: 6, z: 32, placed: 0, total: 0 },
       { name: 'Colonnade', x: 0, z: 14, placed: 0, total: 0 },
       { name: "Queen's Pyramid", x: -20, z: 8, placed: 0, total: 0 },
       { name: 'Solar Barque', x: 22, z: -8, placed: 0, total: 0 },

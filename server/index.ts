@@ -43,7 +43,7 @@ app.post('/event', (req, res) => {
     const file = typeof event.tool_input?.file_path === 'string' ? event.tool_input.file_path : undefined;
     const command = typeof event.tool_input?.command === 'string' ? event.tool_input.command : undefined;
 
-    const result = processToolEvent(event.session_id, event.tool_name, { file, command });
+    const result = processToolEvent(event.session_id, event.tool_name, { file, command }, event.cwd);
 
     const msg: ToolActivityMessage = {
       type: 'tool_activity',
@@ -71,12 +71,17 @@ app.post('/event', (req, res) => {
     }
   }
 
+  // Derive display name from cwd folder, falling back to truncated session ID
+  const sessionName = event.cwd
+    ? event.cwd.split('/').filter(Boolean).pop() ?? event.session_id.slice(0, 8)
+    : event.session_id.slice(0, 8);
+
   if (event.hook_event_name === 'SessionStart') {
     const msg: SessionUpdateMessage = {
       type: 'session_update',
       session_id: event.session_id,
       status: 'active',
-      name: event.session_id.slice(0, 8),
+      name: sessionName,
     };
     broadcast(msg);
   }
@@ -87,7 +92,7 @@ app.post('/event', (req, res) => {
       type: 'session_update',
       session_id: event.session_id,
       status: 'ended',
-      name: event.session_id.slice(0, 8),
+      name: sessionName,
     };
     broadcast(msg);
   }
