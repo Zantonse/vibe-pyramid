@@ -657,12 +657,12 @@ export class SceneManager {
     const duneGeo = new THREE.SphereGeometry(1, 12, 6, 0, Math.PI * 2, 0, Math.PI / 2);
 
     const dunes = [
-      { x: -80, z: -60, sx: 40, sy: 6, sz: 15 },
-      { x: 70, z: -80, sx: 50, sy: 8, sz: 18 },
-      { x: -50, z: 80, sx: 45, sy: 5, sz: 20 },
-      { x: 90, z: 50, sx: 35, sy: 7, sz: 14 },
-      { x: 0, z: -100, sx: 60, sy: 9, sz: 16 },
-      { x: -100, z: 20, sx: 30, sy: 5, sz: 12 },
+      { x: -160, z: -130, sx: 60, sy: 8, sz: 22 },
+      { x: 150, z: -160, sx: 70, sy: 10, sz: 25 },
+      { x: -110, z: 160, sx: 65, sy: 7, sz: 28 },
+      { x: 180, z: 100, sx: 50, sy: 9, sz: 20 },
+      { x: 0, z: -200, sx: 80, sy: 12, sz: 24 },
+      { x: -200, z: 40, sx: 45, sy: 7, sz: 18 },
     ];
 
     // Single InstancedMesh with per-instance scale encoded in transform matrix

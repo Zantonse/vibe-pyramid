@@ -9329,8 +9329,8 @@ export function getStructureRegistry(): Structure[] {
       id: 'sphinx',
       name: 'Sphinx',
       icon: '\u{1F981}',
-      worldOffset: new THREE.Vector3(0, 0, 55),
-      slots: generateSphinxSlots(new THREE.Vector3(0, 0, 55)),
+      worldOffset: new THREE.Vector3(15, 0, 80),
+      slots: generateSphinxSlots(new THREE.Vector3(15, 0, 80)),
     },
     {
       id: 'colonnade',

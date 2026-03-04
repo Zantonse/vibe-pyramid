@@ -164,7 +164,7 @@ function animate(): void {
     minimap.update(pyramidProgress, [
       { name: 'Great Pyramid', x: 0, z: 0, placed: buildManager.pyramidBuilder.currentPlacedCount, total: buildManager.pyramidBuilder.totalSlots },
       { name: 'Obelisk', x: 18, z: 15, placed: 0, total: 0 },
-      { name: 'Sphinx', x: 0, z: 22, placed: 0, total: 0 },
+      { name: 'Sphinx', x: 6, z: 32, placed: 0, total: 0 },
       { name: 'Colonnade', x: 0, z: 14, placed: 0, total: 0 },
       { name: "Queen's Pyramid", x: -20, z: 8, placed: 0, total: 0 },
       { name: 'Solar Barque', x: 22, z: -8, placed: 0, total: 0 },
