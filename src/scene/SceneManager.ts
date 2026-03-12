@@ -793,10 +793,11 @@ export class SceneManager {
     // Curved river ribbon along the north-east, connecting near the oasis
     const riverMat = new THREE.MeshStandardMaterial({
       color: 0x1a6b8a,
-      roughness: 0.2,
-      metalness: 0.1,
-      transparent: true,
-      opacity: 0.85,
+      roughness: 0.15,
+      metalness: 0.4,
+      emissive: 0x0D47A1,
+      emissiveIntensity: 0.12,
+      side: THREE.DoubleSide,
     });
     const bankMat = new THREE.MeshStandardMaterial({ color: 0x8a7a50, roughness: 0.8, metalness: 0.0 });
     const mudMat = new THREE.MeshStandardMaterial({ color: 0x6a5a3a, roughness: 0.9, metalness: 0.0 });
@@ -805,11 +806,11 @@ export class SceneManager {
     const riverPoints: { x: number; z: number }[] = [];
     for (let t = 0; t <= 1; t += 0.02) {
       const x = -100 + t * 260; // -100 to 160
-      const z = 55 + Math.sin(t * Math.PI * 1.5) * 12 + Math.cos(t * Math.PI * 3) * 3;
+      const z = -38 + Math.sin(t * Math.PI * 1.5) * 6 + Math.cos(t * Math.PI * 3) * 2;
       riverPoints.push({ x, z });
     }
 
-    const riverWidth = 18;
+    const riverWidth = 25;
     const positions: number[] = [];
     const indices: number[] = [];
 
@@ -826,8 +827,8 @@ export class SceneManager {
 
       const lx = p.x + nx * riverWidth / 2, lz = p.z + nz * riverWidth / 2;
       const rx = p.x - nx * riverWidth / 2, rz = p.z - nz * riverWidth / 2;
-      positions.push(lx, getTerrainHeight(lx, lz) + 1.5, lz);
-      positions.push(rx, getTerrainHeight(rx, rz) + 1.5, rz);
+      positions.push(lx, 5, lz);
+      positions.push(rx, 5, rz);
 
       if (i < riverPoints.length - 1) {
         const base = i * 2;
@@ -841,6 +842,7 @@ export class SceneManager {
     riverGeo.setIndex(indices);
     riverGeo.computeVertexNormals();
     const river = new THREE.Mesh(riverGeo, riverMat);
+    river.renderOrder = 1;
     this.scene.add(river);
 
     // Mud banks along river edges
