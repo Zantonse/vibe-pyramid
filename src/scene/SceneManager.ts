@@ -809,7 +809,7 @@ export class SceneManager {
       riverPoints.push({ x, z });
     }
 
-    const riverWidth = 12;
+    const riverWidth = 18;
     const positions: number[] = [];
     const indices: number[] = [];
 
@@ -826,8 +826,8 @@ export class SceneManager {
 
       const lx = p.x + nx * riverWidth / 2, lz = p.z + nz * riverWidth / 2;
       const rx = p.x - nx * riverWidth / 2, rz = p.z - nz * riverWidth / 2;
-      positions.push(lx, getTerrainHeight(lx, lz) + 0.5, lz);
-      positions.push(rx, getTerrainHeight(rx, rz) + 0.5, rz);
+      positions.push(lx, getTerrainHeight(lx, lz) + 1.5, lz);
+      positions.push(rx, getTerrainHeight(rx, rz) + 1.5, rz);
 
       if (i < riverPoints.length - 1) {
         const base = i * 2;
@@ -860,7 +860,7 @@ export class SceneManager {
         const bank = new THREE.Mesh(bankGeo, Math.random() > 0.5 ? bankMat : mudMat);
         const bx = p.x + nx * (riverWidth / 2 + 1);
         const bz = p.z + nz * (riverWidth / 2 + 1);
-        bank.position.set(bx, getTerrainHeight(bx, bz) + 0.05, bz);
+        bank.position.set(bx, getTerrainHeight(bx, bz) + 0.8, bz);
         bank.rotation.y = Math.random() * Math.PI;
         bank.receiveShadow = true;
         this.scene.add(bank);
