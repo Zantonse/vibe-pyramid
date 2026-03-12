@@ -796,7 +796,7 @@ export class SceneManager {
       roughness: 0.2,
       metalness: 0.1,
       transparent: true,
-      opacity: 0.7,
+      opacity: 0.85,
     });
     const bankMat = new THREE.MeshStandardMaterial({ color: 0x8a7a50, roughness: 0.8, metalness: 0.0 });
     const mudMat = new THREE.MeshStandardMaterial({ color: 0x6a5a3a, roughness: 0.9, metalness: 0.0 });
@@ -809,7 +809,7 @@ export class SceneManager {
       riverPoints.push({ x, z });
     }
 
-    const riverWidth = 6;
+    const riverWidth = 12;
     const positions: number[] = [];
     const indices: number[] = [];
 
@@ -826,8 +826,8 @@ export class SceneManager {
 
       const lx = p.x + nx * riverWidth / 2, lz = p.z + nz * riverWidth / 2;
       const rx = p.x - nx * riverWidth / 2, rz = p.z - nz * riverWidth / 2;
-      positions.push(lx, getTerrainHeight(lx, lz) + 0.3, lz);
-      positions.push(rx, getTerrainHeight(rx, rz) + 0.3, rz);
+      positions.push(lx, getTerrainHeight(lx, lz) + 0.5, lz);
+      positions.push(rx, getTerrainHeight(rx, rz) + 0.5, rz);
 
       if (i < riverPoints.length - 1) {
         const base = i * 2;
