@@ -805,7 +805,7 @@ export class SceneManager {
     const riverPoints: { x: number; z: number }[] = [];
     for (let t = 0; t <= 1; t += 0.02) {
       const x = -100 + t * 260; // -100 to 160
-      const z = 85 + Math.sin(t * Math.PI * 1.5) * 20 + Math.cos(t * Math.PI * 3) * 5;
+      const z = 55 + Math.sin(t * Math.PI * 1.5) * 12 + Math.cos(t * Math.PI * 3) * 3;
       riverPoints.push({ x, z });
     }
 
