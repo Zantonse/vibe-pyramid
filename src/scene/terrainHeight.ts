@@ -3,9 +3,11 @@
  * Must match the displacement formula in SceneManager.createTerrain() exactly.
  */
 
-const OASIS_CX = 40, OASIS_CZ = 35, OASIS_R = 20;
-const CITY_CX = 86, CITY_CZ = 68, CITY_R = 45;
-const PYRAMID_R = 14;
+const PYRAMID_R = 35;
+const OASIS_CX = 40, OASIS_CZ = 35, OASIS_R = 20;  // unchanged
+const CITY_CX = 85, CITY_CZ = 55, CITY_R = 50;
+const HARBOR_CX = 80, HARBOR_CZ = 78, HARBOR_R = 35;
+const NECRO_CX = 0, NECRO_CZ = -100, NECRO_R = 60;
 
 export function getTerrainHeight(x: number, z: number): number {
   // Multi-octave dune displacement — identical to createTerrain()
@@ -17,7 +19,7 @@ export function getTerrainHeight(x: number, z: number): number {
   // Flatten near pyramid center
   const pDist = Math.sqrt(x * x + z * z);
   if (pDist < PYRAMID_R) {
-    y *= Math.max(0, (pDist - 6) / (PYRAMID_R - 6));
+    y *= Math.max(0, (pDist - 10) / (PYRAMID_R - 10));
   }
   // Flatten near oasis basin
   const oDist = Math.sqrt((x - OASIS_CX) ** 2 + (z - OASIS_CZ) ** 2);
@@ -28,6 +30,16 @@ export function getTerrainHeight(x: number, z: number): number {
   const cDist = Math.sqrt((x - CITY_CX) ** 2 + (z - CITY_CZ) ** 2);
   if (cDist < CITY_R) {
     y *= Math.max(0, (cDist - 35) / (CITY_R - 35));
+  }
+  // Flatten harbor zone
+  const hDist = Math.sqrt((x - HARBOR_CX) ** 2 + (z - HARBOR_CZ) ** 2);
+  if (hDist < HARBOR_R) {
+    y *= Math.max(0, (hDist - 20) / (HARBOR_R - 20));
+  }
+  // Flatten necropolis zone
+  const nDist = Math.sqrt((x - NECRO_CX) ** 2 + (z - NECRO_CZ) ** 2);
+  if (nDist < NECRO_R) {
+    y *= Math.max(0, (nDist - 40) / (NECRO_R - 40));
   }
 
   return y;
