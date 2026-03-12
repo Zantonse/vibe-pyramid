@@ -743,6 +743,140 @@ function generateGranarySlots(offset: THREE.Vector3): BlockSlot[] {
     }
   }
 
+  // --- Merged from Royal Granary Complex (+8 z offset) ---
+  {
+    const rgcZ = 8 * BLOCK_UNIT;
+    const platW = 16;
+    const platD = 8;
+    const halfW = (platW * BLOCK_UNIT) / 2;
+    const halfD = (platD * BLOCK_UNIT) / 2;
+    for (let x = 0; x < platW; x++) {
+      for (let z = 0; z < platD; z++) {
+        slots.push({
+          position: new THREE.Vector3(
+            offset.x - halfW + x * BLOCK_UNIT + BLOCK_UNIT / 2,
+            BLOCK_SIZE * 0.125,
+            offset.z + rgcZ - halfD + z * BLOCK_UNIT + BLOCK_UNIT / 2
+          ),
+          placed: false,
+          geometry: 'slab',
+        });
+      }
+    }
+    const siloPositions = [
+      { sx: 1, sz: 1 }, { sx: 3, sz: 1 }, { sx: 5, sz: 1 }, { sx: 7, sz: 1 },
+      { sx: 1, sz: 5 }, { sx: 3, sz: 5 }, { sx: 5, sz: 5 }, { sx: 7, sz: 5 },
+    ];
+    for (const { sx, sz } of siloPositions) {
+      for (let y = 0; y < 6; y++) {
+        slots.push({
+          position: new THREE.Vector3(
+            offset.x - halfW + sx * BLOCK_UNIT + BLOCK_UNIT / 2,
+            y * BLOCK_UNIT + BLOCK_SIZE / 2,
+            offset.z + rgcZ - halfD + sz * BLOCK_UNIT + BLOCK_UNIT / 2
+          ),
+          placed: false,
+          geometry: 'cylinder',
+        });
+      }
+      slots.push({
+        position: new THREE.Vector3(
+          offset.x - halfW + sx * BLOCK_UNIT + BLOCK_UNIT / 2,
+          6 * BLOCK_UNIT + BLOCK_SIZE * 0.25,
+          offset.z + rgcZ - halfD + sz * BLOCK_UNIT + BLOCK_UNIT / 2
+        ),
+        placed: false,
+        geometry: 'half',
+      });
+    }
+    const offX = 10;
+    const offZ = 2;
+    const offW = 4;
+    const offD = 4;
+    for (let x = 0; x < offW; x++) {
+      for (let z = 0; z < offD; z++) {
+        slots.push({
+          position: new THREE.Vector3(
+            offset.x - halfW + (offX + x) * BLOCK_UNIT + BLOCK_UNIT / 2,
+            BLOCK_SIZE * 0.125,
+            offset.z + rgcZ - halfD + (offZ + z) * BLOCK_UNIT + BLOCK_UNIT / 2
+          ),
+          placed: false,
+          geometry: 'slab',
+        });
+      }
+    }
+    for (let y = 0; y < 3; y++) {
+      for (let x = 0; x < offW; x++) {
+        for (const z of [0, offD - 1]) {
+          slots.push({
+            position: new THREE.Vector3(
+              offset.x - halfW + (offX + x) * BLOCK_UNIT + BLOCK_UNIT / 2,
+              y * BLOCK_UNIT + BLOCK_SIZE / 2,
+              offset.z + rgcZ - halfD + (offZ + z) * BLOCK_UNIT + BLOCK_UNIT / 2
+            ),
+            placed: false,
+            geometry: 'beveled-cube',
+          });
+        }
+      }
+      for (let z = 1; z < offD - 1; z++) {
+        for (const x of [0, offW - 1]) {
+          slots.push({
+            position: new THREE.Vector3(
+              offset.x - halfW + (offX + x) * BLOCK_UNIT + BLOCK_UNIT / 2,
+              y * BLOCK_UNIT + BLOCK_SIZE / 2,
+              offset.z + rgcZ - halfD + (offZ + z) * BLOCK_UNIT + BLOCK_UNIT / 2
+            ),
+            placed: false,
+            geometry: 'beveled-cube',
+          });
+        }
+      }
+    }
+    for (let x = 0; x < offW; x++) {
+      for (let z = 0; z < offD; z++) {
+        slots.push({
+          position: new THREE.Vector3(
+            offset.x - halfW + (offX + x) * BLOCK_UNIT + BLOCK_UNIT / 2,
+            3 * BLOCK_UNIT + BLOCK_SIZE * 0.125,
+            offset.z + rgcZ - halfD + (offZ + z) * BLOCK_UNIT + BLOCK_UNIT / 2
+          ),
+          placed: false,
+          geometry: 'slab',
+        });
+      }
+    }
+    for (let x = 0; x < platW; x++) {
+      slots.push({
+        position: new THREE.Vector3(
+          offset.x - halfW + x * BLOCK_UNIT + BLOCK_UNIT / 2,
+          BLOCK_SIZE * 0.125,
+          offset.z + rgcZ - halfD + 3 * BLOCK_UNIT + BLOCK_UNIT / 2
+        ),
+        placed: false,
+        geometry: 'slab',
+      });
+    }
+    const guardCorners = [
+      { gx: 0, gz: 0 }, { gx: platW - 1, gz: 0 },
+      { gx: 0, gz: platD - 1 }, { gx: platW - 1, gz: platD - 1 },
+    ];
+    for (const { gx, gz } of guardCorners) {
+      for (let y = 0; y < 3; y++) {
+        slots.push({
+          position: new THREE.Vector3(
+            offset.x - halfW + gx * BLOCK_UNIT + BLOCK_UNIT / 2,
+            y * BLOCK_UNIT + BLOCK_SIZE / 2,
+            offset.z + rgcZ - halfD + gz * BLOCK_UNIT + BLOCK_UNIT / 2
+          ),
+          placed: false,
+          geometry: 'cylinder',
+        });
+      }
+    }
+  }
+
   return slots;
 }
 
@@ -3367,6 +3501,229 @@ function generateGuardBarracksSlots(offset: THREE.Vector3): BlockSlot[] {
     }
   }
 
+  // --- Merged from Military Fortress (+10 z offset) ---
+  {
+    const mfZ = 10 * BLOCK_UNIT;
+    const fortW = 14;
+    const fortD = 14;
+    const mfHalfW = (fortW * BLOCK_UNIT) / 2;
+    const mfHalfD = (fortD * BLOCK_UNIT) / 2;
+    for (let x = 0; x < fortW; x++) {
+      for (let z = 0; z < fortD; z++) {
+        slots.push({
+          position: new THREE.Vector3(
+            offset.x - mfHalfW + x * BLOCK_UNIT + BLOCK_UNIT / 2,
+            BLOCK_SIZE * 0.125,
+            offset.z + mfZ - mfHalfD + z * BLOCK_UNIT + BLOCK_UNIT / 2
+          ),
+          placed: false,
+          geometry: 'slab',
+        });
+      }
+    }
+    const mfWallH = 4;
+    for (let y = 0; y < mfWallH; y++) {
+      for (let x = 0; x < fortW; x++) {
+        for (const z of [0, fortD - 1]) {
+          slots.push({
+            position: new THREE.Vector3(
+              offset.x - mfHalfW + x * BLOCK_UNIT + BLOCK_UNIT / 2,
+              y * BLOCK_UNIT + BLOCK_SIZE / 2,
+              offset.z + mfZ - mfHalfD + z * BLOCK_UNIT + BLOCK_UNIT / 2
+            ),
+            placed: false,
+            geometry: 'beveled-cube',
+          });
+        }
+      }
+      for (let z = 1; z < fortD - 1; z++) {
+        for (const x of [0, fortW - 1]) {
+          slots.push({
+            position: new THREE.Vector3(
+              offset.x - mfHalfW + x * BLOCK_UNIT + BLOCK_UNIT / 2,
+              y * BLOCK_UNIT + BLOCK_SIZE / 2,
+              offset.z + mfZ - mfHalfD + z * BLOCK_UNIT + BLOCK_UNIT / 2
+            ),
+            placed: false,
+            geometry: 'beveled-cube',
+          });
+        }
+      }
+    }
+    const mfCornerTowerDefs = [
+      { tx: -mfHalfW, tz: -mfHalfD },
+      { tx: mfHalfW - 2 * BLOCK_UNIT, tz: -mfHalfD },
+      { tx: -mfHalfW, tz: mfHalfD - 2 * BLOCK_UNIT },
+      { tx: mfHalfW - 2 * BLOCK_UNIT, tz: mfHalfD - 2 * BLOCK_UNIT },
+    ];
+    for (const { tx, tz } of mfCornerTowerDefs) {
+      for (let y = mfWallH; y < mfWallH + 2; y++) {
+        for (let cx = 0; cx < 2; cx++) {
+          for (let cz = 0; cz < 2; cz++) {
+            slots.push({
+              position: new THREE.Vector3(
+                offset.x + tx + cx * BLOCK_UNIT + BLOCK_UNIT / 2,
+                y * BLOCK_UNIT + BLOCK_SIZE / 2,
+                offset.z + mfZ + tz + cz * BLOCK_UNIT + BLOCK_UNIT / 2
+              ),
+              placed: false,
+              geometry: 'beveled-cube',
+            });
+          }
+        }
+      }
+    }
+    const mfGateX = offset.x - 2 * BLOCK_UNIT;
+    const mfGateZ = offset.z + mfZ + mfHalfD;
+    for (let y = 0; y < 5; y++) {
+      for (let gx = 0; gx < 4; gx++) {
+        for (let gz = 0; gz < 3; gz++) {
+          if (y < 2 && gx >= 1 && gx <= 2 && gz === 1) continue;
+          slots.push({
+            position: new THREE.Vector3(
+              mfGateX + gx * BLOCK_UNIT + BLOCK_UNIT / 2,
+              y * BLOCK_UNIT + BLOCK_SIZE / 2,
+              mfGateZ + gz * BLOCK_UNIT + BLOCK_UNIT / 2
+            ),
+            placed: false,
+            geometry: 'beveled-cube',
+          });
+        }
+      }
+    }
+    const mfBarW = 8;
+    const mfBarD = 4;
+    const mfBarX = offset.x - mfHalfW + 2 * BLOCK_UNIT;
+    const mfBarZ = offset.z + mfZ - mfHalfD + 2 * BLOCK_UNIT;
+    for (let x = 0; x < mfBarW; x++) {
+      for (let z = 0; z < mfBarD; z++) {
+        slots.push({
+          position: new THREE.Vector3(
+            mfBarX + x * BLOCK_UNIT + BLOCK_UNIT / 2,
+            BLOCK_SIZE * 0.125,
+            mfBarZ + z * BLOCK_UNIT + BLOCK_UNIT / 2
+          ),
+          placed: false,
+          geometry: 'slab',
+        });
+      }
+    }
+    for (let y = 0; y < 2; y++) {
+      for (let x = 0; x < mfBarW; x++) {
+        for (const z of [0, mfBarD - 1]) {
+          slots.push({
+            position: new THREE.Vector3(
+              mfBarX + x * BLOCK_UNIT + BLOCK_UNIT / 2,
+              y * BLOCK_UNIT + BLOCK_SIZE / 2,
+              mfBarZ + z * BLOCK_UNIT + BLOCK_UNIT / 2
+            ),
+            placed: false,
+            geometry: 'beveled-cube',
+          });
+        }
+      }
+      for (let z = 1; z < mfBarD - 1; z++) {
+        for (const x of [0, mfBarW - 1]) {
+          slots.push({
+            position: new THREE.Vector3(
+              mfBarX + x * BLOCK_UNIT + BLOCK_UNIT / 2,
+              y * BLOCK_UNIT + BLOCK_SIZE / 2,
+              mfBarZ + z * BLOCK_UNIT + BLOCK_UNIT / 2
+            ),
+            placed: false,
+            geometry: 'beveled-cube',
+          });
+        }
+      }
+    }
+    for (let x = 0; x < mfBarW; x++) {
+      for (let z = 0; z < mfBarD; z++) {
+        slots.push({
+          position: new THREE.Vector3(
+            mfBarX + x * BLOCK_UNIT + BLOCK_UNIT / 2,
+            2 * BLOCK_UNIT + BLOCK_SIZE * 0.125,
+            mfBarZ + z * BLOCK_UNIT + BLOCK_UNIT / 2
+          ),
+          placed: false,
+          geometry: 'slab',
+        });
+      }
+    }
+    const mfParX = offset.x - mfHalfW + 2 * BLOCK_UNIT;
+    const mfParZ = offset.z + mfZ + 1 * BLOCK_UNIT;
+    for (let x = 0; x < 8; x++) {
+      for (let z = 0; z < 6; z++) {
+        slots.push({
+          position: new THREE.Vector3(
+            mfParX + x * BLOCK_UNIT + BLOCK_UNIT / 2,
+            BLOCK_SIZE * 0.125,
+            mfParZ + z * BLOCK_UNIT + BLOCK_UNIT / 2
+          ),
+          placed: false,
+          geometry: 'slab',
+        });
+      }
+    }
+    const mfArmW = 4;
+    const mfArmD = 4;
+    const mfArmX = offset.x + 3 * BLOCK_UNIT;
+    const mfArmZ = offset.z + mfZ - mfHalfD + 2 * BLOCK_UNIT;
+    for (let x = 0; x < mfArmW; x++) {
+      for (let z = 0; z < mfArmD; z++) {
+        slots.push({
+          position: new THREE.Vector3(
+            mfArmX + x * BLOCK_UNIT + BLOCK_UNIT / 2,
+            BLOCK_SIZE * 0.125,
+            mfArmZ + z * BLOCK_UNIT + BLOCK_UNIT / 2
+          ),
+          placed: false,
+          geometry: 'slab',
+        });
+      }
+    }
+    for (let y = 0; y < 2; y++) {
+      for (let x = 0; x < mfArmW; x++) {
+        for (const z of [0, mfArmD - 1]) {
+          slots.push({
+            position: new THREE.Vector3(
+              mfArmX + x * BLOCK_UNIT + BLOCK_UNIT / 2,
+              y * BLOCK_UNIT + BLOCK_SIZE / 2,
+              mfArmZ + z * BLOCK_UNIT + BLOCK_UNIT / 2
+            ),
+            placed: false,
+            geometry: 'beveled-cube',
+          });
+        }
+      }
+      for (let z = 1; z < mfArmD - 1; z++) {
+        for (const x of [0, mfArmW - 1]) {
+          slots.push({
+            position: new THREE.Vector3(
+              mfArmX + x * BLOCK_UNIT + BLOCK_UNIT / 2,
+              y * BLOCK_UNIT + BLOCK_SIZE / 2,
+              mfArmZ + z * BLOCK_UNIT + BLOCK_UNIT / 2
+            ),
+            placed: false,
+            geometry: 'beveled-cube',
+          });
+        }
+      }
+    }
+    for (let x = 0; x < mfArmW; x++) {
+      for (let z = 0; z < mfArmD; z++) {
+        slots.push({
+          position: new THREE.Vector3(
+            mfArmX + x * BLOCK_UNIT + BLOCK_UNIT / 2,
+            2 * BLOCK_UNIT + BLOCK_SIZE * 0.125,
+            mfArmZ + z * BLOCK_UNIT + BLOCK_UNIT / 2
+          ),
+          placed: false,
+          geometry: 'slab',
+        });
+      }
+    }
+  }
+
   return slots;
 }
 
@@ -4785,6 +5142,47 @@ function generateProcessionalWaySlots(offset: THREE.Vector3): BlockSlot[] {
     }
   }
 
+  // --- Merged from Avenue of Sphinxes (+5 x offset) ---
+  {
+    const aosX = 5 * BLOCK_UNIT;
+    const pathwayLength = 20;
+    for (let z = 0; z < pathwayLength; z++) {
+      slots.push({
+        position: new THREE.Vector3(
+          offset.x + aosX,
+          BLOCK_SIZE * 0.125,
+          offset.z + z * BLOCK_UNIT
+        ),
+        placed: false,
+        geometry: 'slab',
+      });
+    }
+    for (const side of [-1, 1]) {
+      for (let i = 0; i < 3; i++) {
+        const z = offset.z + (i + 1) * 6 * BLOCK_UNIT;
+        const x = offset.x + aosX + side * 2 * BLOCK_UNIT;
+        for (let bz = 0; bz < 3; bz++) {
+          slots.push({
+            position: new THREE.Vector3(
+              x,
+              BLOCK_SIZE / 2,
+              z + (bz - 1) * BLOCK_UNIT
+            ),
+            placed: false,
+          });
+        }
+        slots.push({
+          position: new THREE.Vector3(
+            x,
+            BLOCK_UNIT + BLOCK_SIZE / 2,
+            z + BLOCK_UNIT
+          ),
+          placed: false,
+        });
+      }
+    }
+  }
+
   return slots;
 }
 
@@ -5893,6 +6291,300 @@ function generateNileHarborSlots(offset: THREE.Vector3): BlockSlot[] {
     });
   }
 
+  // --- Merged from Sacred Harbor of Amun (+15 x offset) ---
+  {
+    const shX = 15 * BLOCK_UNIT;
+    const mbX = -10;
+    const mbZ = -4;
+    const mbW = 20;
+    const mbD = 8;
+    for (let x = 0; x < mbW; x++) {
+      for (let z = 0; z < mbD; z++) {
+        slots.push({
+          position: new THREE.Vector3(
+            offset.x + shX + (mbX + x) * BLOCK_UNIT + BLOCK_UNIT / 2,
+            BLOCK_SIZE * 0.125,
+            offset.z + (mbZ + z) * BLOCK_UNIT + BLOCK_UNIT / 2
+          ),
+          placed: false,
+          geometry: 'slab',
+        });
+      }
+    }
+    for (let y = 0; y < 2; y++) {
+      for (let x = 0; x < mbW; x++) {
+        for (let z = 0; z < mbD; z++) {
+          if (x > 0 && x < mbW - 1 && z > 0 && z < mbD - 1) continue;
+          slots.push({
+            position: new THREE.Vector3(
+              offset.x + shX + (mbX + x) * BLOCK_UNIT + BLOCK_UNIT / 2,
+              y * BLOCK_UNIT + BLOCK_SIZE / 2,
+              offset.z + (mbZ + z) * BLOCK_UNIT + BLOCK_UNIT / 2
+            ),
+            placed: false,
+            geometry: 'beveled-cube',
+          });
+        }
+      }
+    }
+    const caX = -6;
+    const caZ = 4;
+    const caW = 12;
+    const caD = 8;
+    for (let x = 0; x < caW; x++) {
+      for (let z = 0; z < caD; z++) {
+        slots.push({
+          position: new THREE.Vector3(
+            offset.x + shX + (caX + x) * BLOCK_UNIT + BLOCK_UNIT / 2,
+            BLOCK_SIZE * 0.125,
+            offset.z + (caZ + z) * BLOCK_UNIT + BLOCK_UNIT / 2
+          ),
+          placed: false,
+          geometry: 'slab',
+        });
+      }
+    }
+    for (let y = 0; y < 2; y++) {
+      for (let x = 0; x < caW; x++) {
+        for (let z = 0; z < caD; z++) {
+          if (x > 0 && x < caW - 1 && z > 0 && z < caD - 1) continue;
+          if (z === 0) continue;
+          slots.push({
+            position: new THREE.Vector3(
+              offset.x + shX + (caX + x) * BLOCK_UNIT + BLOCK_UNIT / 2,
+              y * BLOCK_UNIT + BLOCK_SIZE / 2,
+              offset.z + (caZ + z) * BLOCK_UNIT + BLOCK_UNIT / 2
+            ),
+            placed: false,
+            geometry: 'beveled-cube',
+          });
+        }
+      }
+    }
+    const isX = -3;
+    const isZ = -2;
+    const isW = 6;
+    const isD = 4;
+    for (let x = 0; x < isW; x++) {
+      for (let z = 0; z < isD; z++) {
+        slots.push({
+          position: new THREE.Vector3(
+            offset.x + shX + (isX + x) * BLOCK_UNIT + BLOCK_UNIT / 2,
+            BLOCK_SIZE * 0.375,
+            offset.z + (isZ + z) * BLOCK_UNIT + BLOCK_UNIT / 2
+          ),
+          placed: false,
+          geometry: 'slab',
+        });
+      }
+    }
+    const isColDefs = [
+      { cx: isX + 1, cz: isZ + 1 },
+      { cx: isX + 4, cz: isZ + 1 },
+      { cx: isX + 1, cz: isZ + 2 },
+      { cx: isX + 4, cz: isZ + 2 },
+    ];
+    for (const { cx, cz } of isColDefs) {
+      for (let y = 0; y < 4; y++) {
+        slots.push({
+          position: new THREE.Vector3(
+            offset.x + shX + cx * BLOCK_UNIT + BLOCK_UNIT / 2,
+            BLOCK_SIZE * 0.5 + y * BLOCK_UNIT,
+            offset.z + cz * BLOCK_UNIT + BLOCK_UNIT / 2
+          ),
+          placed: false,
+          geometry: 'fluted-cylinder',
+        });
+      }
+    }
+    const shrX2 = isX + 2;
+    const shrZ2 = isZ + 1;
+    for (let y = 0; y < 3; y++) {
+      for (let x = 0; x < 2; x++) {
+        for (let z = 0; z < 2; z++) {
+          slots.push({
+            position: new THREE.Vector3(
+              offset.x + shX + (shrX2 + x) * BLOCK_UNIT + BLOCK_UNIT / 2,
+              BLOCK_SIZE * 0.5 + y * BLOCK_UNIT,
+              offset.z + (shrZ2 + z) * BLOCK_UNIT + BLOCK_UNIT / 2
+            ),
+            placed: false,
+            geometry: 'beveled-cube',
+          });
+        }
+      }
+    }
+    for (let x = 0; x < 2; x++) {
+      for (let z = 0; z < 2; z++) {
+        slots.push({
+          position: new THREE.Vector3(
+            offset.x + shX + (shrX2 + x) * BLOCK_UNIT + BLOCK_UNIT / 2,
+            BLOCK_SIZE * 0.5 + 3 * BLOCK_UNIT + BLOCK_SIZE * 0.125,
+            offset.z + (shrZ2 + z) * BLOCK_UNIT + BLOCK_UNIT / 2
+          ),
+          placed: false,
+          geometry: 'slab',
+        });
+      }
+    }
+    const rampX2 = -2;
+    const rampZ2 = -7;
+    for (let x = 0; x < 4; x++) {
+      for (let z = 0; z < 5; z++) {
+        slots.push({
+          position: new THREE.Vector3(
+            offset.x + shX + (rampX2 + x) * BLOCK_UNIT + BLOCK_UNIT / 2,
+            BLOCK_SIZE * 0.125,
+            offset.z + (rampZ2 + z) * BLOCK_UNIT + BLOCK_UNIT / 2
+          ),
+          placed: false,
+          geometry: 'slab',
+        });
+      }
+    }
+    const mooringDefs2 = [
+      { mx: mbX + 1, mz: mbZ + 1 },
+      { mx: mbX + 18, mz: mbZ + 1 },
+      { mx: mbX + 1, mz: mbZ + 6 },
+      { mx: mbX + 18, mz: mbZ + 6 },
+    ];
+    for (const { mx, mz } of mooringDefs2) {
+      for (let y = 0; y < 4; y++) {
+        slots.push({
+          position: new THREE.Vector3(
+            offset.x + shX + mx * BLOCK_UNIT + BLOCK_UNIT / 2,
+            y * BLOCK_UNIT + BLOCK_SIZE / 2,
+            offset.z + mz * BLOCK_UNIT + BLOCK_UNIT / 2
+          ),
+          placed: false,
+          geometry: 'cylinder',
+        });
+      }
+    }
+  }
+
+  // --- Merged from Great Nile Port (-15 x offset) ---
+  {
+    const gnX = -15 * BLOCK_UNIT;
+    const dW = 24;
+    const dD = 20;
+    const dX = -12;
+    const dZ = -10;
+    for (let y = 0; y < 3; y++) {
+      for (let x = 0; x < dW; x++) {
+        for (let z = 0; z < dD; z++) {
+          if (x >= 1 && x < dW - 1 && z >= 1 && z < dD - 1) continue;
+          slots.push({
+            position: new THREE.Vector3(
+              offset.x + gnX + (dX + x) * BLOCK_UNIT + BLOCK_UNIT / 2,
+              y * BLOCK_UNIT + BLOCK_SIZE / 2,
+              offset.z + (dZ + z) * BLOCK_UNIT + BLOCK_UNIT / 2
+            ),
+            placed: false,
+            geometry: 'beveled-cube',
+          });
+        }
+      }
+    }
+    for (let x = 0; x < 24; x++) {
+      for (let z = 0; z < 4; z++) {
+        slots.push({
+          position: new THREE.Vector3(
+            offset.x + gnX + (dX + x) * BLOCK_UNIT + BLOCK_UNIT / 2,
+            BLOCK_SIZE * 0.125,
+            offset.z + (dZ + z) * BLOCK_UNIT + BLOCK_UNIT / 2
+          ),
+          placed: false,
+          geometry: 'slab',
+        });
+      }
+    }
+    for (let x = 0; x < 24; x++) {
+      slots.push({
+        position: new THREE.Vector3(
+          offset.x + gnX + (dX + x) * BLOCK_UNIT + BLOCK_UNIT / 2,
+          BLOCK_SIZE / 2,
+          offset.z + (dZ + 4) * BLOCK_UNIT + BLOCK_UNIT / 2
+        ),
+        placed: false,
+        geometry: 'beveled-cube',
+      });
+    }
+    for (let z = 0; z < 4; z++) {
+      slots.push({
+        position: new THREE.Vector3(
+          offset.x + gnX + (dX + 0) * BLOCK_UNIT + BLOCK_UNIT / 2,
+          BLOCK_SIZE / 2,
+          offset.z + (dZ + z) * BLOCK_UNIT + BLOCK_UNIT / 2
+        ),
+        placed: false,
+        geometry: 'beveled-cube',
+      });
+      slots.push({
+        position: new THREE.Vector3(
+          offset.x + gnX + (dX + 23) * BLOCK_UNIT + BLOCK_UNIT / 2,
+          BLOCK_SIZE / 2,
+          offset.z + (dZ + z) * BLOCK_UNIT + BLOCK_UNIT / 2
+        ),
+        placed: false,
+        geometry: 'beveled-cube',
+      });
+    }
+    const gnWarehouseDefs = [
+      { wx: -12, wz: 5 },
+      { wx: -6,  wz: 5 },
+      { wx: -12, wz: 10 },
+      { wx: -6,  wz: 10 },
+    ];
+    const gnWhW = 6;
+    const gnWhD = 4;
+    const gnWhH = 3;
+    for (const { wx, wz } of gnWarehouseDefs) {
+      for (let x = 0; x < gnWhW; x++) {
+        for (let z = 0; z < gnWhD; z++) {
+          slots.push({
+            position: new THREE.Vector3(
+              offset.x + gnX + (wx + x) * BLOCK_UNIT + BLOCK_UNIT / 2,
+              BLOCK_SIZE * 0.125,
+              offset.z + (wz + z) * BLOCK_UNIT + BLOCK_UNIT / 2
+            ),
+            placed: false,
+            geometry: 'slab',
+          });
+        }
+      }
+      for (let y = 0; y < gnWhH; y++) {
+        for (let x = 0; x < gnWhW; x++) {
+          for (let z = 0; z < gnWhD; z++) {
+            if (x > 0 && x < gnWhW - 1 && z > 0 && z < gnWhD - 1) continue;
+            slots.push({
+              position: new THREE.Vector3(
+                offset.x + gnX + (wx + x) * BLOCK_UNIT + BLOCK_UNIT / 2,
+                y * BLOCK_UNIT + BLOCK_SIZE / 2,
+                offset.z + (wz + z) * BLOCK_UNIT + BLOCK_UNIT / 2
+              ),
+              placed: false,
+              geometry: 'beveled-cube',
+            });
+          }
+        }
+      }
+      for (let x = 0; x < gnWhW; x++) {
+        for (let z = 0; z < gnWhD; z++) {
+          slots.push({
+            position: new THREE.Vector3(
+              offset.x + gnX + (wx + x) * BLOCK_UNIT + BLOCK_UNIT / 2,
+              gnWhH * BLOCK_UNIT + BLOCK_SIZE * 0.125,
+              offset.z + (wz + z) * BLOCK_UNIT + BLOCK_UNIT / 2
+            ),
+            placed: false,
+            geometry: 'slab',
+          });
+        }
+      }
+    }
+  }
+
   return slots;
 }
 
@@ -6761,6 +7453,228 @@ function generateNecropolisDistrictSlots(offset: THREE.Vector3): BlockSlot[] {
       placed: false,
       geometry: 'cylinder',
     });
+  }
+
+  // --- Merged from Grand Necropolis (+10 x offset) ---
+  {
+    const gnX = 10 * BLOCK_UNIT;
+    const gnDW = 30;
+    const gnDD = 24;
+    const gnDX = -15;
+    const gnDZ = -12;
+    for (let y = 0; y < 3; y++) {
+      for (let x = 0; x < gnDW; x++) {
+        for (let z = 0; z < gnDD; z++) {
+          if (x >= 1 && x < gnDW - 1 && z >= 1 && z < gnDD - 1) continue;
+          if (z === 0 && x >= 13 && x <= 16) continue;
+          if (z === gnDD - 1 && x >= 13 && x <= 16) continue;
+          slots.push({
+            position: new THREE.Vector3(
+              offset.x + gnX + (gnDX + x) * BLOCK_UNIT + BLOCK_UNIT / 2,
+              y * BLOCK_UNIT + BLOCK_SIZE / 2,
+              offset.z + (gnDZ + z) * BLOCK_UNIT + BLOCK_UNIT / 2
+            ),
+            placed: false,
+            geometry: 'beveled-cube',
+          });
+        }
+      }
+    }
+    for (let z = 0; z < 24; z++) {
+      for (let x = 0; x < 2; x++) {
+        slots.push({
+          position: new THREE.Vector3(
+            offset.x + gnX + (gnDX + 14 + x) * BLOCK_UNIT + BLOCK_UNIT / 2,
+            BLOCK_SIZE * 0.125,
+            offset.z + (gnDZ + z) * BLOCK_UNIT + BLOCK_UNIT / 2
+          ),
+          placed: false,
+          geometry: 'slab',
+        });
+      }
+    }
+    for (let col = 0; col < 8; col++) {
+      for (let row = 0; row < 5; row++) {
+        const mx = gnDX + 1 + col * 3;
+        const mz = gnDZ + 1 + row * 4;
+        if (mx + gnDX >= 13 && mx + gnDX <= 14) continue;
+        for (let y = 0; y < 2; y++) {
+          for (let x = 0; x < 3; x++) {
+            for (let z = 0; z < 2; z++) {
+              slots.push({
+                position: new THREE.Vector3(
+                  offset.x + gnX + (mx + x) * BLOCK_UNIT + BLOCK_UNIT / 2,
+                  y * BLOCK_UNIT + BLOCK_SIZE / 2,
+                  offset.z + (mz + z) * BLOCK_UNIT + BLOCK_UNIT / 2
+                ),
+                placed: false,
+                geometry: 'beveled-cube',
+              });
+            }
+          }
+        }
+      }
+    }
+    for (let t = 0; t < 8; t++) {
+      const tx = gnDX + 1 + t * 3;
+      const tz = gnDZ + 18;
+      for (let y = 0; y < 5; y++) {
+        for (let x = 0; x < 4; x++) {
+          slots.push({
+            position: new THREE.Vector3(
+              offset.x + gnX + (tx + x) * BLOCK_UNIT + BLOCK_UNIT / 2,
+              y * BLOCK_UNIT + BLOCK_SIZE / 2,
+              offset.z + tz * BLOCK_UNIT + BLOCK_UNIT / 2
+            ),
+            placed: false,
+            geometry: 'beveled-cube',
+          });
+        }
+      }
+      for (let y = 0; y < 3; y++) {
+        for (let x = 0; x < 2; x++) {
+          for (let z = 0; z < 3; z++) {
+            if (y > 0 && x > 0 && x < 1 && z > 0 && z < 2) continue;
+            slots.push({
+              position: new THREE.Vector3(
+                offset.x + gnX + (tx + 1 + x) * BLOCK_UNIT + BLOCK_UNIT / 2,
+                y * BLOCK_UNIT + BLOCK_SIZE / 2,
+                offset.z + (tz - 1 - z) * BLOCK_UNIT + BLOCK_UNIT / 2
+              ),
+              placed: false,
+              geometry: 'beveled-cube',
+            });
+          }
+        }
+      }
+    }
+    const mortuaryDefs = [
+      { mtx: gnDX + 2,  mtz: gnDZ + 4 },
+      { mtx: gnDX + 10, mtz: gnDZ + 4 },
+      { mtx: gnDX + 2,  mtz: gnDZ + 11 },
+      { mtx: gnDX + 10, mtz: gnDZ + 11 },
+    ];
+    for (const { mtx, mtz } of mortuaryDefs) {
+      const tmW = 6;
+      const tmD = 4;
+      const tmH = 3;
+      for (let x = 0; x < tmW; x++) {
+        for (let z = 0; z < tmD; z++) {
+          slots.push({
+            position: new THREE.Vector3(
+              offset.x + gnX + (mtx + x) * BLOCK_UNIT + BLOCK_UNIT / 2,
+              BLOCK_SIZE * 0.125,
+              offset.z + (mtz + z) * BLOCK_UNIT + BLOCK_UNIT / 2
+            ),
+            placed: false,
+            geometry: 'slab',
+          });
+        }
+      }
+      for (let y = 0; y < tmH; y++) {
+        for (let x = 0; x < tmW; x++) {
+          for (let z = 0; z < tmD; z++) {
+            if (x > 0 && x < tmW - 1 && z > 0 && z < tmD - 1) continue;
+            slots.push({
+              position: new THREE.Vector3(
+                offset.x + gnX + (mtx + x) * BLOCK_UNIT + BLOCK_UNIT / 2,
+                y * BLOCK_UNIT + BLOCK_SIZE / 2,
+                offset.z + (mtz + z) * BLOCK_UNIT + BLOCK_UNIT / 2
+              ),
+              placed: false,
+              geometry: 'beveled-cube',
+            });
+          }
+        }
+      }
+      for (let col2 = 0; col2 < 2; col2++) {
+        const cx2 = mtx + 1 + col2 * 3;
+        const cz2 = mtz + 0;
+        for (let y = 0; y < 3; y++) {
+          slots.push({
+            position: new THREE.Vector3(
+              offset.x + gnX + cx2 * BLOCK_UNIT + BLOCK_UNIT / 2,
+              y * BLOCK_UNIT + BLOCK_SIZE / 2,
+              offset.z + cz2 * BLOCK_UNIT + BLOCK_UNIT / 2
+            ),
+            placed: false,
+            geometry: 'fluted-cylinder',
+          });
+        }
+        slots.push({
+          position: new THREE.Vector3(
+            offset.x + gnX + cx2 * BLOCK_UNIT + BLOCK_UNIT / 2,
+            3 * BLOCK_UNIT + BLOCK_SIZE / 2,
+            offset.z + cz2 * BLOCK_UNIT + BLOCK_UNIT / 2
+          ),
+          placed: false,
+          geometry: 'lotus-capital',
+        });
+      }
+      for (let x = 0; x < tmW; x++) {
+        for (let z = 0; z < tmD; z++) {
+          slots.push({
+            position: new THREE.Vector3(
+              offset.x + gnX + (mtx + x) * BLOCK_UNIT + BLOCK_UNIT / 2,
+              tmH * BLOCK_UNIT + BLOCK_SIZE * 0.125,
+              offset.z + (mtz + z) * BLOCK_UNIT + BLOCK_UNIT / 2
+            ),
+            placed: false,
+            geometry: 'slab',
+          });
+        }
+      }
+    }
+    const gardenDefs = [
+      { gx: gnDX + 18, gz: gnDZ + 2 },
+      { gx: gnDX + 23, gz: gnDZ + 2 },
+      { gx: gnDX + 18, gz: gnDZ + 8 },
+      { gx: gnDX + 23, gz: gnDZ + 8 },
+      { gx: gnDX + 18, gz: gnDZ + 14 },
+      { gx: gnDX + 23, gz: gnDZ + 14 },
+    ];
+    for (const { gx, gz } of gardenDefs) {
+      for (let x = 0; x < 4; x++) {
+        for (let z = 0; z < 4; z++) {
+          slots.push({
+            position: new THREE.Vector3(
+              offset.x + gnX + (gx + x) * BLOCK_UNIT + BLOCK_UNIT / 2,
+              BLOCK_SIZE * 0.125,
+              offset.z + (gz + z) * BLOCK_UNIT + BLOCK_UNIT / 2
+            ),
+            placed: false,
+            geometry: 'slab',
+          });
+        }
+      }
+    }
+    const shrineDefs2 = [
+      { sx: gnDX + 2,  sz: gnDZ + 8 },
+      { sx: gnDX + 6,  sz: gnDZ + 8 },
+      { sx: gnDX + 2,  sz: gnDZ + 15 },
+      { sx: gnDX + 6,  sz: gnDZ + 15 },
+      { sx: gnDX + 18, sz: gnDZ + 18 },
+      { sx: gnDX + 22, sz: gnDZ + 18 },
+      { sx: gnDX + 18, sz: gnDZ + 20 },
+      { sx: gnDX + 22, sz: gnDZ + 20 },
+    ];
+    for (const { sx, sz } of shrineDefs2) {
+      for (let y = 0; y < 3; y++) {
+        for (let x = 0; x < 2; x++) {
+          for (let z = 0; z < 2; z++) {
+            slots.push({
+              position: new THREE.Vector3(
+                offset.x + gnX + (sx + x) * BLOCK_UNIT + BLOCK_UNIT / 2,
+                y * BLOCK_UNIT + BLOCK_SIZE / 2,
+                offset.z + (sz + z) * BLOCK_UNIT + BLOCK_UNIT / 2
+              ),
+              placed: false,
+              geometry: 'beveled-cube',
+            });
+          }
+        }
+      }
+    }
   }
 
   return slots;
@@ -9403,8 +10317,8 @@ export function getStructureRegistry(): Structure[] {
       slots: generateWorkerHovelSlots(new THREE.Vector3(70, 0, 48)),
     },
     {
-      id: 'granary',
-      name: 'Granary',
+      id: 'royal-granary',
+      name: 'Royal Granary',
       icon: '\u{1F33E}',
       worldOffset: new THREE.Vector3(-50, 0, 35),
       slots: generateGranarySlots(new THREE.Vector3(-50, 0, 35)),
@@ -9429,13 +10343,6 @@ export function getStructureRegistry(): Structure[] {
       icon: '\u{1F3EA}',
       worldOffset: new THREE.Vector3(92, 0, 42),
       slots: generateSmallMarketSlots(new THREE.Vector3(92, 0, 42)),
-    },
-    {
-      id: 'avenue-of-sphinxes',
-      name: 'Avenue of Sphinxes',
-      icon: '\u{1F981}',
-      worldOffset: new THREE.Vector3(0, 0, 55),
-      slots: generateAvenueOfSphinxesSlots(new THREE.Vector3(0, 0, 55)),
     },
     {
       id: 'shrine-of-anubis',
@@ -9599,8 +10506,8 @@ export function getStructureRegistry(): Structure[] {
       slots: generateBreweryBakerySlots(new THREE.Vector3(60, 0, 25)),
     },
     {
-      id: 'guard-barracks',
-      name: 'Guard Barracks',
+      id: 'military-garrison',
+      name: 'Military Garrison',
       icon: '\u{1F6E1}',
       worldOffset: new THREE.Vector3(-55, 0, -20),
       slots: generateGuardBarracksSlots(new THREE.Vector3(-55, 0, -20)),
@@ -9662,18 +10569,11 @@ export function getStructureRegistry(): Structure[] {
       slots: generateWeavingMillSlots(new THREE.Vector3(75, 0, -50)),
     },
     {
-      id: 'processional-way',
-      name: 'Processional Way',
+      id: 'grand-processional',
+      name: 'Grand Processional Avenue',
       icon: '\u{1F6E3}',
       worldOffset: new THREE.Vector3(0, 0, -80),
       slots: generateProcessionalWaySlots(new THREE.Vector3(0, 0, -80)),
-    },
-    {
-      id: 'military-fortress',
-      name: 'Military Fortress',
-      icon: '\u{1F3F0}',
-      worldOffset: new THREE.Vector3(-90, 0, -65),
-      slots: generateMilitaryFortressSlots(new THREE.Vector3(-90, 0, -65)),
     },
     {
       id: 'karnak-precinct-wall',
@@ -9690,13 +10590,6 @@ export function getStructureRegistry(): Structure[] {
       slots: generateTempleOfPtahSlots(new THREE.Vector3(-85, 0, 70)),
     },
     {
-      id: 'royal-granary-complex',
-      name: 'Royal Granary Complex',
-      icon: '\u{1F33E}',
-      worldOffset: new THREE.Vector3(90, 0, 65),
-      slots: generateRoyalGranaryComplexSlots(new THREE.Vector3(90, 0, 65)),
-    },
-    {
       id: 'hatshepsut-terrace',
       name: "Hatshepsut's Terrace Temple",
       icon: '\u{1F3DB}',
@@ -9704,8 +10597,8 @@ export function getStructureRegistry(): Structure[] {
       slots: generateHatshepsutTerraceSlots(new THREE.Vector3(-100, 0, -85)),
     },
     {
-      id: 'nile-harbor',
-      name: 'Nile Harbor',
+      id: 'grand-harbor',
+      name: 'Grand Harbor',
       icon: '\u{2693}',
       worldOffset: new THREE.Vector3(105, 0, 50),
       slots: generateNileHarborSlots(new THREE.Vector3(105, 0, 50)),
@@ -9739,8 +10632,8 @@ export function getStructureRegistry(): Structure[] {
       slots: generatePharaohMortuaryComplexSlots(new THREE.Vector3(120, 0, 80)),
     },
     {
-      id: 'necropolis-district',
-      name: 'Necropolis District',
+      id: 'grand-necropolis',
+      name: 'Grand Necropolis',
       icon: '\u{1FAA6}',
       worldOffset: new THREE.Vector3(-120, 0, 75),
       slots: generateNecropolisDistrictSlots(new THREE.Vector3(-120, 0, 75)),
@@ -9760,13 +10653,6 @@ export function getStructureRegistry(): Structure[] {
       slots: generateRoyalPalaceComplexSlots(new THREE.Vector3(-130, 0, -80)),
     },
     {
-      id: 'sacred-harbor-of-amun',
-      name: 'Sacred Harbor of Amun',
-      icon: '\u{26F5}',
-      worldOffset: new THREE.Vector3(135, 0, 60),
-      slots: generateSacredHarborOfAmunSlots(new THREE.Vector3(135, 0, 60)),
-    },
-    {
       id: 'festival-hall-thutmose',
       name: 'Festival Hall of Thutmose',
       icon: '\u{1F3DB}',
@@ -9781,25 +10667,11 @@ export function getStructureRegistry(): Structure[] {
       slots: generateKarnakHypostyleSlots(new THREE.Vector3(145, 0, -20)),
     },
     {
-      id: 'great-nile-port',
-      name: 'Great Nile Port',
-      icon: '\u{2693}',
-      worldOffset: new THREE.Vector3(-145, 0, -30),
-      slots: generateGreatNilePortSlots(new THREE.Vector3(-145, 0, -30)),
-    },
-    {
       id: 'temple-of-dendera',
       name: 'Temple of Dendera',
       icon: '\u{1F3DB}',
       worldOffset: new THREE.Vector3(150, 0, 45),
       slots: generateTempleOfDenderaSlots(new THREE.Vector3(150, 0, 45)),
-    },
-    {
-      id: 'grand-necropolis',
-      name: 'Grand Necropolis',
-      icon: '\u{1FAA6}',
-      worldOffset: new THREE.Vector3(-150, 0, 60),
-      slots: generateGrandNecropolisSlots(new THREE.Vector3(-150, 0, 60)),
     },
     {
       id: 'theban-acropolis',
