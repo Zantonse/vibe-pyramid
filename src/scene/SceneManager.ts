@@ -806,7 +806,7 @@ export class SceneManager {
     const riverPoints: { x: number; z: number }[] = [];
     for (let t = 0; t <= 1; t += 0.02) {
       const x = -100 + t * 260; // -100 to 160
-      const z = -38 + Math.sin(t * Math.PI * 1.5) * 6 + Math.cos(t * Math.PI * 3) * 2;
+      const z = -65 + Math.sin(t * Math.PI * 1.5) * 8 + Math.cos(t * Math.PI * 3) * 3;
       riverPoints.push({ x, z });
     }
 
@@ -827,8 +827,8 @@ export class SceneManager {
 
       const lx = p.x + nx * riverWidth / 2, lz = p.z + nz * riverWidth / 2;
       const rx = p.x - nx * riverWidth / 2, rz = p.z - nz * riverWidth / 2;
-      positions.push(lx, 5, lz);
-      positions.push(rx, 5, rz);
+      positions.push(lx, getTerrainHeight(lx, lz) + 0.8, lz);
+      positions.push(rx, getTerrainHeight(rx, rz) + 0.8, rz);
 
       if (i < riverPoints.length - 1) {
         const base = i * 2;
