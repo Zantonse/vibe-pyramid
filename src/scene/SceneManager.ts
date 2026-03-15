@@ -805,8 +805,8 @@ export class SceneManager {
     // River path as a series of connected quads forming a curve
     const riverPoints: { x: number; z: number }[] = [];
     for (let t = 0; t <= 1; t += 0.02) {
-      const x = -100 + t * 260; // -100 to 160
-      const z = -65 + Math.sin(t * Math.PI * 1.5) * 8 + Math.cos(t * Math.PI * 3) * 3;
+      const x = -200 + t * 450; // -200 to 250 (wider span)
+      const z = -90 + Math.sin(t * Math.PI * 1.5) * 10 + Math.cos(t * Math.PI * 3) * 4;
       riverPoints.push({ x, z });
     }
 
