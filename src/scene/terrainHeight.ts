@@ -6,7 +6,7 @@
 const PYRAMID_R = 35;
 const OASIS_CX = 40, OASIS_CZ = 35, OASIS_R = 20;  // unchanged
 const CITY_CX = 85, CITY_CZ = 55, CITY_R = 50;
-const HARBOR_CX = 50, HARBOR_CZ = -90, HARBOR_R = 45;
+const HARBOR_CX = 50, HARBOR_CZ = -170, HARBOR_R = 50;
 const NECRO_CX = 0, NECRO_CZ = -100, NECRO_R = 60;
 
 export function getTerrainHeight(x: number, z: number): number {
