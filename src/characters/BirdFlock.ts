@@ -9,22 +9,23 @@ interface BirdConfig {
   flapPhase: number;
 }
 
-const bodyMat = new THREE.MeshLambertMaterial({ color: 0x8b6842 });
-const wingMat = new THREE.MeshLambertMaterial({ color: 0x5c3d1e, side: THREE.DoubleSide });
-const headMat = new THREE.MeshLambertMaterial({ color: 0xa07850 });
-const beakMat = new THREE.MeshLambertMaterial({ color: 0xd4a040 });
-const tailMat = new THREE.MeshLambertMaterial({ color: 0x4a2e14, side: THREE.DoubleSide });
+const bodyMat = new THREE.MeshStandardMaterial({ color: 0x8b6842, roughness: 0.7, metalness: 0.0 });
+const wingMat = new THREE.MeshStandardMaterial({ color: 0x5c3d1e, roughness: 0.75, metalness: 0.0, side: THREE.DoubleSide });
+const headMat = new THREE.MeshStandardMaterial({ color: 0xa07850, roughness: 0.65, metalness: 0.0 });
+const beakMat = new THREE.MeshStandardMaterial({ color: 0xd4a040, roughness: 0.5, metalness: 0.05 });
+const tailMat = new THREE.MeshStandardMaterial({ color: 0x4a2e14, roughness: 0.8, metalness: 0.0, side: THREE.DoubleSide });
+const eyeMat = new THREE.MeshStandardMaterial({ color: 0x101010, roughness: 0.2, metalness: 0.1 });
+const breastMat = new THREE.MeshStandardMaterial({ color: 0xc0956a, roughness: 0.7, metalness: 0.0 });
 
 function createWingGeo(mirror: number): THREE.BufferGeometry {
-  // Wing: 4-vertex quad — shoulder, mid-tip, wingtip, trailing edge
   const geo = new THREE.BufferGeometry();
-  const s = mirror; // 1 = right, -1 = left
+  const s = mirror;
   const verts = new Float32Array([
-    // Triangle 1: shoulder → mid → trailing
+    // Triangle 1: shoulder -> mid -> trailing
     0, 0, 0.1,
     s * 1.4, 0.05, -0.1,
     s * 0.4, -0.05, -0.4,
-    // Triangle 2: shoulder → mid → wingtip
+    // Triangle 2: shoulder -> mid -> wingtip
     0, 0, 0.1,
     s * 1.4, 0.05, -0.1,
     s * 1.6, 0.02, -0.5,
@@ -37,7 +38,6 @@ function createWingGeo(mirror: number): THREE.BufferGeometry {
 function createTailGeo(): THREE.BufferGeometry {
   const geo = new THREE.BufferGeometry();
   const verts = new Float32Array([
-    // Forked tail — two triangles fanning back
     0, 0, 0,
     -0.2, 0, -0.8,
     0.0, 0.03, -0.5,
@@ -64,15 +64,31 @@ class Bird {
 
     // Body — tapered capsule shape
     const bodyGeo = new THREE.CapsuleGeometry(0.15, 0.5, 4, 6);
-    bodyGeo.rotateX(Math.PI / 2); // Align along Z (forward)
+    bodyGeo.rotateX(Math.PI / 2);
     const body = new THREE.Mesh(bodyGeo, bodyMat);
+    body.castShadow = true;
     this.group.add(body);
+
+    // Breast — lighter underside
+    const breastGeo = new THREE.SphereGeometry(0.12, 5, 4, 0, Math.PI * 2, Math.PI / 3, Math.PI / 2);
+    breastGeo.rotateX(Math.PI / 2);
+    const breast = new THREE.Mesh(breastGeo, breastMat);
+    breast.position.set(0, -0.04, 0.05);
+    this.group.add(breast);
 
     // Head — small sphere forward
     const headGeo = new THREE.SphereGeometry(0.12, 6, 6);
     const head = new THREE.Mesh(headGeo, headMat);
     head.position.set(0, 0.04, 0.42);
+    head.castShadow = true;
     this.group.add(head);
+
+    // Eyes
+    for (const side of [-1, 1]) {
+      const eye = new THREE.Mesh(new THREE.SphereGeometry(0.025, 4, 4), eyeMat);
+      eye.position.set(side * 0.08, 0.07, 0.5);
+      this.group.add(eye);
+    }
 
     // Beak — tiny cone
     const beakGeo = new THREE.ConeGeometry(0.04, 0.14, 4);
@@ -85,6 +101,7 @@ class Bird {
     this.leftWingPivot = new THREE.Group();
     this.leftWingPivot.position.set(-0.1, 0.05, 0);
     const leftWing = new THREE.Mesh(createWingGeo(-1), wingMat);
+    leftWing.castShadow = true;
     this.leftWingPivot.add(leftWing);
     this.group.add(this.leftWingPivot);
 
@@ -92,6 +109,7 @@ class Bird {
     this.rightWingPivot = new THREE.Group();
     this.rightWingPivot.position.set(0.1, 0.05, 0);
     const rightWing = new THREE.Mesh(createWingGeo(1), wingMat);
+    rightWing.castShadow = true;
     this.rightWingPivot.add(rightWing);
     this.group.add(this.rightWingPivot);
 
@@ -100,7 +118,6 @@ class Bird {
     tail.position.set(0, 0, -0.35);
     this.group.add(tail);
 
-    // Scale the whole bird up slightly
     this.group.scale.setScalar(1.2);
   }
 
@@ -109,7 +126,6 @@ class Bird {
 
     const x = Math.cos(this.config.angle) * this.config.orbitRadius;
     const z = Math.sin(this.config.angle) * this.config.orbitRadius;
-    // Gentle height undulation for natural soaring
     const y = this.config.height + Math.sin(this.config.angle * 2.5) * 0.8;
 
     this.group.position.set(x, y, z);
@@ -123,13 +139,12 @@ class Bird {
     );
     this.group.lookAt(this._nextPos);
 
-    // Banking — tilt into the turn
+    // Banking
     this.group.rotation.z = -0.15 * Math.sign(this.config.angularSpeed);
 
-    // Wing flap — smooth sinusoidal with asymmetric up/down
+    // Wing flap
     this.config.flapPhase += this.config.flapSpeed * delta;
     const raw = Math.sin(this.config.flapPhase);
-    // Sharper upstroke, slower downstroke
     const flap = raw > 0 ? raw * 0.6 : raw * 0.35;
 
     this.leftWingPivot.rotation.z = flap;
@@ -141,7 +156,6 @@ export class BirdFlock {
   private birds: Bird[] = [];
 
   constructor(scene: THREE.Scene) {
-    // Just 3 birds — a small group of desert hawks
     const configs: BirdConfig[] = [
       { angle: 0, angularSpeed: 0.25, orbitRadius: 20, height: 16, flapSpeed: 3.5, flapPhase: 0 },
       { angle: 2.1, angularSpeed: 0.30, orbitRadius: 24, height: 18, flapSpeed: 3.0, flapPhase: 1.8 },

@@ -92,7 +92,8 @@ function calculateLayer(blocksPlaced: number): number {
 export function processToolEvent(
   sessionId: string,
   toolName: string,
-  metadata: { file?: string; command?: string }
+  metadata: { file?: string; command?: string },
+  cwd?: string
 ): { xp_earned: number; total_xp: number; blocks_placed: number; new_milestone_index: number | null; current_milestone_index: number } {
   const xp = XP_TABLE[toolName] ?? 1;
   const prevXp = state.total_xp;
@@ -135,8 +136,11 @@ export function processToolEvent(
   }
 
   if (!state.sessions[sessionId]) {
+    const folderName = cwd
+      ? cwd.split('/').filter(Boolean).pop() ?? sessionId.slice(0, 8)
+      : sessionId.slice(0, 8);
     state.sessions[sessionId] = {
-      name: sessionId.slice(0, 8),
+      name: folderName,
       xp_contributed: 0,
       last_active: new Date().toISOString(),
       status: 'active',

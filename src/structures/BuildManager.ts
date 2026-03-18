@@ -2,6 +2,7 @@ import * as THREE from 'three';
 import { PyramidBuilder } from '../pyramid/PyramidBuilder.js';
 import { getStructureRegistry, Structure, BlockSlot, BlockGeometry } from './StructureRegistry.js';
 import { ERA_VISUALS, MilestoneBlockRange } from '../../shared/types.js';
+import { TextureFactory, StoneType } from '../effects/TextureFactory.js';
 
 const _tempMatrix = new THREE.Matrix4();
 const _tempColor = new THREE.Color();
@@ -36,6 +37,22 @@ function getBlockGeometry(type: BlockGeometry = 'cube'): THREE.BufferGeometry {
         -0.5, -0.5, -0.5,   -0.5, 0.5, 0.5,   -0.5, 0.5, -0.5,
       ]);
       geo.setAttribute('position', new THREE.BufferAttribute(verts, 3));
+      const uvs = new Float32Array([
+        // Front face triangle
+        0, 0,  1, 0,  0, 1,
+        // Back face triangle
+        1, 0,  0, 0,  0, 1,
+        // Bottom face (2 tris)
+        0, 0,  1, 0,  1, 1,
+        0, 0,  1, 1,  0, 1,
+        // Slope face (2 tris)
+        0, 1,  0, 0,  1, 0,
+        0, 1,  1, 0,  1, 1,
+        // Left face (2 tris)
+        0, 0,  1, 0,  1, 1,
+        0, 0,  1, 1,  0, 1,
+      ]);
+      geo.setAttribute('uv', new THREE.BufferAttribute(uvs, 2));
       geo.computeVertexNormals();
       break;
     }
@@ -48,13 +65,86 @@ function getBlockGeometry(type: BlockGeometry = 'cube'): THREE.BufferGeometry {
     case 'slab':
       geo = new THREE.BoxGeometry(1.0, 0.25, 1.0);
       break;
+    case 'fluted-cylinder': {
+      const points: THREE.Vector2[] = [];
+      points.push(new THREE.Vector2(0.38, -0.5));
+      points.push(new THREE.Vector2(0.45, -0.45));
+      points.push(new THREE.Vector2(0.45, 0.45));
+      points.push(new THREE.Vector2(0.38, 0.5));
+      geo = new THREE.LatheGeometry(points, 12);
+      break;
+    }
+    case 'beveled-cube': {
+      geo = new THREE.BoxGeometry(1, 1, 1, 2, 2, 2);
+      const pos = geo.attributes.position;
+      const bevel = 0.06;
+      for (let i = 0; i < pos.count; i++) {
+        const x = pos.getX(i), y = pos.getY(i), z = pos.getZ(i);
+        const ax = Math.abs(x), ay = Math.abs(y), az = Math.abs(z);
+        const cornerDist = (ax > 0.4 ? 1 : 0) + (ay > 0.4 ? 1 : 0) + (az > 0.4 ? 1 : 0);
+        if (cornerDist >= 2) {
+          pos.setXYZ(i,
+            x - Math.sign(x) * bevel * (ax > 0.4 ? 1 : 0),
+            y - Math.sign(y) * bevel * (ay > 0.4 ? 1 : 0),
+            z - Math.sign(z) * bevel * (az > 0.4 ? 1 : 0),
+          );
+        }
+      }
+      pos.needsUpdate = true;
+      geo.computeVertexNormals();
+      break;
+    }
+    case 'lotus-capital': {
+      const profile: THREE.Vector2[] = [];
+      const steps = 8;
+      for (let i = 0; i <= steps; i++) {
+        const t = i / steps;
+        const r = 0.3 + 0.35 * Math.pow(t, 0.5) - (t > 0.85 ? (t - 0.85) * 0.5 : 0);
+        const y = -0.2 + t * 0.4;
+        profile.push(new THREE.Vector2(r, y));
+      }
+      geo = new THREE.LatheGeometry(profile, 12);
+      break;
+    }
     case 'cube':
     default:
       geo = new THREE.BoxGeometry(1.0, 1.0, 1.0);
       break;
   }
+  applyVertexAO(geo);
   GEOMETRY_CACHE.set(type, geo);
   return geo;
+}
+
+function applyVertexAO(geo: THREE.BufferGeometry): void {
+  const pos = geo.attributes.position;
+  const colors = new Float32Array(pos.count * 3);
+
+  for (let i = 0; i < pos.count; i++) {
+    const y = pos.getY(i);
+    const normal = geo.attributes.normal;
+    const ny = normal ? normal.getY(i) : 0;
+
+    // Base brightness: slightly darker at bottom of block
+    const yNorm = (y + 0.5); // 0 at bottom, 1 at top
+    let brightness = 0.85 + yNorm * 0.15; // 0.85 at bottom, 1.0 at top
+
+    // Darken downward-facing normals (undersides)
+    if (ny < -0.5) {
+      brightness *= 0.7;
+    }
+
+    // Slight darkening on side faces near the bottom
+    if (Math.abs(ny) < 0.5 && yNorm < 0.3) {
+      brightness *= 0.9;
+    }
+
+    colors[i * 3] = brightness;
+    colors[i * 3 + 1] = brightness;
+    colors[i * 3 + 2] = brightness;
+  }
+
+  geo.setAttribute('color', new THREE.BufferAttribute(colors, 3));
 }
 
 interface AnimatingBlock {
@@ -90,6 +180,11 @@ export class BuildManager {
   private pendingPlacements: { structureIndex: number; slotIndex: number }[] = [];
   private animatingBlocks: AnimatingBlock[] = [];
   private onBlockLandCallback: (() => void) | null = null;
+  private onStructureStartCallbacks: ((id: string, offset: THREE.Vector3) => void)[] = [];
+
+  onStructureStart(cb: (id: string, offset: THREE.Vector3) => void): void {
+    this.onStructureStartCallbacks.push(cb);
+  }
 
   constructor(scene: THREE.Scene) {
     this.scene = scene;
@@ -99,11 +194,18 @@ export class BuildManager {
     // Create shared material pool (36 materials instead of ~2800)
     for (let ei = 0; ei < ERA_VISUALS.length; ei++) {
       const era = ERA_VISUALS[ei];
+      const stoneType: StoneType = ei < 9 ? 'sandstone' : ei < 18 ? 'limestone' : 'granite';
+      // Normal map only (no diffuse .map) to avoid triple multiplication darkening:
+      // instance_color × texture_rgb × vertex_ao would compound and over-darken.
+      // The normal map provides stone surface detail; instance color provides era tint.
       this.eraMaterials.push(new THREE.MeshStandardMaterial({
-        roughness: era.roughness,
+        roughness: ei < 6 ? Math.max(era.roughness, 0.75) : era.roughness,
         metalness: era.metalness,
         emissive: new THREE.Color().setHSL(era.hue, era.saturation, era.lightness * 0.3),
         emissiveIntensity: era.emissiveIntensity,
+        normalMap: TextureFactory.getNormalMap(stoneType),
+        normalScale: new THREE.Vector2(0.4, 0.4),
+        vertexColors: true,
       }));
     }
 
@@ -265,7 +367,7 @@ export class BuildManager {
 
     _tempMatrix.makeTranslation(slot.position.x, slot.position.y, slot.position.z);
     mesh.setMatrixAt(instanceIdx, _tempMatrix);
-    mesh.setColorAt(instanceIdx, this.randomBlockColor(era));
+    mesh.setColorAt(instanceIdx, this.randomBlockColor(era, geoType));
 
     this.structureInstanceCounts.set(key, instanceIdx + 1);
     mesh.count = instanceIdx + 1;
@@ -273,6 +375,11 @@ export class BuildManager {
     if (mesh.instanceColor) mesh.instanceColor.needsUpdate = true;
 
     this.structurePlacedCounts.set(structureIndex, (this.structurePlacedCounts.get(structureIndex) || 0) + 1);
+    if ((this.structurePlacedCounts.get(structureIndex) || 0) === 1) {
+      for (const cb of this.onStructureStartCallbacks) {
+        cb(structure.id, structure.worldOffset);
+      }
+    }
   }
 
   queueBlocks(targetTotal: number, milestoneIndex?: number): void {
@@ -388,7 +495,7 @@ export class BuildManager {
     const key = `${structureIndex}-${geoType}-${era}`;
     const instanceIdx = this.structureInstanceCounts.get(key)!;
     const startY = slot.position.y + 15;
-    const color = this.randomBlockColor(era);
+    const color = this.randomBlockColor(era, geoType);
 
     _tempMatrix.makeTranslation(slot.position.x, startY, slot.position.z);
     mesh.setMatrixAt(instanceIdx, _tempMatrix);
@@ -400,6 +507,11 @@ export class BuildManager {
     if (mesh.instanceColor) mesh.instanceColor.needsUpdate = true;
 
     this.structurePlacedCounts.set(structureIndex, (this.structurePlacedCounts.get(structureIndex) || 0) + 1);
+    if ((this.structurePlacedCounts.get(structureIndex) || 0) === 1) {
+      for (const cb of this.onStructureStartCallbacks) {
+        cb(structure.id, structure.worldOffset);
+      }
+    }
 
     // Cache the mesh key to avoid string allocation in update loop
     const meshKey = key;
@@ -416,11 +528,24 @@ export class BuildManager {
     });
   }
 
-  private randomBlockColor(eraIndex: number): THREE.Color {
+  private randomBlockColor(eraIndex: number, geoType: BlockGeometry = 'cube'): THREE.Color {
     const era = ERA_VISUALS[eraIndex];
-    const hue = era.hue + (Math.random() - 0.5) * era.hueRange;
-    const sat = era.saturation + (Math.random() - 0.5) * era.saturationRange;
-    const light = era.lightness + (Math.random() - 0.5) * era.lightnessRange;
+    let hue = era.hue + (Math.random() - 0.5) * era.hueRange;
+    let sat = era.saturation + (Math.random() - 0.5) * era.saturationRange;
+    let light = era.lightness + (Math.random() - 0.5) * era.lightnessRange;
+
+    // Sand accumulation: horizontal surfaces on early eras get warmer, lighter
+    if (eraIndex < 12 && (geoType === 'slab' || geoType === 'half')) {
+      hue = hue * 0.7 + 0.08 * 0.3;
+      sat *= 0.6;
+      light = light * 0.8 + 0.75 * 0.2;
+    }
+
+    // Edge wear on beveled cubes: slightly lighter overall
+    if (geoType === 'beveled-cube') {
+      light += 0.03;
+    }
+
     return _tempColor.setHSL(hue, sat, light);
   }
 

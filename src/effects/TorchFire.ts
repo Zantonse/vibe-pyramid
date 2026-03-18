@@ -28,7 +28,7 @@ export class TorchFire {
   // Pre-allocated temp vectors to avoid per-frame allocations
   private readonly _tempPos = new THREE.Vector3();
 
-  constructor(scene: THREE.Scene, maxTorches: number = 12) {
+  constructor(scene: THREE.Scene, maxTorches: number = 4) {
     this.scene = scene;
     this.maxTorches = maxTorches;
 
